@@ -17,9 +17,13 @@ public:
   int x, y, level;
   bool horizontal;
   RectilinearBrick(int x, int y, int level, bool horizontal) : x(x), y(y), level(level), horizontal(horizontal) {}
-  RectilinearBrick() {}
+  RectilinearBrick() : x(0), y(0), level(0), horizontal(false) {}
 
-  bool intersects(RectilinearBrick &b);
+  bool operator < (const RectilinearBrick &b) const;
+  bool operator == (const RectilinearBrick &b) const;
+  bool operator != (const RectilinearBrick &b) const;
+
+  bool intersects(const RectilinearBrick &b) const;
   
   void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize);
   void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level);
@@ -27,7 +31,7 @@ public:
   //void getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts);
   //void getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts);
   
-  void serialize(std::ofstream &os);
+  void serialize(std::ofstream &os) const;
   void deserialize(std::ifstream &is);
 
 private:
@@ -36,10 +40,10 @@ private:
     pt.isAbove = isAbove;
     pt.type = type;
     }*/
-  bool inInterval(int min, int max, int a) {
+  bool inInterval(int min, int max, int a) const {
     return  min <= a && a <= max;
   }
-  bool distLessThan2(int a, int b) {
+  bool distLessThan2(int a, int b) const {
     return a == b || a-1 == b || b-1 == a;
   }
 };

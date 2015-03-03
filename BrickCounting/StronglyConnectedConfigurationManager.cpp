@@ -1,14 +1,5 @@
 #include "StronglyConnectedConfigurationManager.h"
-
-template <unsigned int ELEMENT_SIZE>
-void StronglyConnectedConfigurationList<ELEMENT_SIZE>::writeToDisk(){
-  // TODO!
-}
-
-template <unsigned int ELEMENT_SIZE>
-void StronglyConnectedConfigurationList<ELEMENT_SIZE>::readFromDisk() {
-  // TODO!
-}
+#include <sstream>
 
 StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
   lists = new void*[6];
@@ -22,9 +13,40 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
 
 void StronglyConnectedConfigurationManager::create() {
   // create 1:
-  //l1.s.insert(StronglyConnectedConfiguration<1>());
+  StronglyConnectedConfiguration<1> baseConfiguration;
+  l1.s.insert(baseConfiguration);
   std::cout << "Created all combinations of size 1: " << l1 << std::endl;
+  writeToFile(0);
 
   // TODO!
 }
 
+void StronglyConnectedConfigurationManager::writeToFile(int i) {
+  std::ofstream os;
+  std::stringstream ss;
+  ss << "scc/" << (i+1) << ".dat";
+  os.open(ss.str().c_str(), std::ios::binary | std::ios::out);
+  std::cout << "Writing file with strongly connected configurations of size " << (i+1) << " to " << ss.str() << std::endl;
+  
+  switch(i) {
+  case 0:    
+    l1.serialize(os);
+    break;/*
+  case 1:
+    l2.serialize(os);
+    break;
+  case 2:
+    l3.serialize(os);
+    break;
+  case 3:
+    l4.serialize(os);
+    break;
+  case 4:
+    l5.serialize(os);
+    break;
+  case 5:
+    l6.serialize(os);
+    break;//*/
+  }
+  os.close();
+}

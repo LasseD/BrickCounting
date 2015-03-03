@@ -4,8 +4,7 @@
 #include "StronglyConnectedConfiguration.h"
 
 template <unsigned int P>
-class RectilinearConfiguration
-{
+class RectilinearConfiguration {
 private:
 	int partsSizes[P]; // Decreasing 
 	StronglyConnectedConfiguration parts[P];

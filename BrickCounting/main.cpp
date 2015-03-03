@@ -1,5 +1,5 @@
 #include "RectilinearBrick.h"
-#include "StronglyConnectedConfiguration.h"
+#include "StronglyConnectedConfiguration.hpp"
 #include "StronglyConnectedConfigurationManager.h"
 #include <iostream>
 #include <fstream>
@@ -36,6 +36,6 @@ int main(int cargs, char** args) {
   StronglyConnectedConfigurationManager mgr;
   mgr.create();
 
-  runSimpleSerializationTestRectilinearBrick();
+  //runSimpleSerializationTestRectilinearBrick();
   return 0;
 }

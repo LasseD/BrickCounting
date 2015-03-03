@@ -1,6 +1,22 @@
 #include "RectilinearBrick.h"
 
-bool RectilinearBrick::intersects(RectilinearBrick &b) {
+bool RectilinearBrick::operator < (const RectilinearBrick &b) const {
+  if(level != b.level)
+    return level < b.level;
+  if(x != b.x)
+    return x < b.x;
+  if(y != b.y)
+    return y < b.y;
+  return horizontal < b.horizontal;
+}
+bool RectilinearBrick::operator == (const RectilinearBrick &b) const {
+  return (level == b.level) && (x == b.x) && (y == b.y) && (horizontal == b.horizontal);
+}
+bool RectilinearBrick::operator != (const RectilinearBrick &b) const {
+  return (level != b.level) || (x != b.x) || (y != b.y) || (horizontal != b.horizontal);
+}
+
+bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
   if(b.level != level) {
     return false;
   }
@@ -64,7 +80,7 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
   }
 }
 
-void RectilinearBrick::serialize(std::ofstream &os) {
+void RectilinearBrick::serialize(std::ofstream &os) const {
   os.write(reinterpret_cast<const char *>(&x), sizeof(int));
   os.write(reinterpret_cast<const char *>(&y), sizeof(int));
   os.write(reinterpret_cast<const char *>(&level), sizeof(int));
