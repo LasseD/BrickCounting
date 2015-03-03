@@ -1,19 +1,86 @@
-#include "stdafx.h"
 #include "RectilinearBrick.h"
 
 bool RectilinearBrick::intersects(RectilinearBrick &b) {
-	if(b.level != level)
-		return false;
-	if(horizontal && b.horizontal) {
-		return inInterval(x-3, x+3, b.x) && inInterval(y-1, y+1, b.y);
-	}
-	if(!horizontal && !b.horizontal) {
-		return inInterval(x-1, x+1, b.x) && inInterval(y-3, y+3, b.y);
-	}
-	if(horizontal && !b.horizontal) {
-		return inInterval(x-1, x+3, b.x) && inInterval(y-3, y+1, b.y);
-	}
-	return inInterval(x-3, x+1, b.x) && inInterval(y-1, y+3, b.y);
+  if(b.level != level) {
+    return false;
+  }
+  else if(horizontal && b.horizontal) {
+    return inInterval(x-3, x+3, b.x) && inInterval(y-1, y+1, b.y);
+  }
+  else if(!horizontal && !b.horizontal) {
+    return inInterval(x-1, x+1, b.x) && inInterval(y-3, y+3, b.y);
+  }
+  else if(horizontal && !b.horizontal) {
+    return inInterval(x-1, x+3, b.x) && inInterval(y-3, y+1, b.y);
+  }
+  else {
+    return inInterval(x-3, x+1, b.x) && inInterval(y-1, y+3, b.y);
+  }
+}
+
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) {
+  constructAllStronglyConnected(bricks, bricksSize, level-1);  
+  constructAllStronglyConnected(bricks, bricksSize, level+1);  
+}
+
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) {
+  if(horizontal) {
+    // all horizontal:
+    for(int xx = x-2; xx <= x+2; ++xx) {
+      for(int yy = y-1; yy <= y+1; ++yy) {
+	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
+      }
+    }
+    bricks[bricksSize++] = RectilinearBrick(x-3, y, level, true);
+    bricks[bricksSize++] = RectilinearBrick(x+3, y, level, true);
+    // all vertical:
+    for(int xx = x-1; xx <= x+3; ++xx) {
+      bool xExtreme = xx == x-1 || xx == x+3;
+      for(int yy = y-3; yy <= y+1; ++yy) {
+	bool yExtreme = yy == y-3 || yy == y+1;
+	if(!(xExtreme && yExtreme))
+	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
+      }
+    }
+  }
+  else { // vertical
+    // all vertical:
+    for(int xx = x-1; xx <= x+1; ++xx) {
+      for(int yy = y-2; yy <= y+2; ++yy) {
+	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
+      }
+    }
+    bricks[bricksSize++] = RectilinearBrick(x, y-3, level, false);
+    bricks[bricksSize++] = RectilinearBrick(x, y+3, level, false);
+    // all horizontal:
+    for(int xx = x-3; xx <= x+1; ++xx) {
+      bool xExtreme = xx == x-3 || xx == x+1;
+      for(int yy = y-1; yy <= y+3; ++yy) {
+	bool yExtreme = yy == y-1 || yy == y+3;
+	if(!(xExtreme && yExtreme))
+	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
+      }
+    }
+  }
+}
+
+void RectilinearBrick::serialize(std::ofstream &os) {
+  os.write(reinterpret_cast<const char *>(&x), sizeof(int));
+  os.write(reinterpret_cast<const char *>(&y), sizeof(int));
+  os.write(reinterpret_cast<const char *>(&level), sizeof(int));
+  os.write(reinterpret_cast<const char *>(&horizontal), 1);
+}
+void RectilinearBrick::deserialize(std::ifstream &is) {
+  is.read((char*)&x, sizeof(int));
+  is.read((char*)&y, sizeof(int));
+  is.read((char*)&level, sizeof(int));
+  is.read((char*)&horizontal, 1);
+}
+
+std::ostream& operator<<(std::ostream& os, const RectilinearBrick& b)
+{
+  os << "[RectilinearBrick:x="<<b.x<<",y="<< b.y <<",lv="<< b.level<< (b.horizontal?",horizontal]":",vertical]");
+  return os;
 }
 
 /*void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts) {

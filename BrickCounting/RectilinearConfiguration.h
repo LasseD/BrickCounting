@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STRONGLY_CONNECTED_CONFIGURATION_H
+#define STRONGLY_CONNECTED_CONFIGURATION_H
 
 #include "StronglyConnectedConfiguration.h"
 
@@ -13,3 +14,4 @@ public:
 	RectilinearConfiguration();
 };
 
+#endif
