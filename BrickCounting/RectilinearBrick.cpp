@@ -34,12 +34,13 @@ bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
   }
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) {
-  constructAllStronglyConnected(bricks, bricksSize, level-1);  
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const {
+  if(level > 0)
+    constructAllStronglyConnected(bricks, bricksSize, level-1);  
   constructAllStronglyConnected(bricks, bricksSize, level+1);  
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) {
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) const {
   if(horizontal) {
     // all horizontal:
     for(int xx = x-2; xx <= x+2; ++xx) {

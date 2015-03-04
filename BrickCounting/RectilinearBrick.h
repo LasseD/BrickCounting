@@ -25,8 +25,8 @@ public:
 
   bool intersects(const RectilinearBrick &b) const;
   
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize);
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level);
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const;
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) const;
   
   //void getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts);
   //void getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts);

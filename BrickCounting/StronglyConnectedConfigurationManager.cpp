@@ -12,11 +12,26 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
 }
 
 void StronglyConnectedConfigurationManager::create() {
-  // create 1:
+  // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
-  std::cout << "Created all combinations of size 1: " << l1 << std::endl;
+  std::cout << l1 << std::endl;
   writeToFile(0);
+
+  // 2:
+  l2.addAllFor(baseConfiguration);
+  std::cout << l2 << std::endl;
+  writeToFile(1);
+
+  // 3:
+  l3.addAllFor(l2);
+  std::cout << l3 << std::endl;
+  writeToFile(2);
+
+  // 4:
+  l4.addAllFor(l3);
+  std::cout << l4 << std::endl;
+  writeToFile(3);
 
   // TODO!
 }
@@ -31,7 +46,7 @@ void StronglyConnectedConfigurationManager::writeToFile(int i) {
   switch(i) {
   case 0:    
     l1.serialize(os);
-    break;/*
+    break;
   case 1:
     l2.serialize(os);
     break;

@@ -6,7 +6,7 @@
 #
 # for C++ define  CC = g++
 CC = g++
-CFLAGS  = -Wall
+CFLAGS = -Wall
 
 # typing 'make' will invoke the first target entry in the file 
 # (in this case the default target entry)
@@ -17,8 +17,8 @@ default: bc
 
 # To create the executable file bc we need the object files
 #
-bc:  RectilinearBrick.o StronglyConnectedConfiguration.o StronglyConnectedConfigurationManager.o main.o
-	$(CC) $(CFLAGS) -o bc RectilinearBrick.o StronglyConnectedConfiguration.o StronglyConnectedConfigurationManager.o main.o
+bc:  RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
+	$(CC) $(CFLAGS) -o bc RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
 
 # To create the object file RectilinearBrick.o, we need the source
 # files RectilinearBrick.h, and RectilinearBrick.cpp:
@@ -26,13 +26,10 @@ bc:  RectilinearBrick.o StronglyConnectedConfiguration.o StronglyConnectedConfig
 RectilinearBrick.o:  RectilinearBrick.h RectilinearBrick.cpp
 	$(CC) $(CFLAGS) -c RectilinearBrick.cpp
 
-StronglyConnectedConfiguration.o:  RectilinearBrick.h StronglyConnectedConfiguration.h StronglyConnectedConfiguration.cpp
-	$(CC) $(CFLAGS) -c StronglyConnectedConfiguration.cpp
-
-StronglyConnectedConfigurationManager.o:  RectilinearBrick.h StronglyConnectedConfiguration.h StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
+StronglyConnectedConfigurationManager.o:  RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c StronglyConnectedConfigurationManager.cpp
 
-main.o:  RectilinearBrick.h StronglyConnectedConfiguration.h StronglyConnectedConfigurationManager.h main.cpp
+main.o:  RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h main.cpp
 	$(CC) $(CFLAGS) -c main.cpp
 
 # To start over from scratch, type 'make clean'.  This
