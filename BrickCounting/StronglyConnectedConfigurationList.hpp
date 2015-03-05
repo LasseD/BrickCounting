@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include "StronglyConnectedConfiguration.hpp"
+#include <assert.h> 
 
 template <unsigned int ELEMENT_SIZE>
 class StronglyConnectedConfigurationList {
@@ -37,38 +38,46 @@ public:
   2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
   */
   void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
+    std::cout << "addAllFor init" << std::endl;
     std::set<RectilinearBrick> newBricks;
 
     // Add for all bricks in smaller:
     int tmpSize = 0;
     RectilinearBrick tmp[STRONGLY_CONNECTED_BRICK_POSITIONS];
 
-    // Handle origin as special case (because it doesn't exist):
+    // Handle origin as special brick (because it doesn't exist in otherBricks):
     RectilinearBrick b;
     b.constructAllStronglyConnected(tmp, tmpSize);
-    //std::cout << "Found " << tmpSize << " bricks to connect to initial brick" << std::endl;
+    assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
+    std::cout << "addAllFor(" << smaller << ")" << std::endl;
+    assert(smaller.verify());
     for(int j = 0; j < tmpSize; ++j) {
       b = tmp[j];
       if(!smaller.intersects(b))
-        newBricks.insert(b);
+        newBricks.insert(RectilinearBrick(b));
     }
 
-    if(ELEMENT_SIZE > 2) {
+    // Handle normal bricks:
+    if(ELEMENT_SIZE > 1) {
       for(int i = 0; i < ELEMENT_SIZE-2; ++i) {
         tmpSize = 0;
         smaller.otherBricks[i].constructAllStronglyConnected(tmp, tmpSize);
+
+        assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
+
         for(int j = 0; j < tmpSize; ++j) {
           b = tmp[j];
           if(!smaller.intersects(b))
-            newBricks.insert(b);
+            newBricks.insert(RectilinearBrick(b));
         }
       }
     }
 
     // Try all new scc's:
-    for(std::set<RectilinearBrick>::iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
+    std::cout << " Found " << newBricks.size() << " potential new scc's" << std::endl;
+    for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
-      //std::cout << "Trying candidate " << candidate << std::endl;
+      std::cout << " Trying candidate " << candidate << std::endl;
       if(s.find(candidate) != s.end()) {
         //std::cout << "Already known! " << candidate << std::endl;
         continue;
@@ -89,16 +98,34 @@ public:
           continue;	
         }
       }
-      //std::cout << "Yay! Inserting " << candidate << std::endl;
+      std::cout << " Yay! Inserting " << candidate << std::endl;
+      assert(candidate.verify());
       s.insert(candidate);
     }
+
+    std::cout << "Check set before destruction:" << std::endl;
+    RectilinearBrick prev(0, 0, -1, false);
+    for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
+      assert(prev < *it);
+      prev = *it;
+    }
+    newBricks.clear();
+    std::cout << "Done addForAll." << std::endl;
   }
 
   void addAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller) {
+    std::cout << "ADDALLFOR init on smaller of size " << smaller.s.size() << " Content: " << std::endl;
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
+      std::cout << " " << *it << std::endl;
+    }
+    std::cout << "ADDALLFOR GOGOGO! " << std::endl;
+
+    for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
+      std::cout << "ADDALLFOR for smaller " << *it << std::endl;
       addAllFor(*it);
     }
+    std::cout << "ADDALLFOR end" << std::endl;
   }
 };
 

@@ -3,6 +3,7 @@
 #include "StronglyConnectedConfigurationManager.h"
 #include <iostream>
 #include <fstream>
+#include <assert.h>
 
 void runSimpleSerializationTestRectilinearBrick() {
   std::cout << "Running simple serialization test for RectilinearBricks" << std::endl;

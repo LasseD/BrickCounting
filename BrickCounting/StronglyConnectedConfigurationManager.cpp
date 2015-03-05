@@ -27,9 +27,11 @@ void StronglyConnectedConfigurationManager::create() {
   l3.addAllFor(l2);
   std::cout << l3 << std::endl;
   writeToFile(2);
+  //system("pause");
 
   // 4:
   l4.addAllFor(l3);
+  std::cout << "Outputting l4:" << std::endl;
   std::cout << l4 << std::endl;
   writeToFile(3);
 
@@ -61,7 +63,7 @@ void StronglyConnectedConfigurationManager::writeToFile(int i) {
     break;
   case 5:
     l6.serialize(os);
-    break;//*/
+    break;
   }
   os.close();
 }

@@ -7,7 +7,7 @@ bool RectilinearBrick::operator < (const RectilinearBrick &b) const {
     return x < b.x;
   if(y != b.y)
     return y < b.y;
-  return horizontal < b.horizontal;
+  return !horizontal && b.horizontal;
 }
 bool RectilinearBrick::operator == (const RectilinearBrick &b) const {
   return (level == b.level) && (x == b.x) && (y == b.y) && (horizontal == b.horizontal);
@@ -96,7 +96,7 @@ void RectilinearBrick::deserialize(std::ifstream &is) {
 
 std::ostream& operator<<(std::ostream& os, const RectilinearBrick& b)
 {
-  os << "[RectilinearBrick:x="<<b.x<<",y="<< b.y <<",lv="<< b.level<< (b.horizontal?",horizontal]":",vertical]");
+  os<< (b.horizontal?"[-":"[|") << " "<<b.x<<","<< b.y <<", lv "<< b.level << "]";
   return os;
 }
 

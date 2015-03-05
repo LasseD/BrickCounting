@@ -19,6 +19,7 @@ public:
   int x, y, level;
   bool horizontal;
   RectilinearBrick(int x, int y, int level, bool horizontal) : x(x), y(y), level(level), horizontal(horizontal) {}
+  RectilinearBrick(const RectilinearBrick& b) : x(b.x), y(b.y), level(b.level), horizontal(b.horizontal) {}
   RectilinearBrick() : x(0), y(0), level(0), horizontal(false) {}
 
   bool operator < (const RectilinearBrick &b) const;

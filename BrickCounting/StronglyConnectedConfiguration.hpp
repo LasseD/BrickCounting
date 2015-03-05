@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include "RectilinearBrick.h"
+#include <assert.h> 
 
 template <unsigned int SIZE>
 class StronglyConnectedConfiguration {
@@ -12,6 +13,21 @@ public:
   RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
   StronglyConnectedConfiguration(){}
+  StronglyConnectedConfiguration(const StronglyConnectedConfiguration& c) {
+    for(int i = 0; i < SIZE-1; ++i) {
+      otherBricks[i] = c.otherBricks[i];
+    }
+  }
+
+  bool verify() const {
+    const RectilinearBrick origin;
+    for(int i = 1; i < SIZE-1; ++i) {
+      if(otherBricks[i] < origin) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   /*
   Constructor for constructing a scc from a smaller scc c and a brick b.
@@ -31,6 +47,9 @@ public:
     }
     if(ithis != SIZE-1)
       otherBricks[SIZE-2] = b;
+
+    ensureOriginIsSmallest();
+    assert(verify());
   }
 
   /*
@@ -78,6 +97,32 @@ public:
 
     // Sort bricks:
     std::sort(otherBricks, &otherBricks[SIZE]);
+    assert(verify());
+  }
+
+  void ensureOriginIsSmallest() {
+    int minI = -1;
+    RectilinearBrick min; // origin.
+    for(int i = 1; i < SIZE-1; ++i) {
+      if(otherBricks[i] < min) {
+        minI = i;
+        min = otherBricks[i];
+      }
+    }
+
+    if(minI != -1) {
+      // Move all according to the new origin:
+      int moveX = otherBricks[minI].x;
+      int moveY = otherBricks[minI].y;
+      for(int i = 1; i < SIZE-1; ++i) {
+        otherBricks[i].x -= moveX;
+        otherBricks[i].y -= moveY;
+      }
+
+      // Re-introduce old origin at the brick now representing the new origin:
+      otherBricks[minI].x -= moveX;
+      otherBricks[minI].y -= moveY;
+    }
   }
 
   void turn180() {
@@ -96,26 +141,11 @@ public:
       return;
 
     // Find the new origin:
-    int minI = 0;
-    for(int i = 1; i < SIZE-1; ++i) {
-      if(otherBricks[i] < otherBricks[minI])
-        minI = i;
-    }
-
-    // Move all according to the new origin:
-    int moveX = otherBricks[minI].x;
-    int moveY = otherBricks[minI].y;
-    for(int i = 1; i < SIZE-1; ++i) {
-      otherBricks[i].x -= moveX;
-      otherBricks[i].y -= moveY;
-    }
-
-    // Re-introduce old origin at the brick now representing the new origin:
-    otherBricks[minI].x -= moveX;
-    otherBricks[minI].y -= moveY;
+    ensureOriginIsSmallest();
 
     // Sort bricks:
     std::sort(otherBricks, &otherBricks[SIZE]);
+    assert(verify());
   }
 
   bool canTurn90() const {
