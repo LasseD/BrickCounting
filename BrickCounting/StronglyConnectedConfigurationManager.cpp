@@ -42,7 +42,7 @@ void StronglyConnectedConfigurationManager::writeToFile(int i) {
   ss << "scc/" << (i+1) << ".dat";
   os.open(ss.str().c_str(), std::ios::binary | std::ios::out);
   std::cout << "Writing file with strongly connected configurations of size " << (i+1) << " to " << ss.str() << std::endl;
-  
+
   switch(i) {
   case 0:    
     l1.serialize(os);

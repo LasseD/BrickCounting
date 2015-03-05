@@ -8,7 +8,7 @@ void runSimpleSerializationTestRectilinearBrick() {
   std::cout << "Running simple serialization test for RectilinearBricks" << std::endl;
   RectilinearBrick a(1,2,3,true);
   RectilinearBrick b(-1,-2,-3,false);
-  
+
   std::cout << "a and b before serialization: " << a << b << std::endl;
 
   std::ofstream outfile;
@@ -28,8 +28,8 @@ void runSimpleSerializationTestRectilinearBrick() {
 }
 
 /*
- * MAIN ENTRY POINT!
- */
+* MAIN ENTRY POINT!
+*/
 int main(int cargs, char** args) {
   std::cout << "Running strongly connected configurations." << std::endl;
 

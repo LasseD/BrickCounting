@@ -1,16 +1,16 @@
 #ifndef STRONGLY_CONNECTED_CONFIGURATION_H
 #define STRONGLY_CONNECTED_CONFIGURATION_H
 
-#include "StronglyConnectedConfiguration.h"
+#include "StronglyConnectedConfiguration.hpp"
 
 template <unsigned int P>
 class RectilinearConfiguration {
 private:
-	int partsSizes[P]; // Decreasing 
-	StronglyConnectedConfiguration parts[P];
+  int partsSizes[P]; // Decreasing 
+  StronglyConnectedConfiguration parts[P];
 
 public:
-	RectilinearConfiguration();
+  RectilinearConfiguration();
 };
 
 #endif

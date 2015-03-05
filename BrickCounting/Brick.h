@@ -5,8 +5,8 @@
 
 class Brick {
 public:
-	float x, y, angle;
-	uint8_t level;
+  float x, y, angle;
+  uint8_t level;
 };
 
-#endif
+#endif // BRICK_H

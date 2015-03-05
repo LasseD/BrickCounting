@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -33,10 +30,13 @@
     <ClInclude Include="RectilinearBrick.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConnectionPoint.h">
+    <ClInclude Include="StronglyConnectedConfiguration.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="StronglyConnectedConfiguration.h">
+    <ClInclude Include="StronglyConnectedConfigurationList.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StronglyConnectedConfigurationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,10 +53,10 @@
     <ClCompile Include="RectilinearBrick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConnectionPoint.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StronglyConnectedConfiguration.cpp">
+    <ClCompile Include="StronglyConnectedConfigurationManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

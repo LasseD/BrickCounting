@@ -45,7 +45,7 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     // all horizontal:
     for(int xx = x-2; xx <= x+2; ++xx) {
       for(int yy = y-1; yy <= y+1; ++yy) {
-	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
+        bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
       }
     }
     bricks[bricksSize++] = RectilinearBrick(x-3, y, level, true);
@@ -54,9 +54,9 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     for(int xx = x-1; xx <= x+3; ++xx) {
       bool xExtreme = xx == x-1 || xx == x+3;
       for(int yy = y-3; yy <= y+1; ++yy) {
-	bool yExtreme = yy == y-3 || yy == y+1;
-	if(!(xExtreme && yExtreme))
-	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
+        bool yExtreme = yy == y-3 || yy == y+1;
+        if(!(xExtreme && yExtreme))
+          bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
       }
     }
   }
@@ -64,7 +64,7 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     // all vertical:
     for(int xx = x-1; xx <= x+1; ++xx) {
       for(int yy = y-2; yy <= y+2; ++yy) {
-	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
+        bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
       }
     }
     bricks[bricksSize++] = RectilinearBrick(x, y-3, level, false);
@@ -73,9 +73,9 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     for(int xx = x-3; xx <= x+1; ++xx) {
       bool xExtreme = xx == x-3 || xx == x+1;
       for(int yy = y-1; yy <= y+3; ++yy) {
-	bool yExtreme = yy == y-1 || yy == y+3;
-	if(!(xExtreme && yExtreme))
-	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
+        bool yExtreme = yy == y-1 || yy == y+3;
+        if(!(xExtreme && yExtreme))
+          bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
       }
     }
   }
@@ -101,29 +101,29 @@ std::ostream& operator<<(std::ostream& os, const RectilinearBrick& b)
 }
 
 /*void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts) {
-	getConnectionPointsNoLevel(pts, sizePts);
-	for(unsigned int i = 0; i < 4; ++i) {
-		pts[i].level = level+1;
-	}
+getConnectionPointsNoLevel(pts, sizePts);
+for(unsigned int i = 0; i < 4; ++i) {
+pts[i].level = level+1;
+}
 }
 void RectilinearBrick::getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts) {
-	getConnectionPointsNoLevel(pts, sizePts);
-	for(unsigned int i = 0; i < 4; ++i) {
-		pts[i].level = level-1;
-	}
+getConnectionPointsNoLevel(pts, sizePts);
+for(unsigned int i = 0; i < 4; ++i) {
+pts[i].level = level-1;
+}
 }
 void RectilinearBrick::getConnectionPointsNoLevel(ConnectionPoint *pts, int &sizePts) {
-	sizePts = 4;
-	setConnectionPointsDataNoLevel(pts[0], x, y, CONNECTION_DOWN_LEFT);
-	if(horizontal) {
-		setConnectionPointsDataNoLevel(pts[1], x+3, y, CONNECTION_DOWN_RIGHT);
-		setConnectionPointsDataNoLevel(pts[2], x, y+1, CONNECTION_UP_LEFT);
-		setConnectionPointsDataNoLevel(pts[3], x+3, y+1, CONNECTION_UP_RIGHT);
-	}
-	else {
-		setConnectionPointsDataNoLevel(pts[1], x+1, y, CONNECTION_DOWN_RIGHT);
-		setConnectionPointsDataNoLevel(pts[2], x, y+3, CONNECTION_UP_LEFT);
-		setConnectionPointsDataNoLevel(pts[3], x+1, y+3, CONNECTION_UP_RIGHT);
-	}
+sizePts = 4;
+setConnectionPointsDataNoLevel(pts[0], x, y, CONNECTION_DOWN_LEFT);
+if(horizontal) {
+setConnectionPointsDataNoLevel(pts[1], x+3, y, CONNECTION_DOWN_RIGHT);
+setConnectionPointsDataNoLevel(pts[2], x, y+1, CONNECTION_UP_LEFT);
+setConnectionPointsDataNoLevel(pts[3], x+3, y+1, CONNECTION_UP_RIGHT);
+}
+else {
+setConnectionPointsDataNoLevel(pts[1], x+1, y, CONNECTION_DOWN_RIGHT);
+setConnectionPointsDataNoLevel(pts[2], x, y+3, CONNECTION_UP_LEFT);
+setConnectionPointsDataNoLevel(pts[3], x+1, y+3, CONNECTION_UP_RIGHT);
+}
 }*/
 

@@ -8,7 +8,7 @@
 
 template <unsigned int ELEMENT_SIZE>
 class StronglyConnectedConfigurationList {
- public:
+public:
   StronglyConnectedConfiguration<ELEMENT_SIZE> *v; // used sorted for retrieval.
   std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > s; // only used for construction.
 
@@ -31,17 +31,17 @@ class StronglyConnectedConfigurationList {
   }
 
   /*
-    Add all scc's of this size from the scc c of a size smaller:
-    1) Have a small set s in which to put all possible bricks that can connect strongly to c
-    1a) Ensure no intersection with c when doing this!
-    2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
-   */
+  Add all scc's of this size from the scc c of a size smaller:
+  1) Have a small set s in which to put all possible bricks that can connect strongly to c
+  1a) Ensure no intersection with c when doing this!
+  2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
+  */
   void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
     std::set<RectilinearBrick> newBricks;
 
     // Add for all bricks in smaller:
     int tmpSize = 0;
-    RectilinearBrick tmp[38];
+    RectilinearBrick tmp[STRONGLY_CONNECTED_BRICK_POSITIONS];
 
     // Handle origin as special case (because it doesn't exist):
     RectilinearBrick b;
@@ -50,18 +50,18 @@ class StronglyConnectedConfigurationList {
     for(int j = 0; j < tmpSize; ++j) {
       b = tmp[j];
       if(!smaller.intersects(b))
-	newBricks.insert(b);
+        newBricks.insert(b);
     }
 
     if(ELEMENT_SIZE > 2) {
       for(int i = 0; i < ELEMENT_SIZE-2; ++i) {
-	tmpSize = 0;
-	smaller.otherBricks[i].constructAllStronglyConnected(tmp, tmpSize);
-	for(int j = 0; j < tmpSize; ++j) {
-	  b = tmp[j];
-	  if(!smaller.intersects(b))
-	    newBricks.insert(b);
-	}
+        tmpSize = 0;
+        smaller.otherBricks[i].constructAllStronglyConnected(tmp, tmpSize);
+        for(int j = 0; j < tmpSize; ++j) {
+          b = tmp[j];
+          if(!smaller.intersects(b))
+            newBricks.insert(b);
+        }
       }
     }
 
@@ -70,24 +70,24 @@ class StronglyConnectedConfigurationList {
       StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
       //std::cout << "Trying candidate " << candidate << std::endl;
       if(s.find(candidate) != s.end()) {
-	//std::cout << "Already known! " << candidate << std::endl;
-	continue;
+        //std::cout << "Already known! " << candidate << std::endl;
+        continue;
       }
       if(candidate.canTurn90()) {
-	for(int i = 0; i < 3; ++i) {
-	  candidate.turn90();
-	  if(s.find(candidate) != s.end()) {
-	    //std::cout << "Already known as " << candidate << std::endl;
-	    continue;
-	  }
-	}
+        for(int i = 0; i < 3; ++i) {
+          candidate.turn90();
+          if(s.find(candidate) != s.end()) {
+            //std::cout << "Already known as " << candidate << std::endl;
+            continue;
+          }
+        }
       }
       else {
-	candidate.turn180();
-	if(s.find(candidate) != s.end()) {
-	  //std::cout << "Already known 180 as " << candidate << std::endl;
-	  continue;	
-	}
+        candidate.turn180();
+        if(s.find(candidate) != s.end()) {
+          //std::cout << "Already known 180 as " << candidate << std::endl;
+          continue;	
+        }
       }
       //std::cout << "Yay! Inserting " << candidate << std::endl;
       s.insert(candidate);
@@ -104,7 +104,7 @@ class StronglyConnectedConfigurationList {
 
 template <unsigned int ELEMENT_SIZE>
 std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfigurationList<ELEMENT_SIZE>& l) {
-  os << "Combinations of size " << ELEMENT_SIZE << ": " << (uint64_t)l.s.size() << std::endl;
+  os << "Combinations of size " << ELEMENT_SIZE << ": " << l.s.size() << std::endl;
 
   typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = l.s.begin();
   for(int i = 0; it != l.s.end(); ++it, ++i) {

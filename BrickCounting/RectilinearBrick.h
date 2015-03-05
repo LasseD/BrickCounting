@@ -4,7 +4,9 @@
 #include <iostream>
 #include <fstream>
 
-enum ConnectionPointType {NW, NE, SW, SE};
+#define STRONGLY_CONNECTED_BRICK_POSITIONS 76
+
+enum ConnectionPointType {NW = 0, NE = 1, SW = 2, SE = 3};
 
 struct ConnectionPoint {
   ConnectionPointType type;
@@ -24,22 +26,22 @@ public:
   bool operator != (const RectilinearBrick &b) const;
 
   bool intersects(const RectilinearBrick &b) const;
-  
+
   void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const;
   void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) const;
-  
+
   //void getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts);
   //void getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts);
-  
+
   void serialize(std::ofstream &os) const;
   void deserialize(std::ifstream &is);
 
 private:
   /*void getConnectionPointsNoLevel(ConnectionPoint *pts, int &sizePts);
-    void setConnectionPointsDataNoLevel(ConnectionPoint &pt, bool isAbove, ConnectionPointType type) {
-    pt.isAbove = isAbove;
-    pt.type = type;
-    }*/
+  void setConnectionPointsDataNoLevel(ConnectionPoint &pt, bool isAbove, ConnectionPointType type) {
+  pt.isAbove = isAbove;
+  pt.type = type;
+  }*/
   bool inInterval(int min, int max, int a) const {
     return  min <= a && a <= max;
   }
@@ -50,4 +52,4 @@ private:
 
 std::ostream& operator<<(std::ostream &os, const RectilinearBrick& b);
 
-#endif
+#endif // RECTILINEAR_BRICK_H

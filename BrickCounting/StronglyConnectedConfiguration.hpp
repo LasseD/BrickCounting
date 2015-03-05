@@ -14,9 +14,9 @@ public:
   StronglyConnectedConfiguration(){}
 
   /*
-    Constructor for constructing a scc from a smaller scc c and a brick b.
-    Assumptions about the input: b does not intersect c. b and c are strongly connected.
-   */
+  Constructor for constructing a scc from a smaller scc c and a brick b.
+  Assumptions about the input: b does not intersect c. b and c are strongly connected.
+  */
   StronglyConnectedConfiguration(const StronglyConnectedConfiguration<SIZE-1> &c, const RectilinearBrick &b) {
     if(SIZE == 2) {
       otherBricks[0] = b;
@@ -26,7 +26,7 @@ public:
     int ithis = 0;
     for(int i = 0; i < SIZE-2; ++i) {
       if(b < c.otherBricks[i])
-	otherBricks[ithis++] = b;
+        otherBricks[ithis++] = b;
       otherBricks[ithis++] = c.otherBricks[i];
     }
     if(ithis != SIZE-1)
@@ -34,33 +34,33 @@ public:
   }
 
   /*
-    Turns this scc 90 degrees
-    Might cause reordering. 
-    Causes new brick to be "origin".
-    It is assumed that it is possible to turn 90 degrees.
-   */
+  Turns this scc 90 degrees
+  Might cause reordering. 
+  Causes new brick to be "origin".
+  It is assumed that it is possible to turn 90 degrees.
+  */
   void turn90() {
     // First turn 90:
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].horizontal) {
-	otherBricks[i].horizontal = false;
-	int oldX = otherBricks[i].x;
-	otherBricks[i].x = otherBricks[i].y;
-	otherBricks[i].y = -oldX-2;
+        otherBricks[i].horizontal = false;
+        int oldX = otherBricks[i].x;
+        otherBricks[i].x = otherBricks[i].y;
+        otherBricks[i].y = -oldX-2;
       }
       else {
-	otherBricks[i].horizontal = true;
-	int oldY = otherBricks[i].y;
-	otherBricks[i].y = -otherBricks[i].x;
-	otherBricks[i].x = oldY;
+        otherBricks[i].horizontal = true;
+        int oldY = otherBricks[i].y;
+        otherBricks[i].y = -otherBricks[i].x;
+        otherBricks[i].x = oldY;
       }
     }
-    
+
     // Find the new origin:
     int minI = 0;
     for(int i = 1; i < SIZE-1; ++i) {
       if(otherBricks[i] < otherBricks[minI])
-	minI = i;
+        minI = i;
     }
 
     // Move all according to the new origin:
@@ -84,22 +84,22 @@ public:
     // First turn all bricks 180:
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].horizontal) {
-	otherBricks[i].x = -otherBricks[i].x-2;
-	otherBricks[i].y = -otherBricks[i].y+2;
+        otherBricks[i].x = -otherBricks[i].x-2;
+        otherBricks[i].y = -otherBricks[i].y+2;
       }
       else {
-	otherBricks[i].x = -otherBricks[i].x;
-	otherBricks[i].y = -otherBricks[i].y;
+        otherBricks[i].x = -otherBricks[i].x;
+        otherBricks[i].y = -otherBricks[i].y;
       }
     }
     if(SIZE == 2)
       return;
-    
+
     // Find the new origin:
     int minI = 0;
     for(int i = 1; i < SIZE-1; ++i) {
       if(otherBricks[i] < otherBricks[minI])
-	minI = i;
+        minI = i;
     }
 
     // Move all according to the new origin:
@@ -125,9 +125,9 @@ public:
 
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].level > 0)
-	return false;
+        return false;
       if(otherBricks[i].horizontal)
-	return true;
+        return true;
     }
     return false;
   }
@@ -135,7 +135,7 @@ public:
   bool operator<(const StronglyConnectedConfiguration<SIZE> &c) const {
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] != c.otherBricks[i])
-	return otherBricks[i] < c.otherBricks[i];
+        return otherBricks[i] < c.otherBricks[i];
     }
     return false;
   }
@@ -158,7 +158,7 @@ public:
     // All other bricks:
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].intersects(b))
-	return true;
+        return true;
     }
     return false;
   }

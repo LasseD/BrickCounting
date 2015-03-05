@@ -7,13 +7,13 @@
 #include "StronglyConnectedConfigurationList.hpp"
 
 class StronglyConnectedConfigurationManager {
- public:
+public:
   StronglyConnectedConfigurationManager();
   void create();
 
   void **lists;  
 
- private:
+private:
   StronglyConnectedConfigurationList<1> l1;
   StronglyConnectedConfigurationList<2> l2;
   StronglyConnectedConfigurationList<3> l3;
