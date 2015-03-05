@@ -6,7 +6,8 @@
 #
 # for C++ define  CC = g++
 CC = g++
-CFLAGS = -Wall
+#CFLAGS = -Wall
+CFLAGS = -Wall -O2 -DNDEBUG
 
 # typing 'make' will invoke the first target entry in the file 
 # (in this case the default target entry)
@@ -17,19 +18,25 @@ default: bc
 
 # To create the executable file bc we need the object files
 #
-bc:  RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
-	$(CC) $(CFLAGS) -o bc RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
+bc:  LDRPrinter.o RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
+	$(CC) $(CFLAGS) -o bc LDRPrinter.o RectilinearBrick.o StronglyConnectedConfigurationManager.o main.o
 
-# To create the object file RectilinearBrick.o, we need the source
-# files RectilinearBrick.h, and RectilinearBrick.cpp:
+# To create the object file ??.o, we need the source
+# files ??.h, and ??.cpp:
 #
-RectilinearBrick.o:  RectilinearBrick.h RectilinearBrick.cpp
+LDRPrinter.o:  LDRPrinter.h LDRPrinter.cpp
+	$(CC) $(CFLAGS) -c LDRPrinter.cpp
+
+RectilinearBrick.o:  LDRPrinter.h RectilinearBrick.h RectilinearBrick.cpp
 	$(CC) $(CFLAGS) -c RectilinearBrick.cpp
 
-StronglyConnectedConfigurationManager.o:  RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
+#Brick.o:  LDRPrinter.o RectilinearBrick.h Brick.h Brick.cpp
+#	$(CC) $(CFLAGS) -c Brick.cpp
+
+StronglyConnectedConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c StronglyConnectedConfigurationManager.cpp
 
-main.o:  RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h main.cpp
+main.o:  LDRPrinter.h RectilinearBrick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h main.cpp
 	$(CC) $(CFLAGS) -c main.cpp
 
 # To start over from scratch, type 'make clean'.  This

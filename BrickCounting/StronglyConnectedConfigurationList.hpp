@@ -1,11 +1,14 @@
 #ifndef STRONGLY_CONNECTED_CONFIGURATION_LIST_HPP
 #define STRONGLY_CONNECTED_CONFIGURATION_LIST_HPP
 
+#include "LDRPrinter.h"
+#include "StronglyConnectedConfiguration.hpp"
+
 #include <set>
 #include <iostream>
 #include <fstream>
-#include "StronglyConnectedConfiguration.hpp"
 #include <assert.h> 
+#include <sstream>
 
 template <unsigned int ELEMENT_SIZE>
 class StronglyConnectedConfigurationList {
@@ -38,7 +41,6 @@ public:
   2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
   */
   void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
-    std::cout << "addAllFor init" << std::endl;
     std::set<RectilinearBrick> newBricks;
 
     // Add for all bricks in smaller:
@@ -49,8 +51,7 @@ public:
     RectilinearBrick b;
     b.constructAllStronglyConnected(tmp, tmpSize);
     assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
-    std::cout << "addAllFor(" << smaller << ")" << std::endl;
-    assert(smaller.verify());
+    //std::cout << "addAllFor(" << smaller << ")" << std::endl;
     for(int j = 0; j < tmpSize; ++j) {
       b = tmp[j];
       if(!smaller.intersects(b))
@@ -62,7 +63,6 @@ public:
       for(int i = 0; i < ELEMENT_SIZE-2; ++i) {
         tmpSize = 0;
         smaller.otherBricks[i].constructAllStronglyConnected(tmp, tmpSize);
-
         assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
 
         for(int j = 0; j < tmpSize; ++j) {
@@ -74,10 +74,14 @@ public:
     }
 
     // Try all new scc's:
-    std::cout << " Found " << newBricks.size() << " potential new scc's" << std::endl;
+    //std::cout << " Found " << newBricks.size() << " potential new scc's" << std::endl;
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
-      std::cout << " Trying candidate " << candidate << std::endl;
+      //std::cout << " Trying candidate " << candidate << ", can turn 90: " << candidate.canTurn90() << std::endl;
+#ifdef _DEBUG
+      StronglyConnectedConfiguration<ELEMENT_SIZE> copy(candidate);
+#endif
+
       if(s.find(candidate) != s.end()) {
         //std::cout << "Already known! " << candidate << std::endl;
         continue;
@@ -90,6 +94,11 @@ public:
             continue;
           }
         }
+#ifdef _DEBUG
+	StronglyConnectedConfiguration<ELEMENT_SIZE> copy2(candidate);
+        copy2.turn90();	
+	assert(copy2 == copy);
+#endif
       }
       else {
         candidate.turn180();
@@ -97,35 +106,38 @@ public:
           //std::cout << "Already known 180 as " << candidate << std::endl;
           continue;	
         }
+#ifdef _DEBUG
+	StronglyConnectedConfiguration<ELEMENT_SIZE> copy2(candidate);
+        copy2.turn180();	
+	assert(copy2 == copy);
+#endif
       }
-      std::cout << " Yay! Inserting " << candidate << std::endl;
-      assert(candidate.verify());
+      //std::cout << " Yay! Inserting " << candidate << std::endl;
       s.insert(candidate);
     }
 
-    std::cout << "Check set before destruction:" << std::endl;
-    RectilinearBrick prev(0, 0, -1, false);
-    for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
-      assert(prev < *it);
-      prev = *it;
-    }
-    newBricks.clear();
-    std::cout << "Done addForAll." << std::endl;
+    //std::cout << "Done addForAll." << std::endl;
   }
 
   void addAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller) {
-    std::cout << "ADDALLFOR init on smaller of size " << smaller.s.size() << " Content: " << std::endl;
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
-      std::cout << " " << *it << std::endl;
-    }
-    std::cout << "ADDALLFOR GOGOGO! " << std::endl;
-
-    for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
-      std::cout << "ADDALLFOR for smaller " << *it << std::endl;
       addAllFor(*it);
     }
-    std::cout << "ADDALLFOR end" << std::endl;
+  }
+
+  void printLDRFile() {
+    LDRPrinterHandler h;
+
+    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
+    for(int i = 0; it != s.end(); ++it, ++i) {
+      LDRPrinter const * p = &(*it);
+      h.add(p);
+    }
+
+    std::stringstream ss;
+    ss << "StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
+    h.print(ss.str());
   }
 };
 

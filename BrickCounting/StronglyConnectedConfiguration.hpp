@@ -1,16 +1,60 @@
 #ifndef STRONGLY_CONNECTED_CONFIGURATION_HPP
 #define STRONGLY_CONNECTED_CONFIGURATION_HPP
 
+#include "LDRPrinter.h"
+#include "RectilinearBrick.h"
+#include "Brick.h"
+
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include "RectilinearBrick.h"
 #include <assert.h> 
 
 template <unsigned int SIZE>
-class StronglyConnectedConfiguration {
+class StronglyConnectedConfiguration : public LDRPrinter {
 public:
   RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
+
+  bool verify() const {
+    const RectilinearBrick origin;
+    //bool originIntersected = false;
+    for(int i = 0; i < SIZE-1; ++i) {
+      if(otherBricks[i] < origin ||
+	 otherBricks[i].x < -15 || otherBricks[i].x > 15 || otherBricks[i].y < -15 || otherBricks[i].y > 15) {
+	std::cerr << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
+        return false;
+      }
+      //if(origin.intersects(otherBricks[i]))
+      //originIntersected = true;
+    }
+    //if(!originIntersected)
+    //std::cerr << "Verification failed for " << *this << ": Origin not intersected!" << std::endl;
+    return true;
+  }
+
+  void ensureOriginIsSmallest() {
+    int minI = -1;
+    RectilinearBrick min; // origin.
+    for(int i = 0; i < SIZE-1; ++i) {
+      if(otherBricks[i] < min) {
+        minI = i;
+        min = otherBricks[i];
+      }
+    }
+
+    if(minI != -1) {
+      // Move all according to the new origin:
+      for(int i = 0; i < SIZE-1; ++i) {
+        otherBricks[i].x -= min.x;
+        otherBricks[i].y -= min.y;
+      }
+
+      // Re-introduce old origin at the brick now representing the new origin:
+      otherBricks[minI].x -= min.x;
+      otherBricks[minI].y -= min.y;
+      std::sort(otherBricks, &otherBricks[SIZE-1]);
+    }
+  }
 
   StronglyConnectedConfiguration(){}
   StronglyConnectedConfiguration(const StronglyConnectedConfiguration& c) {
@@ -18,17 +62,6 @@ public:
       otherBricks[i] = c.otherBricks[i];
     }
   }
-
-  bool verify() const {
-    const RectilinearBrick origin;
-    for(int i = 1; i < SIZE-1; ++i) {
-      if(otherBricks[i] < origin) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /*
   Constructor for constructing a scc from a smaller scc c and a brick b.
   Assumptions about the input: b does not intersect c. b and c are strongly connected.
@@ -41,11 +74,11 @@ public:
 
     int ithis = 0;
     for(int i = 0; i < SIZE-2; ++i) {
-      if(b < c.otherBricks[i])
+      if(i == ithis && b < c.otherBricks[i])
         otherBricks[ithis++] = b;
       otherBricks[ithis++] = c.otherBricks[i];
     }
-    if(ithis != SIZE-1)
+    if(ithis == SIZE-2)
       otherBricks[SIZE-2] = b;
 
     ensureOriginIsSmallest();
@@ -61,15 +94,15 @@ public:
   void turn90() {
     // First turn 90:
     for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].horizontal) {
-        otherBricks[i].horizontal = false;
-        int oldX = otherBricks[i].x;
+      if(otherBricks[i].horizontal()) {
+        otherBricks[i].setHorizontalFalse();
+        int8_t oldX = otherBricks[i].x;
         otherBricks[i].x = otherBricks[i].y;
         otherBricks[i].y = -oldX-2;
       }
       else {
-        otherBricks[i].horizontal = true;
-        int oldY = otherBricks[i].y;
+        otherBricks[i].setHorizontalTrue();
+        int8_t oldY = otherBricks[i].y;
         otherBricks[i].y = -otherBricks[i].x;
         otherBricks[i].x = oldY;
       }
@@ -77,58 +110,33 @@ public:
 
     // Find the new origin:
     int minI = 0;
-    for(int i = 1; i < SIZE-1; ++i) {
+    for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] < otherBricks[minI])
         minI = i;
     }
 
     // Move all according to the new origin:
-    int moveX = otherBricks[minI].x;
-    int moveY = otherBricks[minI].y;
-    for(int i = 1; i < SIZE-1; ++i) {
+    int8_t moveX = otherBricks[minI].x;
+    int8_t moveY = otherBricks[minI].y;
+    for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i].x -= moveX;
       otherBricks[i].y -= moveY;
     }
 
     // Re-introduce the turned old origin:
-    otherBricks[minI].horizontal = true; 
+    otherBricks[minI].setHorizontalTrue(); 
     otherBricks[minI].x -= moveX;
     otherBricks[minI].y -= moveY;
 
     // Sort bricks:
-    std::sort(otherBricks, &otherBricks[SIZE]);
+    std::sort(otherBricks, &otherBricks[SIZE-1]);
     assert(verify());
-  }
-
-  void ensureOriginIsSmallest() {
-    int minI = -1;
-    RectilinearBrick min; // origin.
-    for(int i = 1; i < SIZE-1; ++i) {
-      if(otherBricks[i] < min) {
-        minI = i;
-        min = otherBricks[i];
-      }
-    }
-
-    if(minI != -1) {
-      // Move all according to the new origin:
-      int moveX = otherBricks[minI].x;
-      int moveY = otherBricks[minI].y;
-      for(int i = 1; i < SIZE-1; ++i) {
-        otherBricks[i].x -= moveX;
-        otherBricks[i].y -= moveY;
-      }
-
-      // Re-introduce old origin at the brick now representing the new origin:
-      otherBricks[minI].x -= moveX;
-      otherBricks[minI].y -= moveY;
-    }
   }
 
   void turn180() {
     // First turn all bricks 180:
     for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].horizontal) {
+      if(otherBricks[i].horizontal()) {
         otherBricks[i].x = -otherBricks[i].x-2;
         otherBricks[i].y = -otherBricks[i].y+2;
       }
@@ -142,9 +150,11 @@ public:
 
     // Find the new origin:
     ensureOriginIsSmallest();
+    //std::cout << "ensured " << *this << std::endl;      
 
     // Sort bricks:
-    std::sort(otherBricks, &otherBricks[SIZE]);
+    std::sort(otherBricks, &(otherBricks[SIZE-1]));
+    //std::cout << "end check " << *this << std::endl;      
     assert(verify());
   }
 
@@ -154,9 +164,9 @@ public:
     }
 
     for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].level > 0)
+      if(otherBricks[i].level() > 0)
         return false;
-      if(otherBricks[i].horizontal)
+      if(otherBricks[i].horizontal())
         return true;
     }
     return false;
@@ -191,6 +201,15 @@ public:
         return true;
     }
     return false;
+  }
+
+  void toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
+    RectilinearBrick().toLDR(os, x, y, ldrColor);
+    if(SIZE < 2)
+      return;
+    for(int i = 0; i < SIZE-1; ++i) {
+      otherBricks[i].toLDR(os, x, y, ldrColor);
+    }
   }
 };
 

@@ -18,24 +18,38 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << l1 << std::endl;
   writeToFile(0);
 
+  l1.printLDRFile();
+
   // 2:
   l2.addAllFor(baseConfiguration);
   std::cout << l2 << std::endl;
   writeToFile(1);
 
+  l2.printLDRFile();
+
   // 3:
   l3.addAllFor(l2);
   std::cout << l3 << std::endl;
   writeToFile(2);
-  //system("pause");
+
+  l3.printLDRFile();
 
   // 4:
   l4.addAllFor(l3);
-  std::cout << "Outputting l4:" << std::endl;
   std::cout << l4 << std::endl;
   writeToFile(3);
 
-  // TODO!
+  // 5:
+  l5.addAllFor(l4);
+  std::cout << l5 << std::endl;
+  writeToFile(4);
+  system("cmd /C pause");
+  //system("pause");
+
+  // 6:
+  l6.addAllFor(l5);
+  std::cout << l6 << std::endl;
+  //writeToFile(5);
 }
 
 void StronglyConnectedConfigurationManager::writeToFile(int i) {

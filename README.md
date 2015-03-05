@@ -4,10 +4,33 @@ Count all combinations of six 2x4 LEGO bricks
 See paper on-line at at http://c-mt.dk/counting
 
 RectilinearBrick: x,y,lv,isHorizontal
+
 ^
+
 StronglyConnectedConfiguration: parts, partsSizes
+
 ^
+
 RectilinearConfiguration: otherBricks
+
+
+Findings:
+
+ StronglyConnectedComponents:
+
+  Size 1: 1 (100% of all rectilinear configurations)
+
+  Size 2: 20 (83% of all rectilinear configurations)
+
+  Size 3: 1027 (66% of all rectilinear configurations)
+
+  Size 4: 62582 (52% of all rectilinear configurations)
+
+  Size 5: 4178600 (41% of all rectilinear configurations), 133772kB => 12GB for 6...
+
+  Size 6:  (% of all rectilinear configurations) 274kB on 5 => must use better algorithm!
+
+
  
 TODO:
 1: Construct all possible SCCs (StronglyConnectedConfigurationBuilder)

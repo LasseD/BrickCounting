@@ -25,7 +25,7 @@ void runSimpleSerializationTestRectilinearBrick() {
   d.deserialize(infile);
   infile.close();
 
-  std::cout << "c and d after serialization: " << c << d << std::endl;  
+  std::cout << "c and d  after serialization: " << c << d << std::endl;  
 }
 
 /*
