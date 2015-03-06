@@ -1,5 +1,6 @@
 #include "StronglyConnectedConfigurationManager.h"
 #include <sstream>
+#include <windows.h>
 
 StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
   lists = new void*[6];
@@ -12,6 +13,9 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
 }
 
 void StronglyConnectedConfigurationManager::create() {
+  // First. Ensure output folder exists:
+  CreateDirectory("scc", NULL);
+
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
@@ -22,34 +26,43 @@ void StronglyConnectedConfigurationManager::create() {
 
   // 2:
   l2.addAllFor(baseConfiguration);
+  l1.s.clear();
   std::cout << l2 << std::endl;
   writeToFile(1);
 
   l2.printLDRFile();
+  std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 2" << std::endl << std::endl;
 
   // 3:
   l3.addAllFor(l2);
+  l2.s.clear();
   std::cout << l3 << std::endl;
   writeToFile(2);
 
   l3.printLDRFile();
+  std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 3" << std::endl << std::endl;
 
   // 4:
   l4.addAllFor(l3);
+  l3.s.clear();
   std::cout << l4 << std::endl;
   writeToFile(3);
+  std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
+
+  //l4.countAllFor(l3);
+  //return;
 
   // 5:
   l5.addAllFor(l4);
+  l4.s.clear();
   std::cout << l5 << std::endl;
   writeToFile(4);
-  system("cmd /C pause");
+  std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 5" << std::endl << std::endl;
+  //system("cmd /C pause");
   //system("pause");
 
   // 6:
-  l6.addAllFor(l5);
-  std::cout << l6 << std::endl;
-  //writeToFile(5);
+  l6.countAllFor(l5);
 }
 
 void StronglyConnectedConfigurationManager::writeToFile(int i) {

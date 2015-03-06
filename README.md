@@ -26,14 +26,14 @@ Findings:
 
   Size 4: 62582 (52% of all rectilinear configurations)
 
-  Size 5: 4178600 (41% of all rectilinear configurations), 133772kB => 12GB for 6...
+  Size 5: 4178600 (41% of all rectilinear configurations)
 
-  Size 6:  (% of all rectilinear configurations) 274kB on 5 => must use better algorithm!
+  Size 6: 287500793 (31% of all rectilinear configurations)
 
 
  
 TODO:
-1: Construct all possible SCCs (StronglyConnectedConfigurationBuilder)
+1: Construct all possible SCCs (StronglyConnectedConfigurationBuilder) DONE SEE RESULTS ABOVE
 2: Construct all possible Rectilinear configurations (Super set)
 3: Construct all possible configurations using SCCs.
  3a: First for connections, no circles, simple check "isRelializable"
@@ -41,19 +41,5 @@ TODO:
  3c: Add circles (near angle search)
 
 Detailed TODO:
-1:
- 1a: Construct SCC blowup alorithm + detect duplicates.
-  brick: get possible strongly connected
-  RC: 
-   Run ^^ for all bricks, 
-   remove duplicates/impossible
-   return all
-  StronglyConnectedConfigurationBuilder::buildForSize(size):
-   if size==1 - return easy.
-   For all one smaller: expand while checking for duplicates
- 1b: Serialize SCC: Easy to read, space efficient, indexed.
-  Folder structure: /scc/<size>.bin 
-  File content for <size>:
-   Actual content: {<bricks sorted z,x,y>}
-   Content is sorted! => Easy read + lookup for duplicates.
-  TODO!
+2:
+ Combine all combinations of SCCs at corners to form all RCs.
