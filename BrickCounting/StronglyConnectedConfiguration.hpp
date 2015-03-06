@@ -180,6 +180,10 @@ public:
     return false;
   }
 
+  bool operator==(const StronglyConnectedConfiguration<SIZE> &c) const {
+    return !(*this < c) && !(c < *this);
+  }
+
   void serialize(std::ofstream &os) const {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i].serialize(os);
