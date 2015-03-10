@@ -57,3 +57,17 @@ Detailed TODO:
    Actual content: {<bricks sorted z,x,y>}
    Content is sorted! => Easy read + lookup for duplicates.
   TODO!
+
+
+
+Geometry:
+ P = 8mm
+ Width of brick: 15.8mm
+ Length of brick: 31.8mm
+ Stud: 4.8mm
+ Stud to side: 3.9mm
+ Maximum angle for a turn point is thus acrcos(6.3/8) = 0.664054277 radians (38.0475075 degrees). 
+
+ Using a byte for angle means precision of
+  0.664054277/127 = 0.00522877383
+ Consider the distance between two studs of models consisting of 3 bricks. It is less than sqrt((3*8)^2+(9*8)^) < 75.9mm Using two of such models with a shared turn point means that the distance of two studs can at most change 2*sin(0.00522877383)*75.9 = 0.79 mm between two models. 
