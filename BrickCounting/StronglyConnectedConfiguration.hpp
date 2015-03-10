@@ -180,10 +180,6 @@ public:
     return false;
   }
 
-  bool operator==(const StronglyConnectedConfiguration<SIZE> &c) const {
-    return !(*this < c) && !(c < *this);
-  }
-
   void serialize(std::ofstream &os) const {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i].serialize(os);
@@ -215,6 +211,33 @@ public:
       otherBricks[i].toLDR(os, x, y, ldrColor);
     }
   }
+
+  int height() const {
+    int res = 1;
+    for(int i = 0; i < SIZE-1; ++i) {
+      if(otherBricks[i].level() > res)
+	res = otherBricks[i].level();
+    }
+    return res+1;
+  }
+
+  unsigned int layerHash() const {
+    // Initialize layers:
+    unsigned int layerSizes[SIZE] = {};
+
+    // count:
+    for(int i = 0; i < SIZE-1; ++i)
+      ++layerSizes[otherBricks[i].level()];
+
+    // encode:
+    unsigned int res = 0;
+    for(int i = 0; i < SIZE; ++i) {
+      res <<= 3;
+      res += layerSizes[i];
+    }
+    return res;
+  }
+
 };
 
 template <unsigned int SIZE>

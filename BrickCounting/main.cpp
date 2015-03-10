@@ -5,8 +5,6 @@
 #include <fstream>
 #include <assert.h>
 
-#pragma comment(linker, "/SUBSYSTEM:CONSOLE /ENTRY:mainCRTStartup")
-
 void runSimpleSerializationTestRectilinearBrick() {
   std::cout << "Running simple serialization test for RectilinearBricks" << std::endl;
   RectilinearBrick a(1,2,3,true);
