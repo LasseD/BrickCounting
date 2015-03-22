@@ -9,9 +9,15 @@
 #include <fstream>
 #include <algorithm>
 #include <assert.h> 
+#include <set> 
+
+class ISCC {
+public:
+  virtual void getConnectionPoints(std::set<ConnectionPoint> &above, std::set<ConnectionPoint> &below) const = 0;
+};
 
 template <unsigned int SIZE>
-class StronglyConnectedConfiguration : public LDRPrinter {
+class StronglyConnectedConfiguration : public LDRPrinter, public ISCC {
 public:
   RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
@@ -191,6 +197,7 @@ public:
       otherBricks[i].deserialize(is);
   }
 
+  // O(SIZE) algorithm.
   bool intersects(const RectilinearBrick &b) const {
     // brick at 0,0,vertical:
     if(b.intersects(RectilinearBrick()))
@@ -232,12 +239,61 @@ public:
     // encode:
     unsigned int res = 0;
     for(int i = 0; i < SIZE; ++i) {
-      res <<= 3;
+      res *= 10;
       res += layerSizes[i];
     }
     return res;
   }
 
+  bool angleLocked(const ConnectionPoint &p) const {
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b=otherBricks[i++]) {
+      if(b.angleLocks(p))
+	return true;
+    }
+    return false;    
+  }
+  bool blocked(const ConnectionPoint &p) const {
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b=otherBricks[i++]) {
+      if(b.blocks(p))
+	return true;
+    }
+    return false;
+  }
+
+  void getConnectionPoints(std::set<ConnectionPoint> &above, std::set<ConnectionPoint> &below) const {
+    // Find bricks that might block every level:
+    std::set<RectilinearBrick> blockers[SIZE];
+    {
+      RectilinearBrick b; // using block so that b can be re-used below.
+      for(int i = 0; i < SIZE; b=otherBricks[i++]) {
+	blockers[b.level()].insert(b);
+      }
+    }
+
+    // Get all possible connection points and add them to sets (unless blocked).
+    ConnectionPoint tmp[SIZE];
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b=otherBricks[i++]) {
+      int four = 0;
+      b.getConnectionPointsAbove(tmp, four);
+      for(int j = 0; j < four; ++j) {
+	if(!blocked(tmp[j]))
+	  above.insert(tmp[j]);
+      }
+      four = 0;
+      b.getConnectionPointsBelow(tmp, four);
+      for(int j = 0; j < four; ++j) {
+	if(above.find(tmp[j]) == above.end() && !blocked(tmp[j]))
+	  below.insert(tmp[j]);
+      }
+    }    
+  }
+};
+
+template <>
+class StronglyConnectedConfiguration<0> {
 };
 
 template <unsigned int SIZE>

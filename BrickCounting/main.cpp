@@ -1,6 +1,7 @@
 #include "RectilinearBrick.h"
 #include "StronglyConnectedConfiguration.hpp"
 #include "StronglyConnectedConfigurationManager.h"
+#include "RectilinearConfigurationManager.h"
 #include <iostream>
 #include <fstream>
 #include <assert.h>
@@ -32,9 +33,14 @@ void runSimpleSerializationTestRectilinearBrick() {
 * MAIN ENTRY POINT!
 */
 int main(int cargs, char** args) {
+  /*
   std::cout << "Running strongly connected configurations." << std::endl;
-
   StronglyConnectedConfigurationManager mgr;
+  mgr.create();
+  //*/
+
+  std::cout << "Running rectilinear configurations." << std::endl;
+  RectilinearConfigurationManager mgr;
   mgr.create();
 
   //runSimpleSerializationTestRectilinearBrick();

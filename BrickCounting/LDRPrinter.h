@@ -7,6 +7,7 @@
 #define LDR_COLOR_RED 4
 #define LDR_COLOR_YELLOW 14
 #define LDR_COLOR_BLACK 0
+#define LDR_COLOR_BLUE 1
 
 class LDRPrinter {
 public:

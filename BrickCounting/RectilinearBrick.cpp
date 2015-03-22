@@ -143,30 +143,53 @@ std::ostream& operator<<(std::ostream& os, const RectilinearBrick& b)
   return os;
 }
 
-/*void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts) {
-getConnectionPointsNoLevel(pts, sizePts);
-for(unsigned int i = 0; i < 4; ++i) {
-pts[i].level = level+1;
-}
+void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts) {
+  getConnectionPoints(pts, sizePts, true);
 }
 void RectilinearBrick::getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts) {
-getConnectionPointsNoLevel(pts, sizePts);
-for(unsigned int i = 0; i < 4; ++i) {
-pts[i].level = level-1;
+  getConnectionPoints(pts, sizePts, false);
 }
+void RectilinearBrick::getConnectionPoints(ConnectionPoint *pts, int &sizePts, bool above) {
+  sizePts = 4;
+  pts[0] = ConnectionPoint(SW, *this, above);
+  pts[1] = ConnectionPoint(SE, *this, above);
+  pts[2] = ConnectionPoint(NW, *this, above);
+  pts[3] = ConnectionPoint(NE, *this, above);
 }
-void RectilinearBrick::getConnectionPointsNoLevel(ConnectionPoint *pts, int &sizePts) {
-sizePts = 4;
-setConnectionPointsDataNoLevel(pts[0], x, y, CONNECTION_DOWN_LEFT);
-if(horizontal) {
-setConnectionPointsDataNoLevel(pts[1], x+3, y, CONNECTION_DOWN_RIGHT);
-setConnectionPointsDataNoLevel(pts[2], x, y+1, CONNECTION_UP_LEFT);
-setConnectionPointsDataNoLevel(pts[3], x+3, y+1, CONNECTION_UP_RIGHT);
-}
-else {
-setConnectionPointsDataNoLevel(pts[1], x+1, y, CONNECTION_DOWN_RIGHT);
-setConnectionPointsDataNoLevel(pts[2], x, y+3, CONNECTION_UP_LEFT);
-setConnectionPointsDataNoLevel(pts[3], x+1, y+3, CONNECTION_UP_RIGHT);
-}
-}*/
 
+bool RectilinearBrick::atConnectingLevelOf(const ConnectionPoint &p) const {
+  return p.above ? level() == p.brick.level()+1 : level() == p.brick.level()-1;
+}
+bool RectilinearBrick::blocks(const ConnectionPoint &p) const {
+  if(!atConnectingLevelOf(p))
+    return false;
+  if(horizontal()) {
+    return (p.y() == y || p.y() == y+1) && (p.x() >= x && p.x() <= x+3);
+  }
+  else {
+    return (p.x() == x || p.x() == x+1) && (p.y() >= y && p.y() <= y+3);
+  }
+}
+bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
+  if(!atConnectingLevelOf(p))
+    return false;
+  if(horizontal()) {
+    return (p.x() == x-1 && inInterval(y,y+1,p.y())) ||
+      (p.x() == x+4 && inInterval(y,y+1,p.y())) ||
+      (p.y() == y-1 && inInterval(x,x+3,p.x())) ||
+      (p.y() == y+2 && inInterval(x,x+3,p.x()));
+  }
+  else {
+    return (p.y() == y-1 && inInterval(x,x+1,p.x())) ||
+      (p.y() == y+4 && inInterval(x,x+1,p.x())) ||
+      (p.x() == x-1 && inInterval(y,y+3,p.y())) ||
+      (p.x() == x+2 && inInterval(y,y+3,p.y()));
+  }  
+}
+
+bool RectilinearBrick::inInterval(int8_t min, int8_t max, int8_t a) const {
+  return  min <= a && a <= max;
+}
+bool RectilinearBrick::distLessThan2(int8_t a, int8_t b) const {
+  return a == b || a-1 == b || b-1 == a;
+}
