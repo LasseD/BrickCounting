@@ -12,7 +12,7 @@ void LDRPrinterHandler::add(const LDRPrinter *c) {
 void LDRPrinterHandler::print(const std::string &title) const {
   std::ofstream os;
   std::stringstream ss;
-  ss << "scc/" << title << ".ldr";
+  ss << title << ".ldr";
   os.open(ss.str().c_str(), std::ios::out);
 
   printHeader(os, title);

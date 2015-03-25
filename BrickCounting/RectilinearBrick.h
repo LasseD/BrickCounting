@@ -28,6 +28,7 @@ public:
   int level() const;
   void setHorizontalTrue();
   void setHorizontalFalse();
+  void flipHorizontal();
 
   bool intersects(const RectilinearBrick &b) const;
 
@@ -66,7 +67,7 @@ struct ConnectionPoint {
   ConnectionPoint() {}
   ConnectionPoint(const ConnectionPoint &p) : type(p.type), brick(p.brick), above(p.above), angleLocked(p.angleLocked) {}
 
-  uint8_t x() const {
+  uint8_t x4x4() const {
     if(brick.horizontal()) {
       if(type == NW || type == SW)
 	return brick.x;
@@ -74,15 +75,15 @@ struct ConnectionPoint {
     }
     else {
       if(type == NW || type == SW)
-	return brick.x;
-      return brick.x+1;
+	return brick.x+1;
+      return brick.x+2;
     }
   }
-  uint8_t y() const {
+  uint8_t y4x4() const {
     if(brick.horizontal()) {
       if(type == SW || type == SE) 
-	return brick.y;
-      return brick.y+1;
+	return brick.y+1;
+      return brick.y+2;
     }
     else {
       if(type == SW || type == SE)

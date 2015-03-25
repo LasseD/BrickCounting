@@ -7,17 +7,17 @@ Findings:
 
  StronglyConnectedComponents:
 
-  Size 1: 1 (100% of all rectilinear configurations)
+  Size 1: 1
 
-  Size 2: 20 (83% of all rectilinear configurations)
+  Size 2: 20
 
-  Size 3: 1027 (66% of all rectilinear configurations)
+  Size 3: 1036
 
-  Size 4: 62582 (52% of all rectilinear configurations)
+  Size 4: 61188
 
-  Size 5: 4178600 (41% of all rectilinear configurations)
+  Size 5: 3948316
 
-  Size 6: 287500793 (31% of all rectilinear configurations)
+  Size 6: ???
 
 
  

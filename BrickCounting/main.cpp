@@ -39,9 +39,11 @@ int main(int cargs, char** args) {
   mgr.create();
   //*/
 
+  
   std::cout << "Running rectilinear configurations." << std::endl;
   RectilinearConfigurationManager mgr;
   mgr.create();
+  //*/
 
   //runSimpleSerializationTestRectilinearBrick();
   return 0;

@@ -12,6 +12,7 @@
 // 4mm in units:
 #define HALF_STUD_DISTANCE 0.5
 #define STUD_DISTANCE 1.0
+#define STUD_AND_A_HALF_DISTANCE 1.5
 #define HORIZONTAL_BRICK_HALF_WIDTH 1.0
 #define HORIZONTAL_BRICK_CENTER_TO_SIDE 1.9875
 #define HORIZONTAL_BRICK_CENTER_TO_TOP 0.9875
@@ -30,8 +31,9 @@ public:
   int8_t level;
 
   Brick(const Brick& b) : center(b.center), angle(b.angle), level(b.level) {}
+  Brick() {}
   Brick(float cx, float cy, float a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
-  Brick(const RectilinearBrick& b, Point origin, float originAngle, int8_t originLv);
+  Brick(const RectilinearBrick& b, const Point &origin, float originAngle, int8_t originLv);
 
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const;
 
@@ -50,5 +52,7 @@ public:
 
   bool operator < (const Brick &b) const;
 };
+
+std::ostream& operator<<(std::ostream &os, const Brick& b);
 
 #endif // BRICK_H

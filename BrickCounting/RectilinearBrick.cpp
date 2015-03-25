@@ -25,13 +25,12 @@ int RectilinearBrick::level() const {
 }
 void RectilinearBrick::setHorizontalTrue() {
   levelShifted |= 1;
-  assert(level() >= 0);
-  assert(level() <= 5);
 }
 void RectilinearBrick::setHorizontalFalse() {
+  levelShifted ^= 1;
+}
+void RectilinearBrick::flipHorizontal() {
   levelShifted &= ~1;
-  assert(level() >= 0);
-  assert(level() <= 5);
 }
 
 bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
@@ -47,9 +46,9 @@ bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
     return inInterval(x-1, x+1, b.x) && inInterval(y-3, y+3, b.y);
   }
   if(h && !bh) {
-    return inInterval(x-1, x+3, b.x) && inInterval(y-3, y+1, b.y);
+    return inInterval(x-2, x+2, b.x) && inInterval(y-2, y+2, b.y);
   }
-  return inInterval(x-3, x+1, b.x) && inInterval(y-1, y+3, b.y);
+  return inInterval(x-2, x+2, b.x) && inInterval(y-2, y+2, b.y);
 }
 
 void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const {
@@ -69,15 +68,6 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     }
     bricks[bricksSize++] = RectilinearBrick(x-3, y, level, true);
     bricks[bricksSize++] = RectilinearBrick(x+3, y, level, true);
-    // all vertical:
-    for(int8_t xx = x-1; xx <= x+3; ++xx) {
-      bool xExtreme = xx == x-1 || xx == x+3;
-      for(int8_t yy = y-3; yy <= y+1; ++yy) {
-        bool yExtreme = yy == y-3 || yy == y+1;
-        if(!(xExtreme && yExtreme))
-          bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
-      }
-    }
   }
   else { // vertical
     // all vertical:
@@ -88,14 +78,14 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     }
     bricks[bricksSize++] = RectilinearBrick(x, y-3, level, false);
     bricks[bricksSize++] = RectilinearBrick(x, y+3, level, false);
-    // all horizontal:
-    for(int8_t xx = x-3; xx <= x+1; ++xx) {
-      bool xExtreme = xx == x-3 || xx == x+1;
-      for(int8_t yy = y-1; yy <= y+3; ++yy) {
-        bool yExtreme = yy == y-1 || yy == y+3;
-        if(!(xExtreme && yExtreme))
-          bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
-      }
+  }
+  // all crossing:
+  for(int8_t xx = x-2; xx <= x+2; ++xx) {
+    bool xExtreme = xx == x-2 || xx == x+2;
+    for(int8_t yy = y-2; yy <= y+2; ++yy) {
+      bool yExtreme = yy == y-2 || yy == y+2;
+      if(!(xExtreme && yExtreme))
+	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, !horizontal());
     }
   }
 }
@@ -114,22 +104,14 @@ void RectilinearBrick::deserialize(std::ifstream &is) {
 void RectilinearBrick::toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
   x += this->x;
   y += this->y;
-  if(horizontal()) {
-    x += 2;
-    y += 1;
-  }
-  else {
-    x += 1;
-    y += 2;
-  }
 
   x *= 20;
   y *= 20;
   int z = -24*level();
 
-  os << "1 " << ldrColor << " " << y << " " << z << " " << x << " ";
+  os << "1 " << ldrColor << " " << x << " " << z << " " << y << " ";
 
-  if(horizontal()) {
+  if(!horizontal()) {
     os << "0 0 1 0 1 0 -1 0 0 3001.dat" << std::endl;
   }
   else {
@@ -164,26 +146,26 @@ bool RectilinearBrick::blocks(const ConnectionPoint &p) const {
   if(!atConnectingLevelOf(p))
     return false;
   if(horizontal()) {
-    return (p.y() == y || p.y() == y+1) && (p.x() >= x && p.x() <= x+3);
+    return (p.y4x4() == y+1 || p.y4x4() == y+2) && (p.x4x4() >= x && p.x4x4() <= x+3);
   }
   else {
-    return (p.x() == x || p.x() == x+1) && (p.y() >= y && p.y() <= y+3);
+    return (p.x4x4() == x+1 || p.x4x4() == x+2) && (p.y4x4() >= y && p.y4x4() <= y+3);
   }
 }
 bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   if(!atConnectingLevelOf(p))
     return false;
   if(horizontal()) {
-    return (p.x() == x-1 && inInterval(y,y+1,p.y())) ||
-      (p.x() == x+4 && inInterval(y,y+1,p.y())) ||
-      (p.y() == y-1 && inInterval(x,x+3,p.x())) ||
-      (p.y() == y+2 && inInterval(x,x+3,p.x()));
+    return (p.x4x4() == x-1 && inInterval(y+1,y+2,p.y4x4())) ||
+      (p.x4x4() == x+4 && inInterval(y+1,y+2,p.y4x4())) ||
+      (p.y4x4() == y && inInterval(x,x+3,p.x4x4())) ||
+      (p.y4x4() == y+3 && inInterval(x,x+3,p.x4x4()));
   }
   else {
-    return (p.y() == y-1 && inInterval(x,x+1,p.x())) ||
-      (p.y() == y+4 && inInterval(x,x+1,p.x())) ||
-      (p.x() == x-1 && inInterval(y,y+3,p.y())) ||
-      (p.x() == x+2 && inInterval(y,y+3,p.y()));
+    return (p.y4x4() == y-1 && inInterval(x+1,x+2,p.x4x4())) ||
+      (p.y4x4() == y+4 && inInterval(x+1,x+2,p.x4x4())) ||
+      (p.x4x4() == x && inInterval(y,y+3,p.y4x4())) ||
+      (p.x4x4() == x+3 && inInterval(y,y+3,p.y4x4()));
   }  
 }
 

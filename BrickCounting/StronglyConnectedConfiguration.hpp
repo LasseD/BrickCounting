@@ -100,18 +100,10 @@ public:
   void turn90() {
     // First turn 90:
     for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].horizontal()) {
-        otherBricks[i].setHorizontalFalse();
-        int8_t oldX = otherBricks[i].x;
-        otherBricks[i].x = otherBricks[i].y;
-        otherBricks[i].y = -oldX-2;
-      }
-      else {
-        otherBricks[i].setHorizontalTrue();
-        int8_t oldY = otherBricks[i].y;
-        otherBricks[i].y = -otherBricks[i].x;
-        otherBricks[i].x = oldY;
-      }
+      int8_t oldX = otherBricks[i].x;
+      otherBricks[i].x = otherBricks[i].y;
+      otherBricks[i].y = -oldX;
+      otherBricks[i].flipHorizontal();
     }
 
     // Find the new origin:
@@ -142,14 +134,8 @@ public:
   void turn180() {
     // First turn all bricks 180:
     for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].horizontal()) {
-        otherBricks[i].x = -otherBricks[i].x-2;
-        otherBricks[i].y = -otherBricks[i].y+2;
-      }
-      else {
-        otherBricks[i].x = -otherBricks[i].x;
-        otherBricks[i].y = -otherBricks[i].y;
-      }
+      otherBricks[i].x = -otherBricks[i].x;
+      otherBricks[i].y = -otherBricks[i].y;
     }
     if(SIZE == 2)
       return;

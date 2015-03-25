@@ -1,27 +1,29 @@
 #include "Brick.h"
+
 #define _USE_MATH_DEFINES
 //#include <math.h>
 #include <tgmath.h>
+#include <iostream>
 
 /*
  Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
  */
-Brick::Brick(const RectilinearBrick& b, Point origin, float originAngle, int8_t originLv) : center(b.x, b.y), angle(originAngle), level(b.level()+originLv) {  
-  if(!b.horizontal()) {
-    angle -= M_PI/2;
-    center.X--;
-    center.Y++;
+Brick::Brick(const RectilinearBrick& b, const Point &origin, float originAngle, int8_t originLv) : center(b.x, b.y), angle(originAngle), level(b.level()+originLv) {  
+  //std::cout << "Constructed brick for " << b << ", origin: " << origin.X << "," << origin.Y << "," << ((int)originLv) << " angle " << originAngle << std::endl;
+  if(!b.horizontal()) { // Vertical:
+    angle += M_PI/2;
   }
 
   // center is now on b. Move by turn angle, then translate to origin:
   // Rotate:
-  float sina = sin(angle);
-  float cosa = cos(angle);
+  float sina = sin(originAngle);
+  float cosa = cos(originAngle);
   center.X = center.X*cosa - center.Y*sina;
   center.Y = center.X*sina + center.Y*cosa;
   // Translate:
   center.X += origin.X;
-  center.Y -= origin.Y;
+  center.Y += origin.Y;
+  //std::cout << "BRICK at " << center.X << "," << center.Y << "," << ((int)level) << " angle " << angle << std::endl;
 }
 
 void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
@@ -29,12 +31,49 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   float y = (this->center.Y)*20;
   int z = -24*level;
 
-  os << "1 " << ldrColor << " " << y << " " << z << " " << x << " ";
+  float sina = sin(-angle);
+  float cosa = cos(-angle);
 
-  float sina = sin(angle);
-  float cosa = cos(angle);
-
+  // Brick:
+  os << "1 " << ldrColor << " " << x << " " << z << " " << y << " ";
   os << cosa << " 0 " << sina << " 0 1 0 " << -sina << " 0 " << cosa << " 3001.dat" << std::endl;
+
+  /*
+  // Guide axle:
+  Point p = getStudPosition(NW);
+  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+8-8) << " " << (p.Y*20) << " ";
+  os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
+  // Guide hose:
+  p = getStudPosition(NE);
+  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+40-8) << " " << (p.Y*20) << " ";
+  os << "-1 0 0 0 -1 0 0 0 1 76263.dat" << std::endl;
+  // Guide pin:
+  p = getStudPosition(SE);
+  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+8-8) << " " << (p.Y*20) << " ";
+  os << "0 1 0 -1 0 0 0 0 1 32556.dat" << std::endl;
+  // Low guide axle:
+  p = getStudPosition(SW);
+  os << "1 " << 0 << " " << (p.X*20) << " " << (z+8) << " " << (p.Y*20) << " ";
+  os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;//*/
+
+  /*
+  // 8 studs:
+  Point studs[8];
+  getStudPositions(studs);
+  for(int i = 0; i < 8; ++i) {
+    Point p = studs[i];
+    os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
+    os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
+  }//*/
+  /*
+  // 7 POIs:
+  Point studs[6];
+  getBoxPOIs(studs);
+  for(int i = 0; i < 6; ++i) {
+    Point p = studs[i];
+    os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
+    os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
+  }//*/
 }
 
 void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
@@ -53,50 +92,49 @@ void Brick::getBoxPOIs(Point *pois) const {
   float sina = sin(angle);
   float cosa = cos(angle);
   // 4 corners:
-  float dx = HORIZONTAL_BRICK_CENTER_TO_SIDE*cosa - HORIZONTAL_BRICK_CENTER_TO_TOP*sina;
-  float dy = HORIZONTAL_BRICK_CENTER_TO_SIDE*sina + HORIZONTAL_BRICK_CENTER_TO_TOP*cosa;
-  pois[0] = Point(center.X+dx, center.Y+dy);
-  pois[1] = Point(center.X-dx, center.Y+dy);
-  pois[2] = Point(center.X+dx, center.Y-dy);
-  pois[3] = Point(center.X-dx, center.Y-dy);
+  float dx = HORIZONTAL_BRICK_CENTER_TO_SIDE;
+  float dy = HORIZONTAL_BRICK_CENTER_TO_TOP;
+  pois[0] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+  pois[1] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+  pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+  pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
   // 2 inner:
   pois[4] = Point(center.X+0.75*cosa, center.Y+0.75*sina);
-  pois[5] = Point(center.X+0.75*cosa, center.Y-0.75*sina);
+  pois[5] = Point(center.X-0.75*cosa, center.Y-0.75*sina);
 }
 
 Point Brick::getStudPosition(ConnectionPointType type) const {
   float sina = sin(angle);
   float cosa = cos(angle);
-  float dx2 = STUD_DISTANCE*cosa - HALF_STUD_DISTANCE*sina;
-  float dy2 = STUD_DISTANCE*sina + HALF_STUD_DISTANCE*cosa;
+  float dx, dy;
   switch(type) {
-  case NW: return Point(center.X+dx2, center.Y+dy2);
-  case NE: return Point(center.X+dx2, center.Y-dy2);
-  case SE: return Point(center.X-dx2, center.Y-dy2);
-  case SW: return Point(center.X-dx2, center.Y+dy2);
-  default:
-    std::cerr << "ERROR: UNKNOWN CONNECTION POIN TYPE: " << type << std::endl;
-    return Point();
+  case NW: dx = -STUD_AND_A_HALF_DISTANCE; dy = HALF_STUD_DISTANCE; break;
+  case NE: dx = STUD_AND_A_HALF_DISTANCE; dy = HALF_STUD_DISTANCE; break;
+  case SE: dx = STUD_AND_A_HALF_DISTANCE; dy = -HALF_STUD_DISTANCE; break;
+  case SW: dx = -STUD_AND_A_HALF_DISTANCE; dy = -HALF_STUD_DISTANCE; break;
+  default: dx = 0; dy = 0; std::cerr << "ARRR!" << std::endl; break;
   }
+  float dx2 = dx*cosa - dy*sina;
+  float dy2 = dx*sina + dy*cosa;
+  return Point(center.X+dx2, center.Y+dy2);
 }
 
 void Brick::getStudPositions(Point *studs) const {
   float sina = sin(angle);
   float cosa = cos(angle);
   // 4 inner:
-  float dx1 = HALF_STUD_DISTANCE*cosa - HALF_STUD_DISTANCE*sina;
-  float dy1 = HALF_STUD_DISTANCE*sina + HALF_STUD_DISTANCE*cosa;
-  studs[0] = Point(center.X+dx1, center.Y+dy1);
-  studs[1] = Point(center.X-dx1, center.Y+dy1);
-  studs[2] = Point(center.X+dx1, center.Y-dy1);
-  studs[3] = Point(center.X-dx1, center.Y-dy1);
+  float dx = HALF_STUD_DISTANCE;
+  float dy = HALF_STUD_DISTANCE;
+  studs[0] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+  studs[1] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+  studs[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+  studs[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
   // 4 outer:
-  float dx2 = STUD_DISTANCE*cosa - HALF_STUD_DISTANCE*sina;
-  float dy2 = STUD_DISTANCE*sina + HALF_STUD_DISTANCE*cosa;
-  studs[4] = Point(center.X+dx2, center.Y+dy2);
-  studs[5] = Point(center.X+dx2, center.Y-dy2);
-  studs[6] = Point(center.X-dx2, center.Y-dy2);
-  studs[7] = Point(center.X-dx2, center.Y+dy2);
+  dx = STUD_AND_A_HALF_DISTANCE;
+  studs[4] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+  studs[5] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+  studs[6] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+  studs[7] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
 }
 
 bool Brick::boxIntersectsPOIsFrom(Brick &b) const {
@@ -218,4 +256,9 @@ bool Brick::operator < (const Brick &b) const {
   if(angle != b.angle)
     return angle < b.angle;  
   return level < b.level;
+}
+
+std::ostream& operator<<(std::ostream &os, const Brick& b) {
+  os << "BRICK[" << b.center.X << "," << b.center.Y << "," << ((int)b.level) << ", angle " << b.angle << "]";
+  return os;
 }

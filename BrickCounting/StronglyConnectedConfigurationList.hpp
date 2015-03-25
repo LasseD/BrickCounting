@@ -229,7 +229,7 @@ public:
     }
 
     std::stringstream ss;
-    ss << "StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
+    ss << "scc\\StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
     h.print(ss.str());
   }
 };
