@@ -62,7 +62,7 @@ void StronglyConnectedConfigurationManager::create() {
   //system("pause");
 
   // 6:
-  //l6.countAllFor(l5);
+  l6.countAllFor(l5);
 }
 
 void StronglyConnectedConfigurationManager::writeToFile(int i) {

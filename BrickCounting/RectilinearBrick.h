@@ -7,6 +7,10 @@
 #include <fstream>
 #include <stdint.h>
 
+#define HALF_STUD_DISTANCE 0.5
+#define STUD_DISTANCE 1.0
+#define STUD_AND_A_HALF_DISTANCE 1.5
+
 #define STRONGLY_CONNECTED_BRICK_POSITIONS 76
 
 // Forward declaration:
@@ -67,29 +71,28 @@ struct ConnectionPoint {
   ConnectionPoint() {}
   ConnectionPoint(const ConnectionPoint &p) : type(p.type), brick(p.brick), above(p.above), angleLocked(p.angleLocked) {}
 
+  // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
   uint8_t x4x4() const {
-    if(brick.horizontal()) {
-      if(type == NW || type == SW)
-	return brick.x;
-      return brick.x+3;
-    }
-    else {
-      if(type == NW || type == SW)
-	return brick.x+1;
-      return brick.x+2;
-    }
+    if(type == NW || type == SW)
+      return brick.x+1;
+    return brick.x+2;
   }
   uint8_t y4x4() const {
-    if(brick.horizontal()) {
-      if(type == SW || type == SE) 
-	return brick.y+1;
-      return brick.y+2;
-    }
-    else {
-      if(type == SW || type == SE)
-	return brick.y;
-      return brick.y+3;
-    }
+    if(type == SW || type == SE) 
+      return brick.y;
+    return brick.y+3;
+  }
+
+  // For specialized use: Position of connection point 
+  float x() const {
+    if(type == NW || type == SW)
+      return brick.x-HALF_STUD_DISTANCE;
+    return brick.x+HALF_STUD_DISTANCE;
+  }
+  float y() const {
+    if(type == SW || type == SE) 
+      return brick.y-STUD_AND_A_HALF_DISTANCE;
+    return brick.y+STUD_AND_A_HALF_DISTANCE;
   }
 
   bool operator < (const ConnectionPoint &p) const {

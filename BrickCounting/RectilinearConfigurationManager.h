@@ -10,8 +10,9 @@ public:
   RectilinearConfigurationManager();
 
   void create();
+  void test() const;
 
-  void printLDRFile(const std::vector<RectilinearConfiguration> &s);
+  void printLDRFile(const std::vector<RectilinearConfiguration> &s) const;
 };
 
 #endif // RECTILINEAR_CONFIGURATION_MANAGER_H
