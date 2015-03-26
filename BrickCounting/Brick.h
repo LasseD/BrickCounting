@@ -6,8 +6,8 @@
 #include "LDRPrinter.h"
 
 #define _USE_MATH_DEFINES
-//#include <math.h>
-#include <tgmath.h>
+#include <math.h>
+//#include <tgmath.h>
 #include <stdint.h>
 #include <iostream>
 
@@ -21,7 +21,7 @@
 // 0.0625 is 0.5 mm.
 #define SNAP_DISTANCE 0.0625
 
-typedef std::pair<float,float> Point;
+typedef std::pair<double,double> Point;
 #define X first
 #define Y second
 
@@ -32,15 +32,15 @@ Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
 class Brick : public LDRPrinter {
 public:
   Point center;
-  float angle; // angle 0 = horizontal.
+  double angle; // angle 0 = horizontal.
   int8_t level;
 
   Brick(const Brick& b) : center(b.center), angle(b.angle), level(b.level) {}
   Brick(const RectilinearBrick& b) : center(b.x, b.y), angle(b.horizontal() ? -M_PI/2 : 0), level(b.level()) {}
   Brick(const Brick& b, const RectilinearBrick& rb);
   Brick() {}
-  Brick(float cx, float cy, float a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
-  Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, float originAngle, int8_t originLv);
+  Brick(double cx, double cy, double a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
+  Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv);
 
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const;
 

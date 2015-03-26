@@ -27,7 +27,8 @@ public:
   void open() {
     std::stringstream ss;
     ss << "scc\\" << ELEMENT_SIZE;
-    CreateDirectory(ss.str().c_str(), NULL);
+    std::string s = ss.str();
+    CreateDirectory(std::wstring(s.begin(),s.end()).c_str(), NULL);
     ss << "\\hash" << hash << ".dat";
 
     fileName = ss.str();    
@@ -69,7 +70,7 @@ public:
       else {
         candidate.turn180();
         if(s.find(candidate) != s.end()) {
-          continue;	
+          continue;
         }
       }
       s.insert(candidate);
@@ -190,13 +191,13 @@ public:
     // Try all new scc's:
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
-      unsigned int hash = candidate.layerHash();
+      unsigned long hash = candidate.layerHash();
 
       // ensure existence:
       if(hashLists.find(hash) == hashLists.end()) {
-	StronglyConnectedConfigurationHashList<ELEMENT_SIZE> newList(hash);
-	newList.open();
-	hashLists.insert(std::make_pair<unsigned int,StronglyConnectedConfigurationHashList<ELEMENT_SIZE> >(hash, newList));
+        StronglyConnectedConfigurationHashList<ELEMENT_SIZE> newList(hash);
+        newList.open();
+        hashLists.insert(std::make_pair(hash, newList));
       }
 
       hashLists.find(hash)->second.output(candidate);
@@ -237,15 +238,6 @@ public:
 template <unsigned int ELEMENT_SIZE>
 std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfigurationList<ELEMENT_SIZE>& l) {
   os << "Combinations of size " << ELEMENT_SIZE << ": " << l.s.size() << std::endl;
-  /*
-  typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = l.s.begin();
-  for(int i = 0; it != l.s.end(); ++it, ++i) {
-    os << " " << *it << std::endl;
-    if(i > 10) {
-      os << "..." << std::endl;
-      break;
-    }      
-  }//*/
   return os;
 };
 

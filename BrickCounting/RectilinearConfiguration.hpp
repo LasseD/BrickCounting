@@ -56,7 +56,7 @@ public:
     std::cout << "ADD: Prev: " << prevBrick << " w. stud " << prevStud.X << "," << prevStud.Y << std::endl;
 
     // Compute position of bricks:
-    float angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
+    double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
     int level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
     RectilinearBrick b;

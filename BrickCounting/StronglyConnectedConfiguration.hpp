@@ -184,24 +184,19 @@ public:
   }
 
   // O(SIZE) algorithm.
-  bool intersects(const RectilinearBrick &b) const {
-    // brick at 0,0,vertical:
-    if(b.intersects(RectilinearBrick()))
-      return true;
-    // All other bricks:
-    for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].intersects(b))
+  bool intersects(const RectilinearBrick &brick) const {
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b = otherBricks[i++]) {
+      if(b.intersects(brick))
         return true;
     }
     return false;
   }
 
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
-    RectilinearBrick().toLDR(os, x, y, ldrColor);
-    if(SIZE < 2)
-      return;
-    for(int i = 0; i < SIZE-1; ++i) {
-      otherBricks[i].toLDR(os, x, y, ldrColor);
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b = otherBricks[i++]) {
+      b.toLDR(os, x, y, ldrColor);
     }
   }
 
@@ -209,21 +204,23 @@ public:
     int res = 1;
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].level() > res)
-	res = otherBricks[i].level();
+        res = otherBricks[i].level();
     }
     return res+1;
   }
 
-  unsigned int layerHash() const {
+  unsigned long layerHash() const {
     // Initialize layers:
     unsigned int layerSizes[SIZE] = {};
 
     // count:
-    for(int i = 0; i < SIZE-1; ++i)
-      ++layerSizes[otherBricks[i].level()];
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b = otherBricks[i++]) {
+      ++layerSizes[b.level()];
+    }
 
     // encode:
-    unsigned int res = 0;
+    unsigned long res = 9;
     for(int i = 0; i < SIZE; ++i) {
       res *= 10;
       res += layerSizes[i];
@@ -235,7 +232,7 @@ public:
     RectilinearBrick b;
     for(int i = 0; i < SIZE; b=otherBricks[i++]) {
       if(b.angleLocks(p))
-	return true;
+        return true;
     }
     return false;    
   }
@@ -243,7 +240,7 @@ public:
     RectilinearBrick b;
     for(int i = 0; i < SIZE; b=otherBricks[i++]) {
       if(b.blocks(p))
-	return true;
+        return true;
     }
     return false;
   }
@@ -254,7 +251,7 @@ public:
     {
       RectilinearBrick b; // using block so that b can be re-used below.
       for(int i = 0; i < SIZE; b=otherBricks[i++]) {
-	blockers[b.level()].insert(b);
+        blockers[b.level()].insert(b);
       }
     }
 
@@ -265,21 +262,17 @@ public:
       int four = 0;
       b.getConnectionPointsAbove(tmp, four);
       for(int j = 0; j < four; ++j) {
-	if(!blocked(tmp[j]))
-	  above.insert(tmp[j]);
+        if(!blocked(tmp[j]))
+          above.insert(tmp[j]);
       }
       four = 0;
       b.getConnectionPointsBelow(tmp, four);
       for(int j = 0; j < four; ++j) {
-	if(above.find(tmp[j]) == above.end() && !blocked(tmp[j]))
-	  below.insert(tmp[j]);
+        if(above.find(tmp[j]) == above.end() && !blocked(tmp[j]))
+          below.insert(tmp[j]);
       }
     }    
   }
-};
-
-template <>
-class StronglyConnectedConfiguration<0> {
 };
 
 template <unsigned int SIZE>

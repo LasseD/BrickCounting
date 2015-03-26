@@ -14,7 +14,7 @@
 #define STRONGLY_CONNECTED_BRICK_POSITIONS 76
 
 // Forward declaration:
-class ConnectionPoint;
+struct ConnectionPoint;
 
 class RectilinearBrick : public LDRPrinter {
 public:
@@ -84,12 +84,12 @@ struct ConnectionPoint {
   }
 
   // For specialized use: Position of connection point 
-  float x() const {
+  double x() const {
     if(type == NW || type == SW)
       return brick.x-HALF_STUD_DISTANCE;
     return brick.x+HALF_STUD_DISTANCE;
   }
-  float y() const {
+  double y() const {
     if(type == SW || type == SE) 
       return brick.y-STUD_AND_A_HALF_DISTANCE;
     return brick.y+STUD_AND_A_HALF_DISTANCE;
