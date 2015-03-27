@@ -14,7 +14,7 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
 
 void StronglyConnectedConfigurationManager::create() {
   // First. Ensure output folder exists:
-  CreateDirectory(L"scc", NULL);
+  CreateDirectory("scc", NULL);
 
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
@@ -26,7 +26,7 @@ void StronglyConnectedConfigurationManager::create() {
 
   // 2:
   l2.addAllFor(baseConfiguration);
-  l1.s.clear();
+  //l1.s.clear();
   std::cout << l2 << std::endl;
   writeToFile(1);
 
@@ -48,6 +48,9 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << l4 << std::endl;
   writeToFile(3);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
+
+  //l4.countAllFor(l3);
+  //return;
 
   // 5:
   l5.addAllFor(l4);

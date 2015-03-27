@@ -1,7 +1,7 @@
 #include "RectilinearBrick.h"
 #include "StronglyConnectedConfiguration.hpp"
 #include "StronglyConnectedConfigurationManager.h"
-#include "RectilinearConfigurationManager.h"
+#include "ConfigurationManager.h"
 #include <iostream>
 #include <fstream>
 #include <assert.h>

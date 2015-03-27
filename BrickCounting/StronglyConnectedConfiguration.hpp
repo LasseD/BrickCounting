@@ -23,22 +23,24 @@ public:
 
   bool verify() const {
     const RectilinearBrick origin;
-    //bool originIntersected = false;
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] < origin ||
 	 otherBricks[i].x < -15 || otherBricks[i].x > 15 || otherBricks[i].y < -15 || otherBricks[i].y > 15) {
 	std::cerr << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
         return false;
       }
-      //if(origin.intersects(otherBricks[i]))
-      //originIntersected = true;
+      if(origin.intersects(otherBricks[i])) {
+	std::cerr << "Verification failed for " << *this << ": Origin intersected!" << std::endl;
+	return false;
+      }
     }
-    //if(!originIntersected)
-    //std::cerr << "Verification failed for " << *this << ": Origin not intersected!" << std::endl;
     return true;
   }
-
-  void ensureOriginIsSmallest() {
+  
+  /*
+    Return true if changed.
+   */
+  bool ensureOriginIsSmallest() {
     int minI = -1;
     RectilinearBrick min; // origin.
     for(int i = 0; i < SIZE-1; ++i) {
@@ -48,18 +50,20 @@ public:
       }
     }
 
-    if(minI != -1) {
-      // Move all according to the new origin:
-      for(int i = 0; i < SIZE-1; ++i) {
-        otherBricks[i].x -= min.x;
-        otherBricks[i].y -= min.y;
-      }
+    if(minI == -1) 
+      return false;
 
-      // Re-introduce old origin at the brick now representing the new origin:
-      otherBricks[minI].x -= min.x;
-      otherBricks[minI].y -= min.y;
-      std::sort(otherBricks, &otherBricks[SIZE-1]);
+    // Move all according to the new origin:
+    for(int i = 0; i < SIZE-1; ++i) {
+      otherBricks[i].x -= min.x;
+      otherBricks[i].y -= min.y;
     }
+    
+    // Re-introduce old origin at the brick now representing the new origin:
+    otherBricks[minI].x -= min.x;
+    otherBricks[minI].y -= min.y;
+    std::sort(otherBricks, &otherBricks[SIZE-1]);
+    return true;
   }
 
   StronglyConnectedConfiguration(){}
@@ -96,6 +100,7 @@ public:
   Might cause reordering. 
   Causes new brick to be "origin".
   It is assumed that it is possible to turn 90 degrees.
+  1,2 -> 2,-1 -> -1,-2
   */
   void turn90() {
     // First turn 90:
@@ -108,7 +113,7 @@ public:
 
     // Find the new origin:
     int minI = 0;
-    for(int i = 0; i < SIZE-1; ++i) {
+    for(int i = 1; i < SIZE-1; ++i) {
       if(otherBricks[i] < otherBricks[minI])
         minI = i;
     }
@@ -140,13 +145,10 @@ public:
     if(SIZE == 2)
       return;
 
-    // Find the new origin:
-    ensureOriginIsSmallest();
-    //std::cout << "ensured " << *this << std::endl;      
+    // Find the new origin if necessary. If no change: sort.:
+    if(!ensureOriginIsSmallest())
+      std::sort(otherBricks, &(otherBricks[SIZE-1]));
 
-    // Sort bricks:
-    std::sort(otherBricks, &(otherBricks[SIZE-1]));
-    //std::cout << "end check " << *this << std::endl;      
     assert(verify());
   }
 
@@ -211,19 +213,28 @@ public:
 
   unsigned long layerHash() const {
     // Initialize layers:
-    unsigned int layerSizes[SIZE] = {};
+    unsigned int hLayerSizes[SIZE] = {};
+    unsigned int vLayerSizes[SIZE] = {};
 
     // count:
     RectilinearBrick b;
     for(int i = 0; i < SIZE; b = otherBricks[i++]) {
-      ++layerSizes[b.level()];
+      if(b.horizontal())
+	++hLayerSizes[b.level()];
+      else
+	++vLayerSizes[b.level()];
     }
 
     // encode:
-    unsigned long res = 9;
+    unsigned long res = 0;
     for(int i = 0; i < SIZE; ++i) {
       res *= 10;
-      res += layerSizes[i];
+      if(vLayerSizes[i] == hLayerSizes[i]) {
+	res += hLayerSizes[i]+vLayerSizes[i]+5;	
+      }
+      else {
+	res += hLayerSizes[i]+vLayerSizes[i];
+      }
     }
     return res;
   }

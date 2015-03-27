@@ -27,10 +27,10 @@ void RectilinearBrick::setHorizontalTrue() {
   levelShifted |= 1;
 }
 void RectilinearBrick::setHorizontalFalse() {
-  levelShifted ^= 1;
+  levelShifted &= ~1;
 }
 void RectilinearBrick::flipHorizontal() {
-  levelShifted &= ~1;
+  levelShifted ^= 1;
 }
 
 bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
@@ -40,15 +40,12 @@ bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
   bool h = horizontal();
   bool bh = b.horizontal();
   if(h && bh) {
-    return inInterval(x-3, x+3, b.x) && inInterval(y-1, y+1, b.y);
+    return (x-3 <= b.x && b.x <= x+3) && (y-1 <= b.y && b.y <= y+1);
   }
   if(!h && !bh) {
-    return inInterval(x-1, x+1, b.x) && inInterval(y-3, y+3, b.y);
+    return x-1 <= b.x && b.x <= x+1 && y-3 <= b.y && b.y <= y+3;
   }
-  if(h && !bh) {
-    return inInterval(x-2, x+2, b.x) && inInterval(y-2, y+2, b.y);
-  }
-  return inInterval(x-2, x+2, b.x) && inInterval(y-2, y+2, b.y);
+  return x-2 <= b.x && b.x <= x+2 && y-2 <= b.y && b.y <= y+2;
 }
 
 void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const {

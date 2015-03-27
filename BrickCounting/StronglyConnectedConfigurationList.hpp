@@ -17,18 +17,18 @@ class StronglyConnectedConfigurationHashList {
 public:
   std::ofstream *os;
   std::string fileName;
-  unsigned long written;
-  int hash;
+  unsigned long written, hash;
   
   StronglyConnectedConfigurationHashList() {} // to satisfy array constructor.
 
-  StronglyConnectedConfigurationHashList(const int hash) : written(0), hash(hash) {}
+  StronglyConnectedConfigurationHashList(const unsigned long hash) : written(0), hash(hash) {}
 
   void open() {
     std::stringstream ss;
     ss << "scc\\" << ELEMENT_SIZE;
     std::string s = ss.str();
-    CreateDirectory(std::wstring(s.begin(),s.end()).c_str(), NULL);
+    CreateDirectory(s.c_str(), NULL);
+    //CreateDirectory(std::wstring(s.begin(),s.end()).c_str(), NULL);
     ss << "\\hash" << hash << ".dat";
 
     fileName = ss.str();    
@@ -39,6 +39,21 @@ public:
   void output(const StronglyConnectedConfiguration<ELEMENT_SIZE> &c) {
     c.serialize(*os);
     ++written;
+  }
+
+  void printLDRFile(const unsigned long hash, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) {
+    LDRPrinterHandler h;
+
+    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
+    for(int i = 0; it != s.end(); ++it, ++i) {
+      LDRPrinter const * p = &(*it);
+      h.add(p);
+    }
+
+    std::stringstream ss;
+    ss << "scc\\HashList_" << ELEMENT_SIZE;
+    ss << "_" << hash;
+    h.print(ss.str());
   }
 
   // Close stream, then read and count. 
@@ -60,12 +75,16 @@ public:
         continue;
       }
       if(candidate.canTurn90()) {
+	bool found = false;
         for(int i = 0; i < 3; ++i) {
           candidate.turn90();
           if(s.find(candidate) != s.end()) {
-            continue;
+	    found = true;
+	    break;
           }
         }
+	if(found)
+	  continue;
       }
       else {
         candidate.turn180();
@@ -78,6 +97,7 @@ public:
     infile.close();
     unsigned long res = s.size();
     std::cout << "Read " << res << " sorted elements of hash " << hash << std::endl;
+    //printLDRFile(hash, s); // TODO: Comment in for great visual debugging!
     s.clear();
     return res;    
   }
@@ -110,32 +130,19 @@ public:
 
   void getAllNewBricks(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks) {
     // Add for all bricks in smaller:
-    int tmpSize = 0;
+    int tmpSize;
     RectilinearBrick tmp[STRONGLY_CONNECTED_BRICK_POSITIONS];
 
     // Handle origin as special brick (because it doesn't exist in otherBricks):
     RectilinearBrick b;
-    b.constructAllStronglyConnected(tmp, tmpSize);
-    assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
-    //std::cout << "addAllFor(" << smaller << ")" << std::endl;
-    for(int j = 0; j < tmpSize; ++j) {
-      b = tmp[j];
-      if(!smaller.intersects(b))
-        newBricks.insert(RectilinearBrick(b));
-    }
+    for(int i = 0; i < ELEMENT_SIZE-1; b = smaller.otherBricks[i++]) {
+      tmpSize = 0;
+      b.constructAllStronglyConnected(tmp, tmpSize);
 
-    // Handle normal bricks:
-    if(ELEMENT_SIZE > 1) {
-      for(int i = 0; i < ELEMENT_SIZE-2; ++i) {
-        tmpSize = 0;
-        smaller.otherBricks[i].constructAllStronglyConnected(tmp, tmpSize);
-        assert (tmpSize <= STRONGLY_CONNECTED_BRICK_POSITIONS);
-
-        for(int j = 0; j < tmpSize; ++j) {
-          b = tmp[j];
-          if(!smaller.intersects(b))
-            newBricks.insert(RectilinearBrick(b));
-        }
+      for(int j = 0; j < tmpSize; ++j) {
+	RectilinearBrick &b2 = tmp[j];
+	if(!smaller.intersects(b2))
+	  newBricks.insert(b2);
       }
     }
   }
@@ -160,12 +167,16 @@ public:
         continue;
       }
       if(candidate.canTurn90()) {
+	bool found = false;
         for(int i = 0; i < 3; ++i) {
           candidate.turn90();
           if(s.find(candidate) != s.end()) {
-            continue;
+	    found = true;
+	    break;
           }
         }
+	if(found)
+	  continue;
       }
       else {
         candidate.turn180();

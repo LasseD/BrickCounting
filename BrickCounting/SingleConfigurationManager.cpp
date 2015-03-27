@@ -1,12 +1,8 @@
-#include "Brick.h"
-#include "RectilinearConfigurationManager.h"
+#include "SingleConfigurationManager.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-#include <iostream>
+SingleConfigurationManager::SingleConfigurationManager(){}
 
-RectilinearConfigurationManager::RectilinearConfigurationManager(){}
-
+/*
 void RectilinearConfigurationManager::test() const {
   // Setup:
   RectilinearBrick b1;
@@ -17,7 +13,7 @@ void RectilinearConfigurationManager::test() const {
   StronglyConnectedConfiguration<3> scc3(scc2, b3);//*/
 
   // NW: Axle, NE: Hose, SE: PIN
-
+/*
   RectilinearConfiguration rc(scc3);
   std::cout << "Constructing and adding yellow brick: " << std::endl;
   rc.add(scc1, IConnection(0, Connection(ConnectionPoint(NW, b3, true), ConnectionPoint(SE, b1, false))));
@@ -28,7 +24,7 @@ void RectilinearConfigurationManager::test() const {
   std::cout << "Constructing and adding green brick: " << std::endl;
   rc.add(scc1, IConnection(0, Connection(ConnectionPoint(SW, b1, true), ConnectionPoint(NE, b1, false))));
   //*/
-
+/*
   // Print:
   std::vector<RectilinearConfiguration> s;
   s.push_back(rc);
@@ -50,4 +46,4 @@ void RectilinearConfigurationManager::printLDRFile(const std::vector<Rectilinear
   }
   
   h.print("rc/Test");
-}
+}//*/

@@ -11,19 +11,68 @@ Findings:
 
   Size 2: 20
 
-  Size 3: 1036
+  Size 3: 1004
 
-  Size 4: 61188
+  Size 4: 58862
 
-  Size 5: 3948316
+  Size 5: 3817291
 
-  Size 6: ???
+  Size 6: 261534637
 
 
  
 TODO:
 
 1: Construct all possible SCCs (StronglyConnectedConfigurationBuilder) DONE SEE RESULTS ABOVE
+
+Written 5554 unsorted elements of hash 1125 to stream. Now counting.
+Read 2790 sorted elements of hash 1125
+Written 4486 unsorted elements of hash 1175 to stream. Now counting.
+Read 2242 sorted elements of hash 1175
+Written 15344 unsorted elements of hash 1215 to stream. Now counting.
+Read 9244 sorted elements of hash 1215
+Written 478 unsorted elements of hash 1355 to stream. Now counting.
+Read 154 sorted elements of hash 1355
+Written 12306 unsorted elements of hash 1715 to stream. Now counting.
+Read 7819 sorted elements of hash 1715
+Written 8632 unsorted elements of hash 2115 to stream. Now counting.
+Read 2790 sorted elements of hash 2115
+Written 2678 unsorted elements of hash 2255 to stream. Now counting.
+Read 1176 sorted elements of hash 2255
+Written 2044 unsorted elements of hash 2755 to stream. Now counting.
+Read 958 sorted elements of hash 2755
+Written 605 unsorted elements of hash 3155 to stream. Now counting.
+Read 254 sorted elements of hash 3155
+Written 7298 unsorted elements of hash 7115 to stream. Now counting.
+Read 2145 sorted elements of hash 7115
+Written 2492 unsorted elements of hash 7255 to stream. Now counting.
+Read 1637 sorted elements of hash 7255
+Written 2031 unsorted elements of hash 7755 to stream. Now counting.
+Read 1034 sorted elements of hash 7755
+Number of StronglyConnectedConfigurations of size 4: 59683
+
+
+Written 478 unsorted elements of hash 1355 to stream. Now counting.
+Read 154 sorted elements of hash 1355
+Written 605 unsorted elements of hash 3155 to stream. Now counting.
+Read 254 sorted elements of hash 3155
+
+
+
+
+Written 10040 unsorted elements of hash 1120 to stream. Now counting.
+Read 5032 sorted elements of hash 1120
+Written 15930 unsorted elements of hash 2110 to stream. Now counting.
+Read 4935 sorted elements of hash 2110
+
+Written 27650 unsorted elements of hash 1210 to stream. Now counting.
+Read 17063 sorted elements of hash 1210
+Written 9245 unsorted elements of hash 2200 to stream. Now counting.
+Read 3917 sorted elements of hash 2200
+Number of StronglyConnectedConfigurations of size 4: 58795
+
+
+
 
 2: Construct all possible Rectilinear configurations (Super set)
 
