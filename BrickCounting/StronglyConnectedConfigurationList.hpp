@@ -106,7 +106,6 @@ public:
 template <unsigned int ELEMENT_SIZE>
 class StronglyConnectedConfigurationList {
 public:
-  StronglyConnectedConfiguration<ELEMENT_SIZE> *v; // used sorted for retrieval.
   std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > s; // only used for construction.
   std::map<unsigned int,StronglyConnectedConfigurationHashList<ELEMENT_SIZE> > hashLists;
 
@@ -119,13 +118,16 @@ public:
       it->serialize(os);
     }
   }
-  void deserialize(std::ifstream &is) {
-    unsigned long size;
+  FatSCC* deserialize(std::ifstream &is, unsigned long &size) const {
     is.read((char*)&size, sizeof(unsigned long));
-    v = new StronglyConnectedConfiguration<ELEMENT_SIZE>[size];
+    //std::cout << " StronglyConnectedConfigurationList::deserialize FatSCCs of size " << ELEMENT_SIZE << ". " << size << " elements to deserialize." << std::endl;
+    FatSCC* v = new FatSCC[size];
     for(int i = 0; i < size; ++i) {
-      v[i].deserialize(is);
+      StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
+      scc.deserialize(is);
+      v[i] = FatSCC(scc, i);
     }
+    return v;
   }
 
   void getAllNewBricks(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks) {

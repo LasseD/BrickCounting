@@ -33,17 +33,17 @@ void runSimpleSerializationTestRectilinearBrick() {
 * MAIN ENTRY POINT!
 */
 int main(int cargs, char** args) {
-  
+  /*
   std::cout << "Running strongly connected configurations." << std::endl;
   StronglyConnectedConfigurationManager mgr;
   mgr.create();
   //*/
 
-  /*
-  std::cout << "Running rectilinear configurations." << std::endl;
-  RectilinearConfigurationManager mgr;
-  mgr.test();
-  //mgr.create();
+  
+  ConfigurationManager mgr;
+  //mgr.test();
+  //mgr.runForSize(2);
+  mgr.runForSize(3);
   //*/
 
   //runSimpleSerializationTestRectilinearBrick();

@@ -50,12 +50,12 @@ public:
   void getStudPositions(Point *positions) const;
   bool boxIntersectsPOIsFrom(Brick &b) const;
   bool boxesIntersect(const Brick &b) const;
-  bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, Connection &foundConnection, const RectilinearBrick &source) const;
+  bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const;
   /*
     Return true if this brick intersects the other. 
     If the two bricks are corner connected, then connected is set to true and the found connection is set.
    */
-  bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, Connection &foundConnection, const RectilinearBrick &source) const;
+  bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const;
 
   bool operator < (const Brick &b) const;
 };

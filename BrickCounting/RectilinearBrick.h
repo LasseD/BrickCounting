@@ -66,10 +66,16 @@ struct ConnectionPoint {
   ConnectionPointType type;
   RectilinearBrick brick;
   bool above, angleLocked;
+  int brickI;
 
-  ConnectionPoint(ConnectionPointType type, const RectilinearBrick &brick, bool above) : type(type), brick(brick), above(above), angleLocked(false) {}
-  ConnectionPoint() {}
-  ConnectionPoint(const ConnectionPoint &p) : type(p.type), brick(p.brick), above(p.above), angleLocked(p.angleLocked) {}
+  ConnectionPoint(ConnectionPointType type, const RectilinearBrick &brick, bool above) : type(type), brick(brick), above(above), angleLocked(false), brickI(-1) {}
+  ConnectionPoint() : brickI(-1) {}
+  ConnectionPoint(const ConnectionPoint &p) : type(p.type), brick(p.brick), above(p.above), angleLocked(p.angleLocked), brickI(p.brickI) {}
+ConnectionPoint(const ConnectionPoint &p, std::pair<int,int> rotationPoint) : type((ConnectionPointType)((p.type+2)%4)), brick(p.brick), above(p.above), angleLocked(false), brickI(-1) {
+    // Relocate position of brick:
+    brick.y = rotationPoint.second - brick.y;
+    brick.x = rotationPoint.first - brick.x;
+  }
 
   // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
   uint8_t x4x4() const {
@@ -102,8 +108,35 @@ struct ConnectionPoint {
       return type < p.type;
     return above < p.above;
   }
+  bool operator != (const ConnectionPoint &p) const {
+    if(brick != p.brick)
+      return true;
+    if(type != p.type)
+      return true;
+    return above != p.above;
+  }
+  bool operator == (const ConnectionPoint &p) const {
+    if(brick != p.brick)
+      return false;
+    if(type != p.type)
+      return false;
+    return above == p.above;
+  }
 };
 
-typedef std::pair<ConnectionPoint,ConnectionPoint> Connection;
+inline std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p) {
+  if(p.above)
+    os << "A";
+  else
+    os << "B";
+  os << p.brickI;
+  switch(p.type) {
+  case NW : os << "NW"; break;
+  case NE : os << "NE"; break;
+  case SW : os << "SW"; break;
+  case SE : os << "SE"; break;
+  }
+  return os;
+}
 
 #endif // RECTILINEAR_BRICK_H

@@ -95,3 +95,37 @@ void StronglyConnectedConfigurationManager::writeToFile(int i) {
   }
   os.close();
 }
+
+FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long &size) const {
+  std::ifstream is;
+  std::stringstream ss;
+  ss << "scc/" << (i+1) << ".dat";
+  is.open(ss.str().c_str(), std::ios::binary | std::ios::in);
+  std::cout << "Reading file with strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
+
+  FatSCC* ret;
+  switch(i) {
+  case 0:    
+    ret = l1.deserialize(is, size);
+    break;
+  case 1:
+    ret = l2.deserialize(is, size);
+    break;
+  case 2:
+    ret = l3.deserialize(is, size);
+    break;
+  case 3:
+    ret = l4.deserialize(is, size);
+    break;
+  case 4:
+    ret = l5.deserialize(is, size);
+    break;
+  default:
+    std::cerr << "ERROR: StronglyConnectedConfigurationManager::loadFromFile() called on " << i << std::endl;
+    break;
+  }
+  is.close();
+  
+  std::cout << "Read " << size << " strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
+  return ret;
+}

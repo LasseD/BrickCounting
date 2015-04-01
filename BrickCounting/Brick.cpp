@@ -25,7 +25,7 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
  Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
  */
 Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv) {  
-  std::cout << "Building brick. RB=" << b << std::endl << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
+  //std::cout << "Building brick. RB=" << b << std::endl << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
   // center is now on b. Move by turn angle, then translate to origin:
   // Rotate:
   double sina = sin(angle);
@@ -34,15 +34,12 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   center.X = center.X*cosa - center.Y*sina;
   center.Y = oldX*sina + center.Y*cosa;
 
-  std::cout << " Center compared to connection after rotating " << angle << ": " << center.X << "," << center.Y << std::endl;
-  /*if(!b.horizontal()) { // Vertical!
-    angle += M_PI/2;
-  }//*/
+  //std::cout << " Center compared to connection after rotating " << angle << ": " << center.X << "," << center.Y << std::endl;
 
   // Translate:
   center.X += origin.X;
   center.Y += origin.Y;
-  std::cout << " After translation: " << center.X << "," << center.Y << "," << ((int)level) << " angle " << angle << std::endl;
+  //std::cout << " After translation: " << center.X << "," << center.Y << "," << ((int)level) << " angle " << angle << std::endl;
 }
 
 void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
@@ -184,8 +181,10 @@ bool Brick::boxesIntersect(const Brick &b) const {
   return boxIntersectsPOIsFrom(tmpB) || b.boxIntersectsPOIsFrom(tmpThis);
 }
 
- bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, Connection &foundConnection, const RectilinearBrick &source) const {
+ bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+   //std::cout << " Checking stud intersection between " << *this << " and " << b << std::endl;
   moveBrickSoThisIsAxisAlignedAtOrigin(b);
+  //std::cout << "  After axis aligning this. b=" << b << std::endl;
   Point studsOfB[NUMBER_OF_STUDS];
   b.getStudPositions(studsOfB);
   // X handle four inner:
@@ -202,12 +201,14 @@ bool Brick::boxesIntersect(const Brick &b) const {
       if(stud.X > cornerX && stud.Y > cornerY) {
 	return STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY);
       }
+      //std::cout << "  Inner stud intersection " << stud.X << "," << stud.Y << std::endl;
       return true;
     }
   }
   // Handle four outer specially as they might cause connection:
   for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
     Point stud = studsOfB[i];
+    //std::cout << "  stud: " << stud.X << "," << stud.Y << std::endl;
     if(stud.X < 0)
       stud.X = -stud.X;
     if(stud.Y < 0)
@@ -215,36 +216,43 @@ bool Brick::boxesIntersect(const Brick &b) const {
 
     if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE && stud.Y < VERTICAL_BRICK_CENTER_TO_TOP) {
       // X check if it hits stud:
-      const double studX = STUD_DISTANCE;
-      const double studY = HALF_STUD_DISTANCE;    
+      const double studX = HALF_STUD_DISTANCE;
+      const double studY = STUD_AND_A_HALF_DISTANCE;   
+      //std::cout << " snap distance sq " << SNAP_DISTANCE*SNAP_DISTANCE << " vs " << ((stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) << std::endl;
       if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
 	// We are already connected:
 	if(connected) {
 	  connected = false;
+	  //std::cout << "  Double outer stud intersection " << stud.X << "," << stud.Y << std::endl;
 	  return true;
 	}
 	// Compute corner:
 	connected = true;
-	if(stud.X < 0 && stud.Y < 0)
-	  foundConnection.first = ConnectionPoint(SW, source, true);
-	else if(stud.X < 0 && stud.Y > 0)
-	  foundConnection.first = ConnectionPoint(NW, source, true);
-	else if(stud.X > 0 && stud.Y < 0)
-	  foundConnection.first = ConnectionPoint(SE, source, true);
+	if(studsOfB[i].X < 0 && studsOfB[i].Y < 0)
+	  foundConnectionThis = ConnectionPoint(SW, source, false);
+	else if(studsOfB[i].X < 0 && studsOfB[i].Y > 0)
+	  foundConnectionThis = ConnectionPoint(NW, source, false);
+	else if(studsOfB[i].X > 0 && studsOfB[i].Y < 0)
+	  foundConnectionThis = ConnectionPoint(SE, source, false);
 	else // if(stud.X > 0 && stud.Y > 0)
-	  foundConnection.first = ConnectionPoint(NE, source, true);
-	foundConnection.second = ConnectionPoint((ConnectionPointType)(i-4), bSource, false);
+	  foundConnectionThis = ConnectionPoint(NE, source, false);
+	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true);
+	continue;
       }      
 
       // Might intersect - check corner case:
       const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE-STUD_RADIUS;
       const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP-STUD_RADIUS;
-      if(stud.X > cornerX && stud.Y > cornerY) {
-	return STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY);
+      if(stud.X < cornerX || 
+	 stud.Y < cornerY || 
+         STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+        //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
+	connected = false;
+        return true;
       }
-      return true;
     }
   }
+  //std::cout << "  All checked. No problems. Returning connected=" << connected << std::endl;
   return connected;
 }
 
@@ -257,17 +265,18 @@ bool Brick::boxesIntersect(const Brick &b) const {
    - If intersect: Check if only intersecting one corner stud.
    - If only one corner stud, check if corner connected.
  */
-bool Brick::intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, Connection &foundConnection, const RectilinearBrick &source) const {
+bool Brick::intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+  //std::cout << "! Checking intersection between " << *this << " and " << b << std::endl;
   connected = false;
   if(level > b.level+1 || b.level > level+1)
     return false;
   if(level == b.level)
     return boxesIntersect(b);
   Brick tmpB(b);
-  Brick tmpThis(b);
+  Brick tmpThis(*this);
   if(level < b.level)
-    return b.boxIntersectsStudsFrom(tmpThis, source, connected, foundConnection, bSource);
-  return boxIntersectsStudsFrom(tmpB, source, connected, foundConnection, bSource);
+    return b.boxIntersectsStudsFrom(tmpThis, source, connected, foundConnectionThis, foundConnectionB, bSource);
+  return boxIntersectsStudsFrom(tmpB, bSource, connected, foundConnectionB, foundConnectionThis, source);
 }
 
 bool Brick::operator < (const Brick &b) const {

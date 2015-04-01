@@ -36,13 +36,13 @@ Brick.o:  LDRPrinter.h RectilinearBrick.h Brick.h Brick.cpp
 StronglyConnectedConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c StronglyConnectedConfigurationManager.cpp
 
-SingleConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h SingleConfigurationManager.h SingleConfigurationManager.cpp
+SingleConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp SingleConfigurationManager.h SingleConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c SingleConfigurationManager.cpp
 
-ConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h SingleConfigurationManager.h ConfigurationManager.h ConfigurationManager.cpp
+ConfigurationManager.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp SingleConfigurationManager.h ConfigurationManager.h ConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c ConfigurationManager.cpp
 
-main.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h SingleConfigurationManager.h ConfigurationManager.h main.cpp
+main.o:  LDRPrinter.h RectilinearBrick.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp SingleConfigurationManager.h ConfigurationManager.h main.cpp
 	$(CC) $(CFLAGS) -c main.cpp
 
 # To start over from scratch, type 'make clean'.  This

@@ -4,14 +4,18 @@
 #include <set>
 #include <iostream>
 #include <fstream>
+#include "StronglyConnectedConfiguration.hpp"
 #include "StronglyConnectedConfigurationList.hpp"
 
 class StronglyConnectedConfigurationManager {
 public:
   StronglyConnectedConfigurationManager();
   void create();
+  void loadAllFromDisk();
 
   void **lists;  
+
+  FatSCC* loadFromFile(int i, unsigned long &size) const;
 
 private:
   StronglyConnectedConfigurationList<1> l1;
