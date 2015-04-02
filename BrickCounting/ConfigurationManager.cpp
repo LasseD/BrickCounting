@@ -3,6 +3,7 @@
 #include "SingleConfigurationManager.h"
 
 #include <iostream>
+#include <algorithm>
 
 void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex) {
   if(combination.size() == combinationType.size()) {
@@ -42,17 +43,17 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   // TODO: Thread here!
 }
 
-void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining) {
+void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize) {
   //std::cout << "ConfigurationManager::runForCombinationType(remaining=" << remaining << ") started!" << std::endl;
   if(remaining == 0) {
     runForCombinationType(combinationType);
     return;
   }
     
-  for(int i = 1; i <= remaining; ++i) {
+  for(int i = std::min(prevSize,remaining); i > 0; --i) {
     std::vector<int> v(combinationType);
     v.push_back(i);
-    runForCombinationType(v, remaining-i);
+    runForCombinationType(v, remaining-i, i);
   }
 }
 
@@ -64,10 +65,10 @@ void ConfigurationManager::runForSize(int size) {
   }
 
   // For base being 1..size-1:
-  for(int base = 1; base <= size-1; ++base) {
+  for(int base = size-1; base > 0; --base) {
     std::vector<int> combination;
     combination.push_back(base);
-    runForCombinationType(combination, size-base);
+    runForCombinationType(combination, size-base, base);
   }
 
   // Output results:
@@ -90,5 +91,6 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
 }
 
 void ConfigurationManager::test() const {
-  SingleConfigurationManager::test();
+  SingleConfigurationManager::test1();
+  SingleConfigurationManager::test2();
 }

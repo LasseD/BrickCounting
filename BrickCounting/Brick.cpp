@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <assert.h>
 
 /*
 Constructor used for finding connection points:
@@ -43,8 +44,8 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
 }
 
 void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
-  double x = (this->center.X)*20;
-  double y = (this->center.Y)*20;
+  double x = (this->center.X+xx)*20;
+  double y = (this->center.Y+yy)*20;
   int z = -24*level;
 
   double sina = sin(-angle+M_PI/2);
@@ -55,24 +56,24 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   os << "1 " << ldrColor << " " << x << " " << z << " " << y << " ";
   os << cosa << " 0 " << sina << " 0 1 0 " << -sina << " 0 " << cosa << " 3001.dat" << std::endl;
 
-  
+  /*
   // Guide axle:
   Point p = getStudPosition(NW);
-  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+8-8) << " " << (p.Y*20) << " ";
+  os << "1 " << ldrColor << " " << ((p.X+xx)*20) << " " << (z+8-8) << " " << ((p.Y+yy)*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   // Guide hose:
   p = getStudPosition(NE);
-  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+40-8) << " " << (p.Y*20) << " ";
+  os << "1 " << ldrColor << " " << ((p.X+xx)*20) << " " << (z+40-8) << " " << ((p.Y+yy)*20) << " ";
   os << "-1 0 0 0 -1 0 0 0 1 76263.dat" << std::endl;
   // Guide pin:
   p = getStudPosition(SE);
-  os << "1 " << ldrColor << " " << (p.X*20) << " " << (z+8-8) << " " << (p.Y*20) << " ";
+  os << "1 " << ldrColor << " " << ((p.X+xx)*20) << " " << (z+8-8) << " " << ((p.Y+yy)*20) << " ";
   os << "0 1 0 -1 0 0 0 0 1 32556.dat" << std::endl;
   // Low guide axle:
   p = getStudPosition(SW);
-  os << "1 " << 0 << " " << (p.X*20) << " " << (z+8) << " " << (p.Y*20) << " ";
+  os << "1 " << 0 << " " << ((p.X+xx)*20) << " " << (z+8) << " " << ((p.Y+yy)*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;//*/
-
+  //*/
   /*
   // 8 studs:
   Point studs[8];
@@ -95,14 +96,15 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
 
 void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
   // Tranlate to make this->origin = 0,0:
-  b.center.X = b.center.X-center.X;
-  b.center.Y = b.center.Y-center.Y;
+  b.center.X -= center.X;
+  b.center.Y -= center.Y;
   // Rotate to make this->angle = 0.
   double sina = sin(-angle);
   double cosa = cos(-angle);
-  b.center.X = b.center.X*cosa - b.center.Y*sina;
-  b.center.Y = b.center.X*sina + b.center.Y*cosa;
-  b.angle = b.angle-angle;
+  double oldX = b.center.X;
+  b.center.X = oldX*cosa - b.center.Y*sina;
+  b.center.Y = oldX*sina + b.center.Y*cosa;
+  b.angle -= angle;
 }
 
 void Brick::getBoxPOIs(Point *pois) const {
@@ -155,6 +157,7 @@ void Brick::getStudPositions(Point *studs) const {
 }
 
 bool Brick::boxIntersectsPOIsFrom(Brick &b) const {
+  //std::cout << "Testing " << *this << " vs " << b << std::endl; 
   moveBrickSoThisIsAxisAlignedAtOrigin(b);
   // Get POIs:
   Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
@@ -166,8 +169,10 @@ bool Brick::boxIntersectsPOIsFrom(Brick &b) const {
       poi.X = -poi.X;
     if(poi.Y < 0)
       poi.Y = -poi.Y;
-    if(poi.X < VERTICAL_BRICK_CENTER_TO_SIDE && poi.Y < VERTICAL_BRICK_CENTER_TO_TOP)
-      return true;
+    if(poi.X < VERTICAL_BRICK_CENTER_TO_SIDE && poi.Y < VERTICAL_BRICK_CENTER_TO_TOP) {
+      //std::cout << *this << " intersects " << b << std::endl; 
+      return true;      
+    }
   }
   return false;
 }
@@ -229,14 +234,14 @@ bool Brick::boxesIntersect(const Brick &b) const {
 	// Compute corner:
 	connected = true;
 	if(studsOfB[i].X < 0 && studsOfB[i].Y < 0)
-	  foundConnectionThis = ConnectionPoint(SW, source, false);
+	  foundConnectionThis = ConnectionPoint(SW, source, false, -1);
 	else if(studsOfB[i].X < 0 && studsOfB[i].Y > 0)
-	  foundConnectionThis = ConnectionPoint(NW, source, false);
+	  foundConnectionThis = ConnectionPoint(NW, source, false, -1);
 	else if(studsOfB[i].X > 0 && studsOfB[i].Y < 0)
-	  foundConnectionThis = ConnectionPoint(SE, source, false);
+	  foundConnectionThis = ConnectionPoint(SE, source, false, -1);
 	else // if(stud.X > 0 && stud.Y > 0)
-	  foundConnectionThis = ConnectionPoint(NE, source, false);
-	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true);
+	  foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
 	continue;
       }      
 
@@ -270,8 +275,11 @@ bool Brick::intersects(const Brick &b, const RectilinearBrick &bSource, bool &co
   connected = false;
   if(level > b.level+1 || b.level > level+1)
     return false;
-  if(level == b.level)
-    return boxesIntersect(b);
+  if(level == b.level) {
+    bool ret = boxesIntersect(b);
+    //assert(!ret); // TODO: REM!      
+    return ret;
+  }
   Brick tmpB(b);
   Brick tmpThis(*this);
   if(level < b.level)

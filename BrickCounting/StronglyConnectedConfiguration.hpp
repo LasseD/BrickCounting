@@ -3,6 +3,7 @@
 
 #include "LDRPrinter.h"
 #include "RectilinearBrick.h"
+#include "ConnectionPoint.h"
 #include "Brick.h"
 
 #include <iostream>
@@ -311,33 +312,32 @@ public:
   }
 
   void getConnectionPoints(std::set<ConnectionPoint> &above, std::set<ConnectionPoint> &below) const {
+    //std::cout << "Connection points for " << size << "," << index << ":" << std::endl;
     // Find bricks that might block every level:
-    std::set<RectilinearBrick> blockers[size];
-    {
-      RectilinearBrick b; // using block so that b can be re-used below.
+    std::set<RectilinearBrick> blockers[6];
+    { // using block so that b can be re-used below.
+      RectilinearBrick b;
       for(int i = 0; i < size; b=otherBricks[i++]) {
         blockers[b.level()].insert(b);
       }
     }
 
     // Get all possible connection points and add them to sets (unless blocked).
-    ConnectionPoint tmp[size];
+    ConnectionPoint tmp[4];
     RectilinearBrick b;
     for(int i = 0; i < size; b=otherBricks[i++]) {
-      int four = 0;
-      b.getConnectionPointsAbove(tmp, four);
-      for(int j = 0; j < four; ++j) {
+      b.getConnectionPointsAbove(tmp, i);
+      for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
-	  tmp[j].brickI = i;
           above.insert(tmp[j]);
+ 	  //std::cout << " - " << tmp[j] << std::endl;
 	}
       }
-      four = 0;
-      b.getConnectionPointsBelow(tmp, four);
-      for(int j = 0; j < four; ++j) {
+      b.getConnectionPointsBelow(tmp, i);
+      for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
-	  tmp[j].brickI = i;
           below.insert(tmp[j]);
+	  //std::cout << " - " << tmp[j] << std::endl;
 	}
       }
     }    
@@ -348,22 +348,36 @@ public:
       return true; // not applicaple.
     std::vector<ConnectionPoint> rotatedPoints;
     for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
-      rotatedPoints.push_back(ConnectionPoint(*it, rotationBrickPosition));
+      ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
+      rotatedPoints.push_back(rotatedPoint);
     }
     std::sort(rotatedPoints.begin(), rotatedPoints.end());
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
-      if(*it2 < *it1)
+      if(*it2 < *it1) {
 	return false;
+      }
+      if(*it1 < *it2) {
+	return true;
+      }
     }
     return true;
   }
 
+  bool isRotationallyMinimal(const ConnectionPoint &p) const {
+    if(!isRotationallySymmetric)
+      return true; // not applicaple.
+    ConnectionPoint rotatedPoint(p, rotationBrickPosition);
+    return p < rotatedPoint;
+  }
+
   bool operator<(const FatSCC &c) const {
-    return size < c.size || index < c.index;
+    if(size != c.size)
+      return size < c.size;
+    return index < c.index;
   }
   bool operator==(const FatSCC &c) const {
-    return size == c.size || index == c.index;
+    return size == c.size && index == c.index;
   }
 };
 

@@ -14,7 +14,7 @@ private:
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex);
 
   void runForCombinationType(const std::vector<int> &combinationType);
-  void runForCombinationType(const std::vector<int> &combinationType, int remaining);
+  void runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize);
 public:
   ConfigurationManager();
   void runForSize(int size);

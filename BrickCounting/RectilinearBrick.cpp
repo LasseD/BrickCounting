@@ -1,4 +1,6 @@
 #include "RectilinearBrick.h"
+#include "ConnectionPoint.h"
+
 #include <assert.h>
 
 bool RectilinearBrick::operator < (const RectilinearBrick &b) const {
@@ -122,18 +124,17 @@ std::ostream& operator<<(std::ostream& os, const RectilinearBrick& b)
   return os;
 }
 
-void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int &sizePts) {
-  getConnectionPoints(pts, sizePts, true);
+void RectilinearBrick::getConnectionPointsAbove(ConnectionPoint *pts, int brickI) {
+  getConnectionPoints(pts, true, brickI);
 }
-void RectilinearBrick::getConnectionPointsBelow(ConnectionPoint *pts, int &sizePts) {
-  getConnectionPoints(pts, sizePts, false);
+void RectilinearBrick::getConnectionPointsBelow(ConnectionPoint *pts, int brickI) {
+  getConnectionPoints(pts, false, brickI);
 }
-void RectilinearBrick::getConnectionPoints(ConnectionPoint *pts, int &sizePts, bool above) {
-  sizePts = 4;
-  pts[0] = ConnectionPoint(SW, *this, above);
-  pts[1] = ConnectionPoint(SE, *this, above);
-  pts[2] = ConnectionPoint(NW, *this, above);
-  pts[3] = ConnectionPoint(NE, *this, above);
+void RectilinearBrick::getConnectionPoints(ConnectionPoint *pts, bool above, int brickI) {
+  pts[0] = ConnectionPoint(NW, *this, above, brickI);
+  pts[1] = ConnectionPoint(NE, *this, above, brickI);
+  pts[2] = ConnectionPoint(SE, *this, above, brickI);
+  pts[3] = ConnectionPoint(SW, *this, above, brickI);
 }
 
 bool RectilinearBrick::atConnectingLevelOf(const ConnectionPoint &p) const {

@@ -3,6 +3,7 @@
 
 #include "LDRPrinter.h"
 #include "RectilinearBrick.h"
+#include "ConnectionPoint.h"
 #include "StronglyConnectedConfiguration.hpp"
 
 #define _USE_MATH_DEFINES
@@ -13,41 +14,6 @@
 #include <set>
 #include <map>
 #include <assert.h> 
-
-struct BrickIdentifier {
-  unsigned long sccI; // In SCC list imported from file.
-  int sccBrickI; // In SCC.
-  int configurationSCCI;
-  BrickIdentifier() {}
-  BrickIdentifier(const BrickIdentifier &bi) : sccI(bi.sccI), sccBrickI(bi.sccBrickI), configurationSCCI(bi.configurationSCCI) {}
-  BrickIdentifier(unsigned long sccI, int sccBrickI, int configurationSCCI) : sccI(sccI), sccBrickI(sccBrickI), configurationSCCI(configurationSCCI) {}
-
-  bool operator<(const BrickIdentifier &bi) const {
-    if(sccI != bi.sccI)      
-      return sccI < bi.sccI;
-    if(sccBrickI != bi.sccBrickI)      
-      return sccBrickI < bi.sccBrickI;
-    return configurationSCCI < bi.configurationSCCI;
-  }
-  bool operator!=(const BrickIdentifier &bi) const {
-    return sccI != bi.sccI || sccBrickI != bi.sccBrickI || configurationSCCI != bi.configurationSCCI;
-  }
-  bool operator==(const BrickIdentifier &bi) const {
-    return sccI == bi.sccI && sccBrickI == bi.sccBrickI && configurationSCCI == bi.configurationSCCI;
-  }
-};
-
-inline std::ostream& operator<<(std::ostream &os, const BrickIdentifier& bi) {
-  os << "BI[scc=" << bi.sccI << "," << bi.sccBrickI << ",confI=" << bi.configurationSCCI << "]";
-  return os;
-}
-
-typedef std::pair<BrickIdentifier,ConnectionPoint> IConnectionPoint;
-
-inline std::ostream& operator<<(std::ostream &os, const IConnectionPoint& p) {
-  os << "ICP[" << p.first << "," << p.second << "]";
-  return os;
-}
 
 struct Connection {
   IConnectionPoint p1, p2;
@@ -95,7 +61,7 @@ public:
   }
   void insert(const Connection &c) {
     Connection toInsert(c);
-    if(c.p1.second.above) {
+    if(c.p1.first.configurationSCCI > c.p2.first.configurationSCCI) {
       std::swap(toInsert.p1, toInsert.p2);
     }
     v.insert(toInsert);
@@ -105,6 +71,9 @@ public:
   }
   std::set<Connection>::const_iterator end() const {
     return v.end();
+  }
+  unsigned int size() const {
+    return v.size();
   }
 };
 
@@ -126,7 +95,7 @@ struct IBrick {
 
 struct Configuration : public LDRPrinter {
 private:
-  int scci, bricksSize;
+  int bricksSize;
   IBrick bricks[6];
   std::map<int,Brick> origBricks;
 
@@ -155,7 +124,6 @@ public:
   }
 
   Configuration(const FatSCC &scc) {
-    scci = 1;
     bricksSize = 0;
     RectilinearBrick b;
     origBricks.insert(std::make_pair(0,Brick(b)));
@@ -168,7 +136,9 @@ public:
 
   void add(const FatSCC &scc, const Connection &c) {
     // Get objects of interest:
-    Brick prevOrigBrick = origBricks[c.p1.first.configurationSCCI];
+    int prevBrickI = c.p1.first.configurationSCCI;
+    int currBrickI = c.p2.first.configurationSCCI;
+    Brick prevOrigBrick = origBricks[prevBrickI];
     const ConnectionPoint &prevPoint = c.p1.second;
     const ConnectionPoint &currPoint = c.p2.second;
     Brick prevBrick(prevOrigBrick, c.p1.second.brick);
@@ -180,22 +150,20 @@ public:
     int level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
     RectilinearBrick b;
-    origBricks.insert(std::make_pair(scci, Brick(b, currPoint, prevStud, angle, level)));
+    origBricks.insert(std::make_pair(currBrickI, Brick(b, currPoint, prevStud, angle, level)));
     for(int i = 0; i < scc.size; b=scc.otherBricks[i++]) {
       Brick brick(b, currPoint, prevStud, angle, level);
       //std::cout << "ADD: Curr: " << brick << std::endl;
 
-      IBrick ib(b, brick, BrickIdentifier(scc.index, i, scci));
+      IBrick ib(b, brick, BrickIdentifier(scc.index, i, currBrickI));
       bricks[bricksSize++] = ib;
     }
-    ++scci;
   }
 
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
-    int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLACK, LDR_COLOR_BLUE, 2, 85};
+    int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, 2, 85, LDR_COLOR_BLACK};
 
     for(int i = 0; i < bricksSize; ++i) {
-      //std::cout << "Printing brick for RC: " << bricks[i].b << std::endl;
       bricks[i].b.toLDR(os, x, y, colors[bricks[i].bi.configurationSCCI]);
     }
   }

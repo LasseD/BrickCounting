@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cmath>
 
-#define MODEL_PADDING 15
+#define MODEL_PADDING 13
 
 void LDRPrinterHandler::add(const LDRPrinter *c) {
   sccs.push_back(c);

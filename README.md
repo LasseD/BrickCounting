@@ -21,9 +21,15 @@ Findings:
 
  Rectilinear configurations (excluding SCC's. Should match the previous results)
 
-  Size 2: 4
+  Size 2: 4 (for a total of 24 matching previous results)
 
-  Size 3: In progress...
+  Size 3: 556 (for a total of 1560 matching previous results)
+
+  Size 4: In progress...
+
+  Size 4: In progress...
+
+  Size 4: In progress...
  
 TODO:
 

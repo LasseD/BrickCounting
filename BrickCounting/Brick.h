@@ -1,8 +1,8 @@
-
 #ifndef BRICK_H
 #define BRICK_H
 
 #include "RectilinearBrick.h"
+#include "ConnectionPoint.h"
 #include "LDRPrinter.h"
 
 #define _USE_MATH_DEFINES
