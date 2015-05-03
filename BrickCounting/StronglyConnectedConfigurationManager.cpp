@@ -66,10 +66,60 @@ void StronglyConnectedConfigurationManager::create() {
   l6.countAllFor(l5);
 }
 
-void StronglyConnectedConfigurationManager::writeToFile(int i) {
+void StronglyConnectedConfigurationManager::createOld() {
+  // First. Ensure output folder exists:
+  CreateDirectory("old_rc", NULL);
+
+  // 1:
+  StronglyConnectedConfiguration<1> baseConfiguration;
+  l1.s.insert(baseConfiguration);
+  std::cout << l1 << std::endl;
+  writeToFile(0);
+
+  l1.printLDRFile(true);
+
+  // 2:
+  l2.addAllFor(baseConfiguration, true);
+  l1.s.clear();
+  std::cout << l2 << std::endl;
+  writeToFile(1, true);
+
+  l2.printLDRFile(true);
+  std::cout << "DONE OLD OF SIZE 2" << std::endl << std::endl;
+
+  // 3:
+  l3.addAllFor(l2, true);
+  std::cout << "Done add all for l3" << std::endl;
+  l2.s.clear();
+  std::cout << l3 << std::endl;
+  writeToFile(2, true);
+
+  l3.printLDRFile(true);
+  std::cout << "DONE OLD OF SIZE 3" << std::endl << std::endl;
+
+  // 4:
+  l4.addAllFor(l3, true);
+  l3.s.clear();
+  std::cout << l4 << std::endl;
+  writeToFile(3, true);
+  std::cout << "DONE OLD OF SIZE 4" << std::endl << std::endl;
+
+  // 5:
+  l5.addAllFor(l4, true);
+  l4.s.clear();
+  std::cout << l5 << std::endl;
+  writeToFile(4, true);
+  std::cout << "DONE OLD OF SIZE 5" << std::endl << std::endl;
+}
+
+void StronglyConnectedConfigurationManager::writeToFile(int i, bool old) {
   std::ofstream os;
   std::stringstream ss;
-  ss << "scc/" << (i+1) << ".dat";
+  if(old)
+    ss << "old_rc";
+  else
+    ss << "scc";
+  ss << "\\" << (i+1) << ".dat";
   os.open(ss.str().c_str(), std::ios::binary | std::ios::out);
   std::cout << "Writing file with strongly connected configurations of size " << (i+1) << " to " << ss.str() << std::endl;
 
@@ -122,7 +172,7 @@ FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long
     break;
   default:
     std::cerr << "ERROR: StronglyConnectedConfigurationManager::loadFromFile() called on " << i << std::endl;
-    break;
+    return NULL;
   }
   is.close();
   

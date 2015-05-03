@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <iostream>
 
-#define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 6
+#define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
 // 4mm in units:
 #define VERTICAL_BRICK_HALF_WIDTH 1.0
@@ -43,6 +43,8 @@ public:
   Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv);
 
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const;
+
+  RectilinearBrick toRectilinearBrick() const;
 
   void moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const;
   void getBoxPOIs(Point *pois) const;

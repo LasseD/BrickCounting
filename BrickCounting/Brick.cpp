@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <assert.h>
+#include <math.h>
 
 /*
 Constructor used for finding connection points:
@@ -25,7 +26,9 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
 /*
  Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
  */
-Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv) {  
+Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv-p.brick.level()) {  
+  if(p.brick.horizontal())
+    angle += M_PI/2;
   //std::cout << "Building brick. RB=" << b << std::endl << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
   // center is now on b. Move by turn angle, then translate to origin:
   // Rotate:
@@ -40,6 +43,8 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   // Translate:
   center.X += origin.X;
   center.Y += origin.Y;
+  if(b.horizontal())
+    angle -= M_PI/2;
   //std::cout << " After translation: " << center.X << "," << center.Y << "," << ((int)level) << " angle " << angle << std::endl;
 }
 
@@ -56,7 +61,7 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   os << "1 " << ldrColor << " " << x << " " << z << " " << y << " ";
   os << cosa << " 0 " << sina << " 0 1 0 " << -sina << " 0 " << cosa << " 3001.dat" << std::endl;
 
-  /*
+  /*  
   // Guide axle:
   Point p = getStudPosition(NW);
   os << "1 " << ldrColor << " " << ((p.X+xx)*20) << " " << (z+8-8) << " " << ((p.Y+yy)*20) << " ";
@@ -94,6 +99,16 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   }//*/
 }
 
+RectilinearBrick Brick::toRectilinearBrick() const {
+  int x = round(this->center.X);
+  int y = round(this->center.Y);
+  double a = angle*2/M_PI;
+  if(a < 0)
+    a = -a;
+  bool horizontal = (((int)(a+0.5)) & 1) == 1;
+  return RectilinearBrick((int8_t)x, (int8_t)y, level, horizontal);
+}
+
 void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
   // Tranlate to make this->origin = 0,0:
   b.center.X -= center.X;
@@ -117,9 +132,14 @@ void Brick::getBoxPOIs(Point *pois) const {
   pois[1] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
   pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
   pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+  // 4 sides:
+  pois[4] = Point(center.X+dx*cosa,  center.Y+dx*sina);
+  pois[5] = Point(center.X-dx*cosa, center.Y-dx*sina);
+  pois[6] = Point(center.X+dy*sina,  center.Y+dy*cosa);
+  pois[7] = Point(center.X-dy*sina, center.Y-dy*cosa);
   // 2 inner:
-  pois[4] = Point(center.X+0.75*sina, center.Y+0.75*cosa);
-  pois[5] = Point(center.X-0.75*sina, center.Y-0.75*cosa);
+  pois[8] = Point(center.X+0.75*sina, center.Y+0.75*cosa);
+  pois[9] = Point(center.X-0.75*sina, center.Y-0.75*cosa);
 }
 
 Point Brick::getStudPosition(ConnectionPointType type) const {

@@ -39,6 +39,12 @@ class SingleConfigurationManager {
   unsigned int combinationSize;
   FatSCC combination[6];
   std::set<ConnectionList> foundConnectionLists;
+
+  // Experimental lookup:
+  std::set<uint64_t> foundConnectionsEncoded;
+  ConfigurationEncoder encoder;
+  //std::set<StronglyConnectedConfiguration<4> > &foundSCCs; // For debugging only!
+  //std::set<StronglyConnectedConfiguration<4> > &correct; // For debuggin only!
   std::set<ConnectionPoint> above[6];
   std::set<ConnectionPoint> below[6]; 
   bool prevMustBeChosen[6];
@@ -46,15 +52,14 @@ class SingleConfigurationManager {
 public:
   SingleConfigurationManager(const std::vector<FatSCC> &combination);
 
-  bool connectionListIsUnknown(const ConnectionList &l, int* perm, bool *rotated, unsigned int i) const;
-  bool connectionListIsUnknown(const ConnectionList &l, PermutationHandler &ph, int* perm, int* colors, unsigned int i, int color) const;
-  bool connectionListIsUnknown(const ConnectionList &l) const;
+  uint64_t encode(const ConnectionList &l, int* perm, bool *rotated, unsigned int i) const;
+  uint64_t encode(const ConnectionList &l, PermutationHandler &ph, int* perm, int* colors, unsigned int i) const;
+  uint64_t encode(const ConnectionList &l) const;
 
   void run(std::vector<Connection> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize);
   void run();
   void printLDRFile() const;
   bool isRotationallyMinimal(const ConnectionList &l) const;
-  bool isRotationallyMinimal(const std::vector<Connection> &l) const;
 
   static void test1();
   static void test2();

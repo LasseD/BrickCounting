@@ -20,8 +20,8 @@ struct ConnectionPoint {
   ConnectionPoint(const ConnectionPoint &p, std::pair<int,int> rotationPoint);
 
   // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
-  uint8_t x4x4() const;
-  uint8_t y4x4() const;
+  int8_t x4x4() const;
+  int8_t y4x4() const;
 
   // For specialized use: Position of connection point 
   double x() const;

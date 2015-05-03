@@ -11,6 +11,7 @@ class StronglyConnectedConfigurationManager {
 public:
   StronglyConnectedConfigurationManager();
   void create();
+  void createOld();
   void loadAllFromDisk();
 
   void **lists;  
@@ -25,7 +26,7 @@ private:
   StronglyConnectedConfigurationList<5> l5;
   StronglyConnectedConfigurationList<6> l6;
 
-  void writeToFile(int i);
+  void writeToFile(int i, bool old = false);
 };
 
 #endif

@@ -11,6 +11,9 @@
 #include <algorithm>
 #include <assert.h> 
 #include <set> 
+#include <limits.h>
+
+#define NO_INDEX ULONG_MAX
 
 template <unsigned int SIZE>
 class StronglyConnectedConfiguration : public LDRPrinter {
@@ -62,7 +65,7 @@ public:
     return true;
   }
 
-  StronglyConnectedConfiguration(){}
+  StronglyConnectedConfiguration() {}
   StronglyConnectedConfiguration(const StronglyConnectedConfiguration& c) {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i] = c.otherBricks[i];
@@ -256,6 +259,25 @@ public:
     }
     return res;
   }
+
+  bool inSet(const std::set<StronglyConnectedConfiguration<SIZE> > &s) {
+    if(s.find(*this) != s.end()) {
+      return true;
+    }
+    if(this->canTurn90()) {
+      for(int i = 0; i < 3; ++i) {
+	this->turn90();
+	if(s.find(*this) != s.end()) {
+	  return true;
+	}
+      }
+      return false;
+    }
+    else {
+      this->turn180();
+      return s.find(*this) != s.end();
+    }
+  }
 };
 
 template <unsigned int SIZE>
@@ -275,9 +297,7 @@ public:
   std::pair<int,int> rotationBrickPosition;
 
   FatSCC() {}
-  FatSCC(const FatSCC &f) : size(f.size), index(f.index), isRotationallySymmetric(f.isRotationallySymmetric) {
-    if(size == 1)
-      return;
+  FatSCC(const FatSCC &f) : size(f.size), index(f.index), isRotationallySymmetric(f.isRotationallySymmetric), rotationBrickPosition(f.rotationBrickPosition) {
     for(int i = 0; i < size-1; ++i) {
       otherBricks[i] = f.otherBricks[i];
     }
@@ -294,13 +314,88 @@ public:
     rotationBrickPosition = scc.rotationBrickPosition();
   }
 
+  FatSCC(std::vector<Brick> v) : size(v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
+    //std::cout << "CONVERTING!" << std::endl;
+    // Ensure level starts at 0:
+    int minLv = 999;
+    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+      if(it->level < minLv)
+	minLv = it->level;
+    }
+    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+      it->level-=minLv;
+    }
+    //std::cout << " min level: " << minLv << std::endl;
+    
+    // Turn into RectilinearBricks and find min:
+    std::vector<RectilinearBrick> rbricks;
+    RectilinearBrick min = v.begin()->toRectilinearBrick();
+    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+      RectilinearBrick rb = it->toRectilinearBrick();
+      if(rb < min)
+	min = rb;
+      rbricks.push_back(rb);
+      //std::cout << "  - " << *it << " -> " << rb << std::endl;
+    }
+    //std::cout << " min: " << min << std::endl;
+
+    // Turn 90 degrees if min is vertical:
+    if(min.horizontal()) {
+      //std::cout << " Turning 90 degrees." << std::endl;
+      for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+	int8_t oldX = it->x;
+	it->x = it->y;
+	it->y = -oldX;
+	it->flipHorizontal();
+      }
+
+      // Find the origin:
+      min = *rbricks.begin();
+      for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+	if(*it < min) {
+	  min = *it;
+	}
+      }
+    }
+
+    // Move all according to the origin:
+    int8_t moveX = min.x;
+    int8_t moveY = min.y;
+    for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+      it->x -= moveX;
+      it->y -= moveY;
+    }
+
+    // Sort and save bricks:
+    std::sort(rbricks.begin(), rbricks.end());
+    int i = -1;
+    for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it, ++i) {
+      if(i == -1)
+	continue; // don't save origin.
+      otherBricks[i] = *it;
+    }
+    /*std::cout << " Resulting rbs: " << std::endl;
+    for(i = 0; i < size-1; ++i) {
+      std::cout << "  - " << otherBricks[i] << std::endl;
+    }//*/
+  }
+
+  template <unsigned int SIZE>
+  StronglyConnectedConfiguration<SIZE> toSCC() const {
+    StronglyConnectedConfiguration<SIZE> ret;
+    for(int i = 0; i < SIZE-1; ++i) {
+      ret.otherBricks[i] = otherBricks[i];
+    }
+    return ret;
+  }
+
   bool angleLocked(const ConnectionPoint &p) const {
     RectilinearBrick b;
     for(int i = 0; i < size; b=otherBricks[i++]) {
       if(b.angleLocks(p))
         return true;
     }
-    return false;    
+    return false;
   }
   bool blocked(const ConnectionPoint &p) const {
     RectilinearBrick b;
@@ -355,10 +450,32 @@ public:
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
+	//std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
 	return false;
       }
       if(*it1 < *it2) {
 	return true;
+      }
+    }
+    return true;
+  }
+
+  bool isRotationallyIdentical(const std::vector<ConnectionPoint> &pointsForSccs) const {
+    if(!isRotationallySymmetric)
+      return false; // not applicaple.
+    std::vector<ConnectionPoint> rotatedPoints;
+    for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
+      ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
+      rotatedPoints.push_back(rotatedPoint);
+    }
+    std::sort(rotatedPoints.begin(), rotatedPoints.end());
+
+    for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
+      if(*it2 < *it1) {
+	return false;
+      }
+      if(*it1 < *it2) {
+	return false;
       }
     }
     return true;
@@ -372,12 +489,33 @@ public:
   }
 
   bool operator<(const FatSCC &c) const {
+    if(index == NO_INDEX) { // Proper comparison:
+      for(int i = 0; i < size-1; ++i) {
+	if(otherBricks[i] != c.otherBricks[i])
+	  return otherBricks[i] < c.otherBricks[i];
+      }
+      return false;
+    }
+
     if(size != c.size)
       return size < c.size;
     return index < c.index;
   }
   bool operator==(const FatSCC &c) const {
     return size == c.size && index == c.index;
+  }
+  bool check(const FatSCC &c) const {
+    if(size != c.size)
+      return true;
+    bool indicesSame = index == c.index;
+    bool otherBricksSame = true;
+    for(int i = 0; i < size-1; ++i) {
+      if(otherBricks[i] != c.otherBricks[i]) {
+	otherBricksSame = false;
+	break;
+      }
+    }
+    return indicesSame == otherBricksSame;
   }
 };
 

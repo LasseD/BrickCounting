@@ -17,7 +17,7 @@ ConnectionPoint::ConnectionPoint(const ConnectionPoint &p, std::pair<int,int> ro
 }
 
 // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
-uint8_t ConnectionPoint::x4x4() const {
+int8_t ConnectionPoint::x4x4() const {
   if(brick.horizontal()) {
     if(type == SW || type == SE)
       return brick.x;
@@ -30,7 +30,7 @@ uint8_t ConnectionPoint::x4x4() const {
   }
 }
 
-uint8_t ConnectionPoint::y4x4() const {
+int8_t ConnectionPoint::y4x4() const {
   if(brick.horizontal()) {
     if(type == SW || type == NW)
       return brick.y+2;
@@ -42,7 +42,7 @@ uint8_t ConnectionPoint::y4x4() const {
     return brick.y+3;
   }
 }
-
+/*
 // For specialized use: Position of connection point 
 double ConnectionPoint::x() const {
   if(type == NW || type == SW)
@@ -55,6 +55,35 @@ double ConnectionPoint::y() const {
     return brick.y-STUD_AND_A_HALF_DISTANCE;
   return brick.y+STUD_AND_A_HALF_DISTANCE;
 }
+//*/
+
+// For specialized use: Position of connection point 
+double ConnectionPoint::x() const {
+  if(brick.horizontal()) {
+    if(type == SW || type == SE)
+      return brick.x-STUD_AND_A_HALF_DISTANCE;
+    return brick.x+STUD_AND_A_HALF_DISTANCE;
+  }
+  else {
+    if(type == NW || type == SW)
+      return brick.x-HALF_STUD_DISTANCE;
+    return brick.x+HALF_STUD_DISTANCE;
+  }
+}
+
+double ConnectionPoint::y() const {
+  if(brick.horizontal()) {
+    if(type == SW || type == NW)
+      return brick.y+HALF_STUD_DISTANCE;
+    return brick.y-HALF_STUD_DISTANCE;
+  }
+  else {
+    if(type == SW || type == SE) 
+      return brick.y-STUD_AND_A_HALF_DISTANCE;
+    return brick.y+STUD_AND_A_HALF_DISTANCE;
+  }
+}
+ //*/
 
 bool ConnectionPoint::operator < (const ConnectionPoint &p) const {
   if(brick != p.brick)
@@ -85,7 +114,8 @@ std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p) {
     os << "A";
   else
     os << "B";
-  os << p.brick;
+  //os << p.brick;
+  //os << p.brickI;
   switch(p.type) {
   case NW : os << "NW"; break;
   case NE : os << "NE"; break;
@@ -118,7 +148,7 @@ bool BrickIdentifier::operator==(const BrickIdentifier &bi) const {
 }
 
 std::ostream& operator<<(std::ostream &os, const BrickIdentifier& bi) {
-  os << "BI[scc=" << bi.sccI << "," << bi.sccBrickI << ",confI=" << bi.configurationSCCI << "]";
+  os << "BI[scc=" << bi.sccI << "," << bi.sccBrickI << "," << bi.configurationSCCI << "]";
   return os;
 }
 

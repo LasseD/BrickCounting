@@ -11,7 +11,7 @@
 #define STUD_DISTANCE 1.0
 #define STUD_AND_A_HALF_DISTANCE 1.5
 
-#define STRONGLY_CONNECTED_BRICK_POSITIONS 76
+#define STRONGLY_CONNECTED_BRICK_POSITIONS 92
 
 // Forward declaration:
 struct ConnectionPoint;
@@ -36,8 +36,7 @@ public:
 
   bool intersects(const RectilinearBrick &b) const;
 
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const;
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) const;
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeCorners) const;
 
   void getConnectionPointsAbove(ConnectionPoint *pts, int brickI);
   void getConnectionPointsBelow(ConnectionPoint *pts, int brickI);
@@ -52,6 +51,7 @@ public:
   bool angleLocks(const ConnectionPoint &p) const;
 
 private:
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeCorners) const;
   void getConnectionPoints(ConnectionPoint *pts, bool above, int brickI);
   bool inInterval(int8_t min, int8_t max, int8_t a) const;
   bool distLessThan2(int8_t a, int8_t b) const;

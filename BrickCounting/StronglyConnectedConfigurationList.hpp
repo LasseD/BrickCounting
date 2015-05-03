@@ -129,8 +129,18 @@ public:
     }
     return v;
   }
+  void deserialize(std::ifstream &is, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) const {
+    unsigned long size;
+    is.read((char*)&size, sizeof(unsigned long));
+    //std::cout << " StronglyConnectedConfigurationList::deserialize FatSCCs of size " << ELEMENT_SIZE << ". " << size << " elements to deserialize." << std::endl;
+    for(int i = 0; i < size; ++i) {
+      StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
+      scc.deserialize(is);
+      s.insert(scc);
+    }
+  }
 
-  void getAllNewBricks(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks) {
+  void getAllNewBricks(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks, bool includeCorners) {
     // Add for all bricks in smaller:
     int tmpSize;
     RectilinearBrick tmp[STRONGLY_CONNECTED_BRICK_POSITIONS];
@@ -139,7 +149,7 @@ public:
     RectilinearBrick b;
     for(int i = 0; i < ELEMENT_SIZE-1; b = smaller.otherBricks[i++]) {
       tmpSize = 0;
-      b.constructAllStronglyConnected(tmp, tmpSize);
+      b.constructAllStronglyConnected(tmp, tmpSize, includeCorners);
 
       for(int j = 0; j < tmpSize; ++j) {
 	RectilinearBrick &b2 = tmp[j];
@@ -155,9 +165,9 @@ public:
   1a) Ensure no intersection with c when doing this!
   2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
   */
-  void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
+  void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, bool includeCorners = false) {
     std::set<RectilinearBrick> newBricks;
-    getAllNewBricks(smaller, newBricks);
+    getAllNewBricks(smaller, newBricks, includeCorners);
 
     // Try all new scc's:
     //std::cout << " Found " << newBricks.size() << " potential new scc's" << std::endl;
@@ -190,16 +200,16 @@ public:
     }
   }
 
-  void addAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller) {
+  void addAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeCorners = false) {
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
-      addAllFor(*it);
+      addAllFor(*it, includeCorners);
     }
   }
 
   void countAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
     std::set<RectilinearBrick> newBricks;
-    getAllNewBricks(smaller, newBricks);
+    getAllNewBricks(smaller, newBricks, false);
 
     // Try all new scc's:
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
@@ -233,7 +243,7 @@ public:
     return sum;
   }
 
-  void printLDRFile() {
+  void printLDRFile(bool includeCorners = false) {
     LDRPrinterHandler h;
 
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
@@ -243,7 +253,11 @@ public:
     }
 
     std::stringstream ss;
-    ss << "scc\\StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
+    if(includeCorners)
+      ss << "old_rc";
+    else
+      ss << "scc";
+    ss << "\\StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
     h.print(ss.str());
   }
 };

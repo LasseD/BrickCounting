@@ -14,15 +14,19 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     nonRectilinearConnectionLists+=mgr.nonRectilinearConnectionLists;
     models+=mgr.models;
     problematic+=mgr.problematic;
-    std::cout << "Found " << mgr.rectilinear << " rectilinear combinations in " << mgr.attempts << " attempts." << std::endl;
+    //std::cout << "Found " << mgr.rectilinear << " rectilinear combinations in " << mgr.attempts << " attempts." << std::endl;
     return;
   }
 
   int sccSize = combinationType[combination.size()];
-  unsigned int i = combinationType[combination.size()-1] == sccSize ? prevSCCIndex : 0;
+  int prevSccSize = combinationType[combination.size()-1];
+  unsigned int i = prevSccSize == sccSize ? prevSCCIndex : 0;
   for(; i < sccsSize[sccSize-1]; ++i) {
     std::vector<FatSCC> v(combination);
-    v.push_back(sccs[sccSize-1][i]);
+    FatSCC &fatSCC = sccs[sccSize-1][i];
+    if(prevSccSize == sccSize && v.back().index != i)
+      assert(v.back().check(fatSCC));
+    v.push_back(fatSCC);
     runForCombination(v, combinationType, i);
   }  
 }
@@ -31,7 +35,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << "ConfigurationManager::runForCombinationType(";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
     std::cout << *it << " ";
-  std::cout << ") started!" << std::endl;
+  std::cout << ") started!" << std::endl;//*/
 
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
@@ -39,6 +43,9 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     v.push_back(sccs[firstSCCSize-1][i]);
     runForCombination(v, combinationType, i);
   }
+
+  std::cout << "Found " << rectilinear << " rectilinear combinations in " << attempts << " attempts." << std::endl;
+
 
   // TODO: Thread here!
 }
@@ -91,6 +98,23 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
 }
 
 void ConfigurationManager::test() const {
-  SingleConfigurationManager::test1();
-  SingleConfigurationManager::test2();
+  /*ConfigurationManager mgr;
+  std::vector<int> v;
+  v.push_back(1);
+  v.push_back(1);
+  v.push_back(1);
+  v.push_back(1);
+
+  //mgr.runForCombinationType(v);
+  
+  std::vector<FatSCC> v2;
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+
+  mgr.runForCombination(v2, v, -1);//*/
+
+  //SingleConfigurationManager::test1();
+  //SingleConfigurationManager::test2();
 }

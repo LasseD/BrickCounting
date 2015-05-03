@@ -50,40 +50,42 @@ bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
   return x-2 <= b.x && b.x <= x+2 && y-2 <= b.y && b.y <= y+2;
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize) const {
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeCorners) const {
   int lv = level();
   if(lv > 0)
-    constructAllStronglyConnected(bricks, bricksSize, lv-1);  
-  constructAllStronglyConnected(bricks, bricksSize, lv+1);  
+    constructAllStronglyConnected(bricks, bricksSize, lv-1, includeCorners);  
+  constructAllStronglyConnected(bricks, bricksSize, lv+1, includeCorners);  
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level) const {
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeCorners) const {
   if(horizontal()) {
     // all horizontal:
-    for(int8_t xx = x-2; xx <= x+2; ++xx) {
+    for(int8_t xx = x-3; xx <= x+3; ++xx) {
+      bool xExtreme = xx == x-3 || xx == x+3;
       for(int8_t yy = y-1; yy <= y+1; ++yy) {
-        bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
+	bool yExtreme = yy == y-1 || yy == y+1;
+	if(includeCorners || !(xExtreme && yExtreme))
+	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
       }
     }
-    bricks[bricksSize++] = RectilinearBrick(x-3, y, level, true);
-    bricks[bricksSize++] = RectilinearBrick(x+3, y, level, true);
   }
   else { // vertical
     // all vertical:
     for(int8_t xx = x-1; xx <= x+1; ++xx) {
-      for(int8_t yy = y-2; yy <= y+2; ++yy) {
-        bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
+      bool xExtreme = xx == x-1 || xx == x+1;
+      for(int8_t yy = y-3; yy <= y+3; ++yy) {
+	bool yExtreme = yy == y-3 || yy == y+3;
+	if(includeCorners || !(xExtreme && yExtreme))
+	  bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
       }
     }
-    bricks[bricksSize++] = RectilinearBrick(x, y-3, level, false);
-    bricks[bricksSize++] = RectilinearBrick(x, y+3, level, false);
   }
   // all crossing:
   for(int8_t xx = x-2; xx <= x+2; ++xx) {
     bool xExtreme = xx == x-2 || xx == x+2;
     for(int8_t yy = y-2; yy <= y+2; ++yy) {
       bool yExtreme = yy == y-2 || yy == y+2;
-      if(!(xExtreme && yExtreme))
+      if(includeCorners || !(xExtreme && yExtreme))
 	bricks[bricksSize++] = RectilinearBrick(xx, yy, level, !horizontal());
     }
   }
@@ -138,7 +140,7 @@ void RectilinearBrick::getConnectionPoints(ConnectionPoint *pts, bool above, int
 }
 
 bool RectilinearBrick::atConnectingLevelOf(const ConnectionPoint &p) const {
-  return p.above ? level() == p.brick.level()+1 : level() == p.brick.level()-1;
+  return p.above ? level() == p.brick.level()+1 : level()+1 == p.brick.level();
 }
 bool RectilinearBrick::blocks(const ConnectionPoint &p) const {
   if(!atConnectingLevelOf(p))
