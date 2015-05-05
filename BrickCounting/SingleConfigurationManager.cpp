@@ -62,108 +62,6 @@ bool SingleConfigurationManager::isRotationallyMinimal(const ConnectionList &l) 
   return true;
 }
 
-uint64_t SingleConfigurationManager::encode(const ConnectionList &l, int* perm, bool *rotated, unsigned int i) const {
-  if(i == combinationSize) {
-    // Build permuted list:
-    ConnectionList permutedList;
-    for(std::set<TinyConnection>::const_iterator it = l.begin(); it != l.end(); ++it) {
-      IConnectionPoint p1 = it->first;
-      IConnectionPoint p2 = it->second;
-
-      int confSCCI1 = p1.first.configurationSCCI;
-      p1.first.configurationSCCI = perm[confSCCI1];
-      if(rotated[confSCCI1]) {
-	p1.second = ConnectionPoint(p1.second, combination[confSCCI1].rotationBrickPosition);
-      }
-
-      int confSCCI2 = p2.first.configurationSCCI;
-      p2.first.configurationSCCI = perm[confSCCI2];
-      if(rotated[confSCCI2]) {
-	p2.second = ConnectionPoint(p2.second, combination[confSCCI2].rotationBrickPosition);
-      }
-
-      permutedList.insert(std::make_pair(p1,p2));
-    }
-
-    return encoder.encode(permutedList);
-    // test permuted list:
-    /*std::cout << "Testing permutation: ";
-    for(unsigned int j = 0; j < combinationSize; ++j)
-      std::cout << j << "->" << perm[j] << ", ";
-    std::cout << std::endl;
-    std::cout << "   " << permutedList << std::endl;//*/
-    //return foundConnectionLists.find(permutedList) == foundConnectionLists.end();
-  }  
-  rotated[i] = false;
-  uint64_t ret = encode(l, perm, rotated, i+1);
-  if(combination[i].isRotationallySymmetric) {
-    rotated[i] = true;
-    return std::min(ret, encode(l, perm, rotated, i+1));
-  }
-  else
-    return ret;
-}
-
-uint64_t SingleConfigurationManager::encode(const ConnectionList &l, PermutationHandler &ph, int* perm, int* colors, unsigned int i) const {
-  if(i == combinationSize) {    
-    /*std::cout << "Combination found: ";
-    for(unsigned int i = 0; i < combinationSize; ++i)
-      std::cout << perm[i] << " ";
-    std::cout << std::endl;//*/
-    /*std::cout << "Known lists: ";
-    for(std::set<ConnectionList>::const_iterator it = foundConnectionLists.begin(); it != foundConnectionLists.end(); ++it)
-      std::cout << "   " << *it << std::endl;//*/
-    bool rotated[6];
-    return encode(l, perm, rotated, 0);
-  }
-
-  // try all combinations:
-  PermutationNode *node = ph.root();
-  int prevColor = -1;
-  uint64_t minEncoded = 0xFFFFFFFFFFFFFFFF;
-  while(node->next != NULL) {
-    PermutationNode *n = node->next;    
-    // remove n from permutation:
-    node->next = n->next;
-    
-    perm[i] = n->val;
-    int currColor = colors[n->val];
-    if(prevColor == -1 || currColor == prevColor) {
-      minEncoded = std::min(minEncoded, encode(l, ph, perm, colors, i+1));
-      node->next = n;
-    }
-    else {
-      minEncoded = std::min(minEncoded, encode(l, ph, perm, colors, i+1));
-      node->next = n;
-      return minEncoded;
-    }
-
-    // re-insert in permutation and go to next:
-    node->next = n; // n->next is already set (never changes)
-    node = n;
-    prevColor = currColor;
-  }
-  return minEncoded;
-}
-
-uint64_t SingleConfigurationManager::encode(const ConnectionList &l) const {
-  // Try all combinations of FatSCC index shuffling:
-  int map[6];
-  int colors[6];
-  colors[0] = 0;
-  for(unsigned int i = 0; i < combinationSize; ++i) {
-    map[i] = i;
-    if(i > 0) {
-      if(combination[i].size == combination[i-1].size && combination[i].index == combination[i-1].index)
-	colors[i] = colors[i-1];
-      else
-	colors[i] = colors[i-1]+1;
-    }
-  }
-  PermutationHandler ph(combinationSize);
-  return encode(l, ph, map, colors, 0);
-}
-
 void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize) {
   if(remainingSize == 0) {
     ++attempts;
@@ -181,6 +79,9 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
       if(!isRotationallyMinimal(found)) {
 	return; // The rotationally minimal is eventually found.
       }
+
+      encoder.testCodec(found); // TODO: REM
+
       // Check if new:
       //std::cout << "Encoding " << found << std::endl;
 
@@ -313,67 +214,3 @@ void SingleConfigurationManager::printLDRFile() const {
     ss << "_" << combination[i].index;
   h.print(ss.str());
 }
-
-void SingleConfigurationManager::test1() {
-  /*// Setup:
-  RectilinearBrick b1;
-  StronglyConnectedConfiguration<1> scc1;
-  RectilinearBrick b2(0, 3, 1, false); // true for horizontal
-  StronglyConnectedConfiguration<2> scc2(scc1, b2);
-  RectilinearBrick b3(0, 6, 0, false);
-  StronglyConnectedConfiguration<3> scc3(scc2, b3);//*//*
-  std::cout << "bricks of scc3: " << std::endl;
-  RectilinearBrick b;
-  for(int i = 0; i < 3; b = scc3.otherBricks[i++])
-    std::cout << " - " << b << std::endl;
-  FatSCC fscc3(scc3, 6);
-  std::cout << "Rotation point: " << fscc3.rotationBrickPosition.X << "," << fscc3.rotationBrickPosition.Y << std::endl;
-
-  // Test where seen:
-  std::vector<FatSCC> combination;
-  combination.push_back(fscc3);
-  combination.push_back(FatSCC(scc1, 0));
-  SingleConfigurationManager mgr(combination);
-  mgr.run();
-  
-  Connection connection1(IConnectionPoint(BrickIdentifier(0,0,0), ConnectionPoint(SW, b1, false, -1)), IConnectionPoint(BrickIdentifier(0,0,1), ConnectionPoint(NW, b1, true, -1)), 0.0);
-  ConnectionList l;
-  l.insert(connection1);
-  std::cout << "Test if connection list is rotationally minimal: " << mgr.isRotationallyMinimal(l) << std::endl;
-
-  bool inFoundList = mgr.foundConnectionLists.find(l) != mgr.foundConnectionLists.end();
-  std::cout << "Test if connection list is falsely seen among the " << mgr.foundConnectionLists.size() << " found lists: " << inFoundList << std::endl;
-  std::cout << "Test if combinations of connection list is unknown: " << mgr.encode(l) << std::endl;  //*/
-}
-void SingleConfigurationManager::test2() {
-  /*// Setup:
-  RectilinearBrick b1;
-  RectilinearBrick b2(0, 0, 1, true);
-  StronglyConnectedConfiguration<1> scc1;
-  StronglyConnectedConfiguration<2> scc2(scc1, b2);
-
-  Connection connection1(IConnectionPoint(BrickIdentifier(9,1,0), ConnectionPoint(SW, b2, false, -1)), IConnectionPoint(BrickIdentifier(9,1,0), ConnectionPoint(NW, b1, true, -1)), 0.0);
-
-  Configuration rc(FatSCC(scc2, 0));
-  rc.add(FatSCC(scc2, 0), connection1);
-
-  // Test where seen:
-  std::vector<FatSCC> combination;
-  combination.push_back(FatSCC(scc2, 9));
-  combination.push_back(FatSCC(scc2, 9));
-  SingleConfigurationManager mgr(combination);
-
-  std::vector<Connection> v;
-  v.push_back(connection1);
-  std::cout << "Minimal attempt: " << mgr.isRotationallyMinimal(v) << std::endl;
-
-  ConnectionList found;
-  std::cout << "Realizable: " << rc.isRealizable(found) << std::endl;
-  std::cout << "Minimal found: " << mgr.isRotationallyMinimal(found) << std::endl;
-
-  // Print:
-  LDRPrinterHandler h;
-  h.add(&rc);
-  h.print("rc/Test2");  //*/
-}
-

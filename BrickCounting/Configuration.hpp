@@ -132,8 +132,7 @@ public:
     return true;
   }
 
-  Configuration(const FatSCC &scc) {
-    bricksSize = 0;
+  void initSCC(const FatSCC &scc) {
     RectilinearBrick b;
     origBricks.insert(std::make_pair(0,Brick(b)));
     for(int i = 0; i < scc.size; b=scc.otherBricks[i++]) {
@@ -141,6 +140,10 @@ public:
       IBrick ib(b, brick, BrickIdentifier(scc.index, i, 0));
       bricks[bricksSize++] = ib;
     }
+  }
+
+  Configuration(const FatSCC &scc) : bricksSize(0) {
+    initSCC(scc);
   }
 
   void add(const FatSCC &scc, const Connection &c) {
@@ -170,6 +173,41 @@ public:
     }
   }
 
+  Configuration(FatSCC const * const sccs, const std::vector<Connection> &cs) : bricksSize(0) {
+    initSCC(sccs[0]);
+
+    int unusedConnections = cs.size();
+    bool usedConnections[8] = {false};
+    bool addedSccs[6] = {false};
+    addedSccs[0] = true;
+
+    while(unusedConnections > 0) {
+      for(unsigned int i = 0; i < cs.size(); ++i) {
+	if(usedConnections[i])
+	  continue;
+	const Connection &c = cs[i];
+	int i1 = c.p1.first.configurationSCCI;
+	int i2 = c.p2.first.configurationSCCI;
+	if(addedSccs[i1]) {
+	  usedConnections[i] = true;
+	  unusedConnections--;
+	  if(!addedSccs[i2]) {
+	    add(sccs[i2], c);
+	    addedSccs[i2] = true;
+	  }
+	}
+	else if(addedSccs[i2]) {
+	  Connection flipped(c);
+	  std::swap(flipped.p1, flipped.p2);
+	  usedConnections[i] = true;
+	  unusedConnections--;
+	  add(sccs[i1], flipped);	  
+	  addedSccs[i1] = true;
+	}
+      }
+    }
+  }
+
   void toLDR(std::ofstream &os, int x, int y, int ldrColor) const {    
     int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, 3, 85, LDR_COLOR_BLACK};
 
@@ -177,24 +215,16 @@ public:
       bricks[i].b.toLDR(os, x, y, colors[bricks[i].bi.configurationSCCI]);
     }
   }
-};
 
-struct PossibleConnections {
-  std::pair<int,int> possibleConnections[15]; // Brick index -> brick index.
-  int rPossibleConnections[36]; // Reverse lookup of ^^: from * 6 + to -> index
-
-  PossibleConnections() {
-    int i = 0;
-    for(int from = 0; from < 5; ++from) {
-      for(int to = from+1; to <= 5; ++to) {
-	rPossibleConnections[from*6 + to] = i;
-	possibleConnections[i] = std::make_pair(from,to);
-	++i;
-      }
-    }
+  FatSCC toMinSCC() const {
+    std::vector<Brick> v;
+    for(int i = 0; i < bricksSize; ++i)
+      v.push_back(bricks[i].b);
+    FatSCC ret(v);
+    ret = ret.rotateToMin();
+    return ret;
   }
 };
-static PossibleConnections possibleConnections; // Only used in ConfigurationEncoder
 
 /*
   Used for uniquely hashing a configuration into a uint64_t.
@@ -267,7 +297,7 @@ struct ConfigurationEncoder {
      -- aboveConnectionPointType(2 bit) 
      -- -||- below
      */
-    uint64_t encoded = (baseIndex << 1) + rotate;
+    uint64_t encoded = 0;
     for(std::vector<TinyConnection>::iterator it = toEncode.begin(); it != toEncode.end(); ++it) {
       // Ensure above, then below
       TinyConnection &c = *it;
@@ -288,6 +318,7 @@ struct ConfigurationEncoder {
       encoded = (encoded << 3) + identifierToCompressed[belowI];
       encoded = (encoded << 2) + (int)(cpBelow.type);
     }
+    encoded = (encoded << 4) + (baseIndex << 1) + rotate;
     
     std::cout << "..ConfigurationEncoder::Encoded " << toEncode.size() << " connections: " << encoded << std::endl;
     return encoded;
@@ -365,38 +396,63 @@ struct ConfigurationEncoder {
     return minEncoded;
   }
 
-	/*
-TODO: Implement if encode shows problems.
   void decode(uint64_t encoded, ConnectionList &list) const {
-    unsigned int size = encoded & 0x0F;
-    encoded >>= 4;
+    bool rotate = encoded & 1;
+    rotate >>= 1;
+    int baseIndex = encoded & 0x07;
+    encoded >>= 3;
 
-    for(unsigned int i = 0; i < size; ++i) {
+    for(unsigned int i = 0; i < fatSccSize-1; ++i) {
       // decode parts:
-      bool cp2Above = encoded & 0x01;
-      encoded >>= 1;
-      ConnectionPointType cp2Type = encoded & 0x03;
+      ConnectionPointType cp2Type = (ConnectionPointType)(encoded & 0x03);
       encoded >>= 2;
-      ConnectionPointType cp1Type = encoded & 0x03;
+      int cp2Index = encoded & 0x0F;
+      encoded >>= 4;
+      ConnectionPointType cp1Type = (ConnectionPointType)(encoded & 0x03);
       encoded >>= 2;
-      int connectionsIndex = encoded & 0x0F;
+      int cp1Index = encoded & 0x0F;
       encoded >>= 4;
 
       // Reconstruct TinyConnection:
-      std::pair<int,int> connectionIndices = possibleConnections.possibleConnections(connectionsIndex);
-      const IBrick &ib1 = c.bricks[connectionIndices.first];
-      const ConnectionPoint cp1(cp1Type, b1.rb, !cp2Above, ib1.sccBrickI);
-      const IBrick &ib2 = c.bricks[connectionIndices.second];
-      const ConnectionPoint cp2(cp2Type, b2.rb, cp2Above, ib2.sccBrickI);
+      const BrickIdentifier &ib1 = compressedToIdentifier[cp1Index];
+      RectilinearBrick rb1 = fatSccs[ib1.configurationSCCI][ib1.sccBrickI];
+      ConnectionPoint cp1(cp1Type, rb1, true, ib1.sccBrickI);
+      if(ib1.configurationSCCI == baseIndex && rotate)
+	cp1 = ConnectionPoint(cp1, fatSccs[ib1.configurationSCCI].rotationBrickPosition);
+      const BrickIdentifier &ib2 = compressedToIdentifier[cp2Index];
+      RectilinearBrick rb2 = fatSccs[ib2.configurationSCCI][ib2.sccBrickI];
+      ConnectionPoint cp2(cp2Type, rb2, false, ib2.sccBrickI);
+      if(ib2.configurationSCCI == baseIndex && rotate)
+	cp2 = ConnectionPoint(cp2, fatSccs[ib2.configurationSCCI].rotationBrickPosition);
 
-      TinyConnection c(cp1,cp2);
-      list.add(c);
+      TinyConnection c(IConnectionPoint(ib1,cp1),IConnectionPoint(ib2,cp2));
+      list.insert(c);
     }
     
-    std::cout << "..ConfigurationEncoder::Encoded " << list.size() << " connections: " << encoded << std::endl;
-    return encoded;
-  }*/
+    std::cout << "..ConfigurationEncoder::decode " << list.size() << " connections: " << list << std::endl;
+  }
 
+  void testCodec(const ConnectionList &list1) const {
+    std::vector<Connection> cs;
+    for(std::set<TinyConnection>::const_iterator it = list1.begin(); it != list1.end(); ++it)
+      cs.push_back(Connection(*it));
+    Configuration c1(fatSccs, cs);
+
+    FatSCC min1 = c1.toMinSCC();
+
+    uint64_t encoded = encode(list1);
+    ConnectionList list2;
+    decode(encoded, list2);
+    
+    cs.clear();
+    for(std::set<TinyConnection>::const_iterator it = list2.begin(); it != list2.end(); ++it)
+      cs.push_back(Connection(*it));
+    Configuration c2(fatSccs, cs);
+
+    FatSCC min2 = c2.toMinSCC();
+    
+    assert(min1 == min2);
+  }
 };
 
 #endif // CONFIGURATION_HPP

@@ -29,8 +29,8 @@ void runTestA() {
 int main(int cargs, char** args) {  
   ConfigurationManager mgr;
   //mgr.test();
-  //mgr.runForSize(2);
-  mgr.runForSize(3);
+  mgr.runForSize(2);
+  //mgr.runForSize(3);
   //mgr.runForSize(4);
   //mgr.runForSize(5);
   //*/

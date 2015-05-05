@@ -488,6 +488,14 @@ public:
     return p < rotatedPoint;
   }
 
+  RectilinearBrick operator[](int i) const {
+    assert(i < size);
+    assert(i >= 0);
+    if(i == 0) {
+      return RectilinearBrick();
+    }
+    return otherBricks[i-1];
+  }
   bool operator<(const FatSCC &c) const {
     if(index == NO_INDEX) { // Proper comparison:
       for(int i = 0; i < size-1; ++i) {
@@ -516,6 +524,120 @@ public:
       }
     }
     return indicesSame == otherBricksSame;
+  }
+
+  bool ensureOriginIsSmallest() {
+    int minI = -1;
+    RectilinearBrick min; // origin.
+    for(int i = 0; i < size-1; ++i) {
+      if(otherBricks[i] < min) {
+        minI = i;
+        min = otherBricks[i];
+      }
+    }
+
+    if(minI == -1) 
+      return false;
+
+    // Move all according to the new origin:
+    for(int i = 0; i < size-1; ++i) {
+      otherBricks[i].x -= min.x;
+      otherBricks[i].y -= min.y;
+    }
+    
+    // Re-introduce old origin at the brick now representing the new origin:
+    otherBricks[minI].x -= min.x;
+    otherBricks[minI].y -= min.y;
+    std::sort(otherBricks, &otherBricks[size-1]);
+    return true;
+  }
+
+  /*
+  Turns this scc 90 degrees
+  Might cause reordering. 
+  Causes new brick to be "origin".
+  It is assumed that it is possible to turn 90 degrees.
+  1,2 -> 2,-1 -> -1,-2
+  */
+  void turn90() {
+    // First turn 90:
+    for(int i = 0; i < size-1; ++i) {
+      int8_t oldX = otherBricks[i].x;
+      otherBricks[i].x = otherBricks[i].y;
+      otherBricks[i].y = -oldX;
+      otherBricks[i].flipHorizontal();
+    }
+
+    // Find the new origin:
+    int minI = 0;
+    for(int i = 1; i < size-1; ++i) {
+      if(otherBricks[i] < otherBricks[minI])
+        minI = i;
+    }
+
+    // Move all according to the new origin:
+    int8_t moveX = otherBricks[minI].x;
+    int8_t moveY = otherBricks[minI].y;
+    for(int i = 0; i < size-1; ++i) {
+      otherBricks[i].x -= moveX;
+      otherBricks[i].y -= moveY;
+    }
+
+    // Re-introduce the turned old origin:
+    otherBricks[minI].setHorizontalTrue(); 
+    otherBricks[minI].x -= moveX;
+    otherBricks[minI].y -= moveY;
+
+    // Sort bricks:
+    std::sort(otherBricks, &otherBricks[size-1]);
+  }
+
+  void turn180() {
+    // First turn all bricks 180:
+    for(int i = 0; i < size-1; ++i) {
+      otherBricks[i].x = -otherBricks[i].x;
+      otherBricks[i].y = -otherBricks[i].y;
+    }
+    if(size == 2)
+      return;
+
+    // Find the new origin if necessary. If no change: sort.:
+    if(!ensureOriginIsSmallest())
+      std::sort(otherBricks, &(otherBricks[size-1]));
+  }
+
+  bool canTurn90() const {
+    if(size <= 2) {
+      return false;
+    }
+
+    for(int i = 0; i < size-1; ++i) {
+      if(otherBricks[i].level() > 0)
+        return false;
+      if(otherBricks[i].horizontal())
+        return true;
+    }
+    return false;
+  }
+  
+  FatSCC rotateToMin() const {
+    FatSCC min(*this);
+    FatSCC candidate(*this);
+    if(canTurn90()) {
+      for(int i = 0; i < 3; ++i) {
+	candidate.turn90();
+	if(candidate < min) {
+	  min = candidate;
+	}
+      }
+    }
+    else {
+      candidate.turn180();
+      if(candidate < min) {
+	min = candidate;
+      }
+    }
+    return min;
   }
 };
 
