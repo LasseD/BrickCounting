@@ -641,13 +641,12 @@ public:
   }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const FatSCC& c)
-{
+inline std::ostream& operator<<(std::ostream& os, const FatSCC& c) {
   os << "FatSCC[size=" << c.size << ",index=" << c.index << ",symmetric=" << c.isRotationallySymmetric;
   for(int i = 0; i < c.size-1; ++i)
     os << c.otherBricks[i];
   os << "]";
   return os;
-}//*/
+}
 
 #endif // STRONGLY_CONNECTED_CONFIGURATION_HPP

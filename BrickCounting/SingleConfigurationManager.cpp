@@ -67,9 +67,13 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
     ++attempts;
     Configuration c(combination[0]);
     // Build Configuration and investigate
-    //std::cout << " Investigating for: " << std::endl;
+#ifdef _TRACE
+    std::cout << " Investigating for: " << std::endl;
+#endif
     for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it) {
-      //std::cout << " - " << *it << std::endl;
+#ifdef _TRACE
+      std::cout << " - " << *it << std::endl;
+#endif
       c.add(combination[it->p2.first.configurationSCCI], *it);
     }
     
@@ -77,7 +81,7 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
     ConnectionList found;
     if(c.isRealizable(found)) {
       if(!isRotationallyMinimal(found)) {
-	return; // The rotationally minimal is eventually found.
+	return; // The rotationally minimal is eventually found... check not needed anymore.
       }
 
       encoder.testCodec(found); // TODO: REM
@@ -137,6 +141,10 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
 }
 
 void SingleConfigurationManager::run() {
+#ifdef _TRACE
+  std::cout << "INIT SingleConfigurationManager::run()" << std::endl;
+#endif
+
   // Try all combinations!
   std::vector<IConnectionPoint> abovePool, belowPool;
   std::vector<Connection> l;

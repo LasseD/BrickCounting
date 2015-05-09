@@ -6,7 +6,7 @@
 #
 # for C++ define  CC = g++
 CC = g++
-CFLAGS = -Wall
+CFLAGS = -Wall -D_TRACE=1
 #CFLAGS = -Wall -O2 -DNDEBUG
 
 # typing 'make' will invoke the first target entry in the file 
