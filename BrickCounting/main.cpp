@@ -27,8 +27,12 @@ void runTestA() {
 * MAIN ENTRY POINT!
 */
 int main(int cargs, char** args) {  
+  // Create SCC data files:
+  //StronglyConnectedConfigurationManager mgr;
+  //mgr.create();
+
+  // Rund RC:
   ConfigurationManager mgr;
-  //mgr.test();
   mgr.runForSize(2);
   //mgr.runForSize(3);
   //mgr.runForSize(4);

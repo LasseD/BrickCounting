@@ -27,7 +27,7 @@ public:
     std::stringstream ss;
     ss << "scc\\" << ELEMENT_SIZE;
     std::string s = ss.str();
-    CreateDirectory(s.c_str(), NULL);
+    //CreateDirectory(s.c_str(), NULL);
     //CreateDirectory(std::wstring(s.begin(),s.end()).c_str(), NULL);
     ss << "\\hash" << hash << ".dat";
 
@@ -122,7 +122,7 @@ public:
     is.read((char*)&size, sizeof(unsigned long));
     //std::cout << " StronglyConnectedConfigurationList::deserialize FatSCCs of size " << ELEMENT_SIZE << ". " << size << " elements to deserialize." << std::endl;
     FatSCC* v = new FatSCC[size];
-    for(int i = 0; i < size; ++i) {
+    for(unsigned int i = 0; i < size; ++i) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
       scc.deserialize(is);
       v[i] = FatSCC(scc, i);

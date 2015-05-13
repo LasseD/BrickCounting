@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <assert.h>
 #include <math.h>
+#include <cmath>
 
 /*
 Constructor used for finding connection points:
@@ -99,9 +100,13 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   }//*/
 }
 
+double round(double number) {
+    return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
+}
+
 RectilinearBrick Brick::toRectilinearBrick() const {
-  int x = round(this->center.X);
-  int y = round(this->center.Y);
+  int x = (int)round(this->center.X);
+  int y = (int)round(this->center.Y);
   double a = angle*2/M_PI;
   if(a < 0)
     a = -a;

@@ -24,21 +24,21 @@ public:
     const RectilinearBrick origin;
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] < origin ||
-	 otherBricks[i].x < -15 || otherBricks[i].x > 15 || otherBricks[i].y < -15 || otherBricks[i].y > 15) {
-	std::cerr << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
-        return false;
+        otherBricks[i].x < -15 || otherBricks[i].x > 15 || otherBricks[i].y < -15 || otherBricks[i].y > 15) {
+          std::cerr << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
+          return false;
       }
       if(origin.intersects(otherBricks[i])) {
-	std::cerr << "Verification failed for " << *this << ": Origin intersected!" << std::endl;
-	return false;
+        std::cerr << "Verification failed for " << *this << ": Origin intersected!" << std::endl;
+        return false;
       }
     }
     return true;
   }
-  
+
   /*
-    Return true if changed.
-   */
+  Return true if changed.
+  */
   bool ensureOriginIsSmallest() {
     int minI = -1;
     RectilinearBrick min; // origin.
@@ -57,7 +57,7 @@ public:
       otherBricks[i].x -= min.x;
       otherBricks[i].y -= min.y;
     }
-    
+
     // Re-introduce old origin at the brick now representing the new origin:
     otherBricks[minI].x -= min.x;
     otherBricks[minI].y -= min.y;
@@ -171,9 +171,9 @@ public:
     RectilinearBrick furthest;
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i].level() > 0)
-	break;
+        break;
       if(otherBricks[i].horizontal())
-	continue; // horizontal first - ignore these!
+        continue; // horizontal first - ignore these!
       furthest = otherBricks[i];
     }
     return std::make_pair(furthest.x, furthest.y);
@@ -241,9 +241,9 @@ public:
     RectilinearBrick b;
     for(int i = 0; i < SIZE; b = otherBricks[i++]) {
       if(b.horizontal())
-	++hLayerSizes[b.level()];
+        ++hLayerSizes[b.level()];
       else
-	++vLayerSizes[b.level()];
+        ++vLayerSizes[b.level()];
     }
 
     // encode:
@@ -251,10 +251,10 @@ public:
     for(int i = 0; i < SIZE; ++i) {
       res *= 10;
       if(vLayerSizes[i] == hLayerSizes[i]) {
-	res += hLayerSizes[i]+vLayerSizes[i]+5;	
+        res += hLayerSizes[i]+vLayerSizes[i]+5;	
       }
       else {
-	res += hLayerSizes[i]+vLayerSizes[i];
+        res += hLayerSizes[i]+vLayerSizes[i];
       }
     }
     return res;
@@ -266,10 +266,10 @@ public:
     }
     if(this->canTurn90()) {
       for(int i = 0; i < 3; ++i) {
-	this->turn90();
-	if(s.find(*this) != s.end()) {
-	  return true;
-	}
+        this->turn90();
+        if(s.find(*this) != s.end()) {
+          return true;
+        }
       }
       return false;
     }
@@ -317,23 +317,23 @@ public:
   FatSCC(std::vector<Brick> v) : size(v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
     //std::cout << "CONVERTING!" << std::endl;
     // Ensure level starts at 0:
-    int minLv = 999;
+    int8_t minLv = 99;
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
       if(it->level < minLv)
-	minLv = it->level;
+        minLv = it->level;
     }
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
       it->level-=minLv;
     }
     //std::cout << " min level: " << minLv << std::endl;
-    
+
     // Turn into RectilinearBricks and find min:
     std::vector<RectilinearBrick> rbricks;
     RectilinearBrick min = v.begin()->toRectilinearBrick();
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
       RectilinearBrick rb = it->toRectilinearBrick();
       if(rb < min)
-	min = rb;
+        min = rb;
       rbricks.push_back(rb);
       //std::cout << "  - " << *it << " -> " << rb << std::endl;
     }
@@ -343,18 +343,18 @@ public:
     if(min.horizontal()) {
       //std::cout << " Turning 90 degrees." << std::endl;
       for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
-	int8_t oldX = it->x;
-	it->x = it->y;
-	it->y = -oldX;
-	it->flipHorizontal();
+        int8_t oldX = it->x;
+        it->x = it->y;
+        it->y = -oldX;
+        it->flipHorizontal();
       }
 
       // Find the origin:
       min = *rbricks.begin();
       for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
-	if(*it < min) {
-	  min = *it;
-	}
+        if(*it < min) {
+          min = *it;
+        }
       }
     }
 
@@ -371,12 +371,12 @@ public:
     int i = -1;
     for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it, ++i) {
       if(i == -1)
-	continue; // don't save origin.
+        continue; // don't save origin.
       otherBricks[i] = *it;
     }
     /*std::cout << " Resulting rbs: " << std::endl;
     for(i = 0; i < size-1; ++i) {
-      std::cout << "  - " << otherBricks[i] << std::endl;
+    std::cout << "  - " << otherBricks[i] << std::endl;
     }//*/
   }
 
@@ -425,15 +425,15 @@ public:
       for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
           above.insert(tmp[j]);
- 	  //std::cout << " - " << tmp[j] << std::endl;
-	}
+          //std::cout << " - " << tmp[j] << std::endl;
+        }
       }
       b.getConnectionPointsBelow(tmp, i);
       for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
           below.insert(tmp[j]);
-	  //std::cout << " - " << tmp[j] << std::endl;
-	}
+          //std::cout << " - " << tmp[j] << std::endl;
+        }
       }
     }    
   }
@@ -450,11 +450,11 @@ public:
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
-	//std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
-	return false;
+        //std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
+        return false;
       }
       if(*it1 < *it2) {
-	return true;
+        return true;
       }
     }
     return true;
@@ -472,10 +472,10 @@ public:
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
-	return false;
+        return false;
       }
       if(*it1 < *it2) {
-	return false;
+        return false;
       }
     }
     return true;
@@ -499,8 +499,8 @@ public:
   bool operator<(const FatSCC &c) const {
     if(index == NO_INDEX) { // Proper comparison:
       for(int i = 0; i < size-1; ++i) {
-	if(otherBricks[i] != c.otherBricks[i])
-	  return otherBricks[i] < c.otherBricks[i];
+        if(otherBricks[i] != c.otherBricks[i])
+          return otherBricks[i] < c.otherBricks[i];
       }
       return false;
     }
@@ -519,8 +519,8 @@ public:
     bool otherBricksSame = true;
     for(int i = 0; i < size-1; ++i) {
       if(otherBricks[i] != c.otherBricks[i]) {
-	otherBricksSame = false;
-	break;
+        otherBricksSame = false;
+        break;
       }
     }
     return indicesSame == otherBricksSame;
@@ -544,7 +544,7 @@ public:
       otherBricks[i].x -= min.x;
       otherBricks[i].y -= min.y;
     }
-    
+
     // Re-introduce old origin at the brick now representing the new origin:
     otherBricks[minI].x -= min.x;
     otherBricks[minI].y -= min.y;
@@ -619,22 +619,22 @@ public:
     }
     return false;
   }
-  
+
   FatSCC rotateToMin() const {
     FatSCC min(*this);
     FatSCC candidate(*this);
     if(canTurn90()) {
       for(int i = 0; i < 3; ++i) {
-	candidate.turn90();
-	if(candidate < min) {
-	  min = candidate;
-	}
+        candidate.turn90();
+        if(candidate < min) {
+          min = candidate;
+        }
       }
     }
     else {
       candidate.turn180();
       if(candidate < min) {
-	min = candidate;
+        min = candidate;
       }
     }
     return min;
@@ -642,7 +642,10 @@ public:
 };
 
 inline std::ostream& operator<<(std::ostream& os, const FatSCC& c) {
-  os << "FatSCC[size=" << c.size << ",index=" << c.index << ",symmetric=" << c.isRotationallySymmetric;
+  os << "FatSCC[size=" << c.size;
+  if(c.index != NO_INDEX)
+    os << ",index=" << c.index;
+  os << ",symmetric=" << c.isRotationallySymmetric;
   for(int i = 0; i < c.size-1; ++i)
     os << c.otherBricks[i];
   os << "]";

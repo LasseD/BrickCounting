@@ -60,7 +60,7 @@ public:
       const TinyConnection &c1 = *it1;
       const TinyConnection &c2 = *it2;
       if(c1 != c2)
-	return c1 < c2;
+        return c1 < c2;
     }
     return false;
   }
@@ -113,20 +113,20 @@ public:
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick &ib = bricks[i];
       for(int j = i+1; j < bricksSize; ++j) {
-	const IBrick &jb = bricks[j];
-	//std::cout << "   isRealizable step " << ib.bi << "/" << ib.b << "<>" << jb.bi << "/" << jb.b << std::endl;
-	if(ib.bi.configurationSCCI == jb.bi.configurationSCCI)
-	  continue; // from same scc.
-	bool connected;
-	ConnectionPoint pi, pj;
-	if(ib.b.intersects(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
-	  if(!connected)
-	    return false;
-	  pi.brickI = ib.bi.sccBrickI;
-	  pj.brickI = jb.bi.sccBrickI;
-	  Connection c(IConnectionPoint(ib.bi, pi), IConnectionPoint(jb.bi, pj), 0.0);
-	  found.insert(c);
-	}
+        const IBrick &jb = bricks[j];
+        //std::cout << "   isRealizable step " << ib.bi << "/" << ib.b << "<>" << jb.bi << "/" << jb.b << std::endl;
+        if(ib.bi.configurationSCCI == jb.bi.configurationSCCI)
+          continue; // from same scc.
+        bool connected;
+        ConnectionPoint pi, pj;
+        if(ib.b.intersects(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
+          if(!connected)
+            return false;
+          pi.brickI = ib.bi.sccBrickI;
+          pj.brickI = jb.bi.sccBrickI;
+          Connection c(IConnectionPoint(ib.bi, pi), IConnectionPoint(jb.bi, pj), 0.0);
+          found.insert(c);
+        }
       }
     }
     return true;
@@ -159,7 +159,7 @@ public:
 
     // Compute position of bricks:
     double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angle;
-    int level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
+    int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
     //std::cout << "Configuration::add(" << scc << ")" << std::endl;
     RectilinearBrick rb;
@@ -182,27 +182,27 @@ public:
 
     while(unusedConnections > 0) {
       for(unsigned int i = 0; i < cs.size(); ++i) {
-	if(usedConnections[i])
-	  continue;
-	const Connection &c = cs[i];
-	int i1 = c.p1.first.configurationSCCI;
-	int i2 = c.p2.first.configurationSCCI;
-	if(addedSccs[i1]) {
-	  usedConnections[i] = true;
-	  unusedConnections--;
-	  if(!addedSccs[i2]) {
-	    add(sccs[i2], c);
-	    addedSccs[i2] = true;
-	  }
-	}
-	else if(addedSccs[i2]) {
-	  Connection flipped(c);
-	  std::swap(flipped.p1, flipped.p2);
-	  usedConnections[i] = true;
-	  unusedConnections--;
-	  add(sccs[i1], flipped);	  
-	  addedSccs[i1] = true;
-	}
+        if(usedConnections[i])
+          continue;
+        const Connection &c = cs[i];
+        int i1 = c.p1.first.configurationSCCI;
+        int i2 = c.p2.first.configurationSCCI;
+        if(addedSccs[i1]) {
+          usedConnections[i] = true;
+          unusedConnections--;
+          if(!addedSccs[i2]) {
+            add(sccs[i2], c);
+            addedSccs[i2] = true;
+          }
+        }
+        else if(addedSccs[i2]) {
+          Connection flipped(c);
+          std::swap(flipped.p1, flipped.p2);
+          usedConnections[i] = true;
+          unusedConnections--;
+          add(sccs[i1], flipped);	  
+          addedSccs[i1] = true;
+        }
       }
     }
   }
@@ -234,9 +234,9 @@ inline std::ostream& operator<<(std::ostream& os, const Configuration& c) {
 }
 
 /*
-  Used for uniquely hashing a configuration into a uint64_t.
-  Performs necessary rotations and permutations on FatSCCs of configuration in order to minimize hash.
- */
+Used for uniquely hashing a configuration into a uint64_t.
+Performs necessary rotations and permutations on FatSCCs of configuration in order to minimize hash.
+*/
 struct ConfigurationEncoder {
   FatSCC fatSccs[6];
   unsigned int fatSccSize;
@@ -256,18 +256,18 @@ struct ConfigurationEncoder {
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       FatSCC &fatScc = fatSccs[i];
       for(int j = 0; j < fatScc.size; ++j) {
-	compressedToIdentifier[compressedI] = BrickIdentifier(fatScc.index, j, i);
-	identifierToCompressed[6*i + j] = compressedI;
-	++compressedI;
+        compressedToIdentifier[compressedI] = BrickIdentifier(fatScc.index, j, i);
+        identifierToCompressed[6*i + j] = compressedI;
+        ++compressedI;
       }      
     }
     // Construct duplicate mapping:
     duplicateMapping[0] = 0;
     for(unsigned int i = 1; i < fatSccSize; ++i) {
       if(fatSccs[i-1] == fatSccs[i])
-	duplicateMapping[i] = duplicateMapping[i-1];
+        duplicateMapping[i] = duplicateMapping[i-1];
       else
-	duplicateMapping[i] = i;
+        duplicateMapping[i] = i;
     }
   }
 
@@ -278,7 +278,7 @@ struct ConfigurationEncoder {
 
     std::vector<ConnectionPoint> v(connectionPoints[i]);
     connectionPoints[i].clear();
-    
+
     for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
       // Fix connection point:
       const ConnectionPoint &cp = *it;
@@ -293,9 +293,9 @@ struct ConfigurationEncoder {
       connectionMaps[i].erase(cp);
       connectionMaps[j].erase(rotateFirstComponent ? c.second.second : c.first.second);
       if(rotateFirstComponent)
-	c.first.second = rcp;
+        c.first.second = rcp;
       else
-	c.second.second = rcp;
+        c.second.second = rcp;
       connectionMaps[i].insert(std::make_pair(rcp, c));
       connectionMaps[j].insert(std::make_pair(icp2.second, c));
     }
@@ -304,14 +304,11 @@ struct ConfigurationEncoder {
   }
 
   /*
-    When encoding:
-    - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
-    - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
-   */
+  When encoding:
+  - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
+  - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
+  */
   uint64_t encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,TinyConnection> *connectionMaps) const {    
-#ifdef _TRACE
-    std::cout << " INIT encode(baseIndex=" << baseIndex << ",rotate=" << rotate << ")" << std::endl;
-#endif
     // Set up permutations and rotations:
     int perm[6];
     perm[baseIndex] = 0;
@@ -325,6 +322,7 @@ struct ConfigurationEncoder {
       duplicateMappingCounters[i] = duplicateMapping[i];
     }
 #ifdef _TRACE
+    std::cout << " INIT encode(baseIndex=" << baseIndex << ",rotate=" << rotate << ")" << std::endl;
     std::cout << " Initial setup structures:" << std::endl;
     std::cout << "  duplicateMapping: ";
     for(unsigned int i = 0; i < fatSccSize; ++i) {
@@ -335,14 +333,23 @@ struct ConfigurationEncoder {
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       std::cout << i << "->" << duplicateMappingCounters[i] << ", ";
     }
-    std::cout << std::endl;    
+    std::cout << std::endl;
+    // connection point structures:
+    std::cout << "Connections:" << std::endl;
+    for(unsigned int i = 0; i < fatSccSize; ++i) {
+      std::cout << " " << i << ": " << std::endl;
+      for(std::vector<ConnectionPoint>::const_iterator it = connectionPoints[i].begin(); it != connectionPoints[i].end(); ++it) {
+        TinyConnection connection = connectionMaps[i][*it];
+        std::cout << "  " << connection.first << "->" << connection.second << std::endl;
+      }
+    }
 #endif
 
     // Compute connections to encode + encodedI on sccs:
     std::set<unsigned int> unencoded;
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       if(i != baseIndex)
-	unencoded.insert(i);
+        unencoded.insert(i);
     }
     std::vector<TinyConnection> toEncode; // to output
     std::queue<unsigned int> queue; // ready to be visited.
@@ -358,52 +365,52 @@ struct ConfigurationEncoder {
 
       std::vector<ConnectionPoint> &v = connectionPoints[fatSccI];
       for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
-	TinyConnection connection = connectionMaps[fatSccI][*it];
-	if(connection.first.first.configurationSCCI == (int)fatSccI) { // swap if necessary.
+        TinyConnection connection = connectionMaps[fatSccI][*it];
+        if(connection.first.first.configurationSCCI == (int)fatSccI) { // swap if necessary.
 #ifdef _TRACE
-	  std::cout << "(swapping)" << std::endl;
+          std::cout << "(swapping)" << std::endl;
 #endif
-	  std::swap(connection.first, connection.second);
-	}
+          std::swap(connection.first, connection.second);
+        }
 #ifdef _TRACE
-	std::cout << " TinyConnection: " << connection.first << ", " << connection.second << std::endl;
+        std::cout << " TinyConnection: " << connection.first << ", " << connection.second << std::endl;
 #endif
-	unsigned int fatSccI2 = connection.second.first.configurationSCCI;
-	ConnectionPoint &p2 = connection.second.second;
+        unsigned int fatSccI2 = connection.second.first.configurationSCCI;
+        ConnectionPoint &p2 = connection.second.second;
 
-	if(unencoded.find(fatSccI2) != unencoded.end()) { // Connection to new scc found!
-	  // Check if rotation necessary!
-	  if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
-	    rotateSCC(fatSccI, connectionPoints, connectionMaps);
-	    p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
-	  }
+        if(unencoded.find(fatSccI2) != unencoded.end()) { // Connection to new scc found!
+          // Check if rotation necessary!
+          if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
+            rotateSCC(fatSccI, connectionPoints, connectionMaps);
+            p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
+          }
 #ifdef _TRACE
-	  std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
+          std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
 #endif
 
-	  toEncode.push_back(connection);
-	  queue.push(fatSccI2);
-	  unencoded.erase(fatSccI2);
+          toEncode.push_back(connection);
+          queue.push(fatSccI2);
+          unencoded.erase(fatSccI2);
 
-	  // If same as prev SCC, minimize index (add final index to perm):
-	  unsigned int mappedI = duplicateMapping[fatSccI2];
-	  perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
-	}
+          // If same as prev SCC, minimize index (add final index to perm):
+          unsigned int mappedI = duplicateMapping[fatSccI2];
+          perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
+        }
       }
     }
-    
+
     /*
-     Encoding algorithm for a connection: 
-     -- aboveBrickI(3 bit), 
-     -- aboveConnectionPointType(2 bit) 
-     -- -||- below
-     */
+    Encoding algorithm for a connection: 
+    -- aboveBrickI(3 bit), 
+    -- aboveConnectionPointType(2 bit) 
+    -- -||- below
+    */
     uint64_t encoded = 0;
     for(std::vector<TinyConnection>::iterator it = toEncode.begin(); it != toEncode.end(); ++it) {
       // Ensure above, then below
       TinyConnection &c = *it;
       if(!c.first.second.above)
-	std::swap(c.first, c.second);
+        std::swap(c.first, c.second);
       // Blow up the TinyConnection... again:
       const IConnectionPoint &ip1 = c.first;
       const IConnectionPoint &ip2 = c.second;
@@ -420,34 +427,34 @@ struct ConfigurationEncoder {
       encoded = (encoded << 3) + identifierToCompressed[belowI];
       encoded = (encoded << 2) + (int)(cpBelow.type);
     }
-    
+
     std::cout << "..ConfigurationEncoder::Encoded " << toEncode.size() << " connections: " << encoded << std::endl;
     return encoded;
   }
 
   /*
-    Setup:
-    - The sccs are sorted by size,diskI (done in constructor).
-    - The connection points of connections are sorted and listed for each scc.
+  Setup:
+  - The sccs are sorted by size,diskI (done in constructor).
+  - The connection points of connections are sorted and listed for each scc.
 
-    Min finding Algorithms:
-    - base scc index (encodedI) = 0.
-    - iterate on connections. Any found index ++.
-    - Now iterate on found of base. 
+  Min finding Algorithms:
+  - base scc index (encodedI) = 0.
+  - iterate on connections. Any found index ++.
+  - Now iterate on found of base. 
 
-    Encoding algorithm: 
-    - Encode connections ordered by brick::encodedI, connectionPoint of brick.
-    - Encode a connection: 
-     -- aboveBrickI(3 bit), 
-     -- aboveConnectionPointType(2 bit) 
-     -- belowBrickI(3 bit), 
-     -- belowConnectionPointType(2 bit) 
-     -- => 5*10 bit < 64 bit.
-    
-    Additions:
-    - If multiple min(size,diskI): Try all min.
-    - If min is rotationally symmetric, try turned 180.    
-   */
+  Encoding algorithm: 
+  - Encode connections ordered by brick::encodedI, connectionPoint of brick.
+  - Encode a connection: 
+  -- aboveBrickI(3 bit), 
+  -- aboveConnectionPointType(2 bit) 
+  -- belowBrickI(3 bit), 
+  -- belowConnectionPointType(2 bit) 
+  -- => 5*10 bit < 64 bit.
+
+  Additions:
+  - If multiple min(size,diskI): Try all min.
+  - If min is rotationally symmetric, try turned 180.    
+  */
   uint64_t encode(const ConnectionList &list) const {
 #ifdef _TRACE
     std::cout << " INIT encode(" << list << ")" << std::endl;
@@ -484,20 +491,20 @@ struct ConfigurationEncoder {
     bool minSet = false;
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       if(!(fatSccs[i] == fatSccs[0]))
-	break;
+        break;
       // Only run if connections are minimal:
       if(fatSccs[i].isRotationallyMinimal(connectionPoints[i])) {
-	uint64_t encoded = encode(i, false, connectionPoints, connectionMaps);
-	if(!minSet || encoded < minEncoded)
-	  minEncoded = encoded;
-	minSet = true;
+        uint64_t encoded = encode(i, false, connectionPoints, connectionMaps);
+        if(!minSet || encoded < minEncoded)
+          minEncoded = encoded;
+        minSet = true;
       }
       // Rotate and run again if necessary:
       if(fatSccs[i].isRotationallyIdentical(connectionPoints[i])) {
-	uint64_t encoded = encode(i, true, connectionPoints, connectionMaps);
-	if(!minSet || encoded < minEncoded)
-	  minEncoded = encoded;
-	minSet = true;
+        uint64_t encoded = encode(i, true, connectionPoints, connectionMaps);
+        if(!minSet || encoded < minEncoded)
+          minEncoded = encoded;
+        minSet = true;
       }
     }
     return minEncoded;
@@ -526,7 +533,7 @@ struct ConfigurationEncoder {
       TinyConnection c(IConnectionPoint(ib1,cp1),IConnectionPoint(ib2,cp2));
       list.insert(c);
     }
-    
+
     std::cout << "..ConfigurationEncoder::decode " << list.size() << " connections: " << list << std::endl;
   }
 
@@ -556,7 +563,7 @@ struct ConfigurationEncoder {
 #ifdef _TRACE
     std::cout << " decoded: " << list2 << std::endl;
 #endif
-    
+
     cs.clear();
     for(std::set<TinyConnection>::const_iterator it = list2.begin(); it != list2.end(); ++it)
       cs.push_back(Connection(*it));
@@ -569,7 +576,7 @@ struct ConfigurationEncoder {
 #ifdef _TRACE
     std::cout << " min2: " << min2 << std::endl;
 #endif
-    
+
     assert(min1 == min2);
   }
 };
