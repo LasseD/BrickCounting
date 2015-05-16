@@ -460,6 +460,32 @@ public:
     return true;
   }
 
+  void getRotationalInformation(const std::vector<ConnectionPoint> &pointsForSccs, bool &minimal, bool &rotSym) const {
+    minimal = true;
+    if(!isRotationallySymmetric) {
+      rotSym = false;
+      return;
+    }
+    std::vector<ConnectionPoint> rotatedPoints;
+    for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
+      ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
+      rotatedPoints.push_back(rotatedPoint);
+    }
+    std::sort(rotatedPoints.begin(), rotatedPoints.end());
+    rotSym = true;
+
+    for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
+      if(*it2 < *it1) {
+        //std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
+	rotSym = false;
+	minimal = false;
+      }
+      if(*it1 < *it2) {
+	rotSym = false;
+      }
+    }
+  }
+
   bool isRotationallyIdentical(const std::vector<ConnectionPoint> &pointsForSccs) const {
     if(!isRotationallySymmetric)
       return false; // not applicaple.
@@ -506,7 +532,7 @@ public:
     }
 
     if(size != c.size)
-      return size < c.size;
+      return size > c.size; // Big first.
     return index < c.index;
   }
   bool operator==(const FatSCC &c) const {
@@ -639,13 +665,25 @@ public:
     }
     return min;
   }
+  
+  int getBrickIndex(const RectilinearBrick &b) const {
+    if(b.isBase())
+      return 0;
+    for(int i = 0; i < size-1; ++i)
+      if(b == otherBricks[i])
+	return i+1;
+    assert(false);
+    return -1;
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const FatSCC& c) {
   os << "FatSCC[size=" << c.size;
   if(c.index != NO_INDEX)
     os << ",index=" << c.index;
-  os << ",symmetric=" << c.isRotationallySymmetric;
+  if(c.isRotationallySymmetric) {
+    os << ",symmetric@" << c.rotationBrickPosition.X << "," << c.rotationBrickPosition.Y;
+  }
   for(int i = 0; i < c.size-1; ++i)
     os << c.otherBricks[i];
   os << "]";

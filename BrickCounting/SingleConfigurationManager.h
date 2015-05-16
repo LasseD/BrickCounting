@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 
 typedef unsigned long long counter;
 
@@ -18,8 +19,9 @@ class SingleConfigurationManager {
   // Experimental lookup:
   std::set<uint64_t> foundConnectionsEncoded;
   ConfigurationEncoder encoder;
-  //std::set<StronglyConnectedConfiguration<4> > &foundSCCs; // For debugging only!
-  //std::set<StronglyConnectedConfiguration<4> > &correct; // For debuggin only!
+  std::set<FatSCC> foundSCCs; // For debugging only!
+  std::map<uint64_t,FatSCC> foundSCCsMap; // For debugging only!
+  //std::set<StronglyConnectedConfiguration<3> > &correct; // For debuggin only!
   std::set<ConnectionPoint> above[6];
   std::set<ConnectionPoint> below[6]; 
   bool prevMustBeChosen[6];

@@ -57,7 +57,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     return;
   }
     
-  for(int i = min(prevSize,remaining); i > 0; --i) {
+  for(int i = std::min(prevSize,remaining); i > 0; --i) {
     std::vector<int> v(combinationType);
     v.push_back(i);
     runForCombinationType(v, remaining-i, i);
@@ -91,7 +91,7 @@ void ConfigurationManager::runForSize(int size) {
 
 ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConnectionLists(0), models(0), problematic(0) {
   StronglyConnectedConfigurationManager sccMgr;
-  for(int i = 0; i < 4; ++i) {
+  for(int i = 0; i < 5; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
     // TODO: Run to 5!
   }

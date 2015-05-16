@@ -49,6 +49,7 @@ public:
   bool atConnectingLevelOf(const ConnectionPoint &p) const;
   bool blocks(const ConnectionPoint &p) const;
   bool angleLocks(const ConnectionPoint &p) const;
+  bool isBase() const;
 
 private:
   void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeCorners) const;

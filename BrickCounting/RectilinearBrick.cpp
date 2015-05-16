@@ -169,9 +169,14 @@ bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   }  
 }
 
+bool RectilinearBrick::isBase() const {
+  return x == 0 && y == 0 && levelShifted == 0;
+}
+
 bool RectilinearBrick::inInterval(int8_t min, int8_t max, int8_t a) const {
   return  min <= a && a <= max;
 }
 bool RectilinearBrick::distLessThan2(int8_t a, int8_t b) const {
   return a == b || a-1 == b || b-1 == a;
 }
+

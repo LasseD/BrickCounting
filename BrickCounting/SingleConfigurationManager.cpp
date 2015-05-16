@@ -7,10 +7,12 @@
 
 SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize(combination.size()), encoder(combination), attempts(0), rectilinear(0), nonRectilinearConnectionLists(0), models(0), problematic(0)
  {
-   /*std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
+#ifdef _TRACE
+   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
   for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
     std::cout << *it << " ";
-  std::cout << std::endl;//*/
+  std::cout << std::endl;
+#endif
 
   for(unsigned int i = 0; i < combinationSize; ++i) {
     prevMustBeChosen[i] = i > 0 && combination[i-1] == combination[i];
@@ -84,7 +86,9 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
 	return; // The rotationally minimal is eventually found... check not needed anymore.
       }
 
+#ifdef _DEBUG
       encoder.testCodec(found); // TODO: REM
+#endif
 
       // Check if new:
       //std::cout << "Encoding " << found << std::endl;
@@ -97,6 +101,35 @@ void SingleConfigurationManager::run(std::vector<Connection> &l, const std::vect
 
 	foundConnectionsEncoded.insert(encoded);
 	//foundConnectionLists.insert(found);
+
+#ifdef _DEBUG
+	// Test code:
+	std::vector<Connection> cs;
+	for(std::set<TinyConnection>::const_iterator it = found.begin(); it != found.end(); ++it)
+	  cs.push_back(Connection(*it));
+	Configuration c1(combination, cs);
+	FatSCC min1 = c1.toMinSCC();
+	FatSCC min2 = c.toMinSCC();
+	assert(min1 == min2);
+#ifdef _TRACE
+	std::cout << "Found " << min1 << ". Encoded: " << encoded << ", connections: ";
+	ConnectionList minList;
+	encoder.decode(encoded, minList);
+	std::cout << minList << std::endl; 	
+#endif
+	assert(foundSCCs.find(min1) == foundSCCs.end());
+	foundSCCs.insert(min1);//*/
+	foundSCCsMap.insert(std::make_pair(encoded,min1)); // For debugging only!
+      }
+      else {
+	FatSCC min2 = c.toMinSCC();
+	if(foundSCCs.find(min2) == foundSCCs.end()) {
+	  std::cout << "Error! " << encoded << ": " << min2 << std::endl;
+	  std::cout << "^^ Not found in scc set! Conflicts with: " << foundSCCsMap[encoded] << std::endl;
+
+	  assert(false);
+	}
+#endif
       }
     }
     

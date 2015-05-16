@@ -18,6 +18,10 @@
 #include <iomanip>
 
 typedef std::pair<IConnectionPoint,IConnectionPoint> TinyConnection;
+inline std::ostream& operator<<(std::ostream &os, const TinyConnection& c) {
+  os << c.first << "<>" << c.second;
+  return os;
+}
 
 struct Connection {
   IConnectionPoint p1, p2;
@@ -175,34 +179,47 @@ public:
 
   Configuration(FatSCC const * const sccs, const std::vector<Connection> &cs) : bricksSize(0) {
     initSCC(sccs[0]);
+#ifdef _TRACE
+    std::cout << "Constructing conf. base: " << sccs[0] << std::endl;
+#endif
+    std::set<Connection> remainingConnections;
+    for(std::vector<Connection>::const_iterator it = cs.begin(); it != cs.end(); ++it) {
+      remainingConnections.insert(*it);
+    }
 
-    int unusedConnections = cs.size();
-    bool usedConnections[8] = {false,false,false,false,false,false,false,false};
     bool addedSccs[6] = {true,false,false,false,false,false};
 
-    while(unusedConnections > 0) {
-      for(unsigned int i = 0; i < cs.size(); ++i) {
-        if(usedConnections[i])
-          continue;
-        const Connection &c = cs[i];
+    while(!remainingConnections.empty()) {
+      for(std::set<Connection>::const_iterator it = remainingConnections.begin(); it != remainingConnections.end(); ++it) {
+        const Connection &c = *it;
         int i1 = c.p1.first.configurationSCCI;
         int i2 = c.p2.first.configurationSCCI;
+	if(addedSccs[i1] && addedSccs[i2]) {
+	  remainingConnections.erase(it);
+	  break;
+	}
+	if(!addedSccs[i1] && !addedSccs[i2]) {
+	  continue;
+	}
+
         if(addedSccs[i1]) {
-          usedConnections[i] = true;
-          unusedConnections--;
-          if(!addedSccs[i2]) {
-            add(sccs[i2], c);
-            addedSccs[i2] = true;
-          }
+	  add(sccs[i2], c);
+	  addedSccs[i2] = true;
+#ifdef _TRACE
+	  std::cout << " Adding " << sccs[i2] << " using " << c << std::endl;
+#endif
         }
-        else if(addedSccs[i2]) {
+        else {
           Connection flipped(c);
           std::swap(flipped.p1, flipped.p2);
-          usedConnections[i] = true;
-          unusedConnections--;
           add(sccs[i1], flipped);	  
           addedSccs[i1] = true;
+#ifdef _TRACE
+	  std::cout << " Adding " << sccs[i1] << " using " << flipped << std::endl;
+#endif
         }
+	remainingConnections.erase(it);
+	break;
       }
     }
   }
@@ -248,6 +265,12 @@ struct ConfigurationEncoder {
 
   ConfigurationEncoder(const std::vector<FatSCC> &combination) { 
     fatSccSize = combination.size();
+#ifdef _TRACE
+    std::cout << "INIT ConfigurationEncoder(";
+    for(unsigned int i = 0; i < fatSccSize; ++i)
+      std::cout << combination[i] << ",";
+    std::cout << ")" << std::endl;
+#endif
     for(unsigned int i = 0; i < fatSccSize; ++i)
       fatSccs[i] = combination[i];
     std::sort(fatSccs, &fatSccs[fatSccSize]);
@@ -273,30 +296,49 @@ struct ConfigurationEncoder {
 
   void rotateSCC(int i, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,TinyConnection> *connectionMaps) const {
 #ifdef _TRACE
-    std::cout << "INIT rotateSCC(" << i << ", ...)" << std::endl;
+    std::cout << "ROTATE SCC " << i << std::endl;
 #endif
 
     std::vector<ConnectionPoint> v(connectionPoints[i]);
+    std::map<ConnectionPoint,TinyConnection> w(connectionMaps[i]);
     connectionPoints[i].clear();
+    connectionMaps[i].clear();
 
     for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
       // Fix connection point:
       const ConnectionPoint &cp = *it;
       ConnectionPoint rcp(cp, fatSccs[i].rotationBrickPosition);
+      int rcpi = fatSccs[i].getBrickIndex(rcp.brick);
+
       connectionPoints[i].push_back(rcp);
+#ifdef _TRACE
+      std::cout << " CP " << cp << "->" << rcp << std::endl;
+#endif
 
       // Fix the two connections:
-      TinyConnection c = connectionMaps[i][cp];
+      TinyConnection c = w[cp];
       bool rotateFirstComponent = c.first.first.configurationSCCI == i;
       const IConnectionPoint &icp2 = rotateFirstComponent ? c.second : c.first;
       int j = icp2.first.configurationSCCI;
-      connectionMaps[i].erase(cp);
-      connectionMaps[j].erase(rotateFirstComponent ? c.second.second : c.first.second);
-      if(rotateFirstComponent)
+      assert(connectionMaps[j].find(icp2.second) != connectionMaps[j].end());
+#ifdef _TRACE
+      std::cout << " " << c;
+#endif
+      if(rotateFirstComponent) {
         c.first.second = rcp;
-      else
+	c.first.first.sccBrickI = rcpi;
+      }
+      else {
         c.second.second = rcp;
+	c.second.first.sccBrickI = rcpi;
+      }
+#ifdef _TRACE
+      std::cout << "->" << c << std::endl;
+      std::cout << "  " << i << "[" << cp << "]: " << w[cp] << std::endl;
+      std::cout << "  " << j << "[" << icp2.second << "]: " << connectionMaps[j][icp2.second] << std::endl;
+#endif
       connectionMaps[i].insert(std::make_pair(rcp, c));
+      connectionMaps[j].erase(icp2.second);
       connectionMaps[j].insert(std::make_pair(icp2.second, c));
     }
 
@@ -329,18 +371,14 @@ struct ConfigurationEncoder {
       std::cout << i << "->" << duplicateMapping[i] << ", ";
     }
     std::cout << std::endl;    
-    std::cout << "  duplicateMappingCounters: ";
-    for(unsigned int i = 0; i < fatSccSize; ++i) {
-      std::cout << i << "->" << duplicateMappingCounters[i] << ", ";
-    }
-    std::cout << std::endl;
     // connection point structures:
     std::cout << "Connections:" << std::endl;
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       std::cout << " " << i << ": " << std::endl;
       for(std::vector<ConnectionPoint>::const_iterator it = connectionPoints[i].begin(); it != connectionPoints[i].end(); ++it) {
+	assert(connectionMaps[i].find(*it) != connectionMaps[i].end());
         TinyConnection connection = connectionMaps[i][*it];
-        std::cout << "  " << connection.first << "->" << connection.second << std::endl;
+        std::cout << "  " << *it << ": " << connection << std::endl;
       }
     }
 #endif
@@ -356,8 +394,8 @@ struct ConfigurationEncoder {
     queue.push(baseIndex);
 
     while(!unencoded.empty()) {
-      unsigned int fatSccI = queue.front();
       assert(!queue.empty());
+      unsigned int fatSccI = queue.front();
       queue.pop();
 #ifdef _TRACE
       std::cout << "Iterating from queue: " << fatSccI << std::endl;
@@ -366,23 +404,27 @@ struct ConfigurationEncoder {
       std::vector<ConnectionPoint> &v = connectionPoints[fatSccI];
       for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
         TinyConnection connection = connectionMaps[fatSccI][*it];
-        if(connection.first.first.configurationSCCI == (int)fatSccI) { // swap if necessary.
+        if(connection.first.first.configurationSCCI != (int)fatSccI) { // swap if necessary.
 #ifdef _TRACE
           std::cout << "(swapping)" << std::endl;
 #endif
           std::swap(connection.first, connection.second);
         }
+        IConnectionPoint &ip2 = connection.second;
+        unsigned int fatSccI2 = ip2.first.configurationSCCI;
+        ConnectionPoint &p2 = ip2.second;
 #ifdef _TRACE
-        std::cout << " TinyConnection: " << connection.first << ", " << connection.second << std::endl;
+        std::cout << " TinyConnection: " << connection.first << ", " << ip2 << std::endl;
+        std::cout << " Connecting to configuration scc " << fatSccI2 << std::endl;
 #endif
-        unsigned int fatSccI2 = connection.second.first.configurationSCCI;
-        ConnectionPoint &p2 = connection.second.second;
 
         if(unencoded.find(fatSccI2) != unencoded.end()) { // Connection to new scc found!
           // Check if rotation necessary!
           if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
-            rotateSCC(fatSccI, connectionPoints, connectionMaps);
+            rotateSCC(fatSccI2, connectionPoints, connectionMaps);
+	    // Update already extracted connection data:
             p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
+	    ip2.first.sccBrickI = fatSccs[fatSccI2].getBrickIndex(p2.brick);
           }
 #ifdef _TRACE
           std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
@@ -416,19 +458,21 @@ struct ConfigurationEncoder {
       const IConnectionPoint &ip2 = c.second;
       const BrickIdentifier &i1 =ip1.first;
       const BrickIdentifier &i2 =ip2.first;
-      // TODO: permute indices!
+      // Permute indices!
       int aboveI = 6*perm[i1.configurationSCCI] + i1.sccBrickI;
       int belowI = 6*perm[i2.configurationSCCI] + i2.sccBrickI;
       const ConnectionPoint &cpAbove = ip1.second;
       const ConnectionPoint &cpBelow = ip2.second;
       // Perform encoding:
-      encoded = (encoded << 3) + identifierToCompressed[aboveI];
+      encoded = (encoded << 4) + identifierToCompressed[aboveI];
       encoded = (encoded << 2) + (int)(cpAbove.type);
-      encoded = (encoded << 3) + identifierToCompressed[belowI];
+      encoded = (encoded << 4) + identifierToCompressed[belowI];
       encoded = (encoded << 2) + (int)(cpBelow.type);
     }
 
+#ifdef _TRACE
     std::cout << "..ConfigurationEncoder::Encoded " << toEncode.size() << " connections: " << encoded << std::endl;
+#endif
     return encoded;
   }
 
@@ -487,30 +531,43 @@ struct ConfigurationEncoder {
     std::cout << " Vectors sorted" << std::endl;
 #endif
 
-    uint64_t minEncoded = 0;
-    bool minSet = false;
+    uint64_t minEncoded = 0xFFFFFFFFFFFFFFFF;
     for(unsigned int i = 0; i < fatSccSize; ++i) {
       if(!(fatSccs[i] == fatSccs[0]))
         break;
       // Only run if connections are minimal:
-      if(fatSccs[i].isRotationallyMinimal(connectionPoints[i])) {
+      bool minimal = false;
+      bool rotSym = false;
+      fatSccs[i].getRotationalInformation(connectionPoints[i], minimal, rotSym);
+      //if(minimal || rotSym) {
         uint64_t encoded = encode(i, false, connectionPoints, connectionMaps);
-        if(!minSet || encoded < minEncoded)
+        if(encoded < minEncoded)
           minEncoded = encoded;
-        minSet = true;
-      }
+	//}
       // Rotate and run again if necessary:
-      if(fatSccs[i].isRotationallyIdentical(connectionPoints[i])) {
+      if(fatSccs[i].isRotationallySymmetric) { //if(!minimal || rotSym) {
         uint64_t encoded = encode(i, true, connectionPoints, connectionMaps);
-        if(!minSet || encoded < minEncoded)
+        if(encoded < minEncoded)
           minEncoded = encoded;
-        minSet = true;
       }
+#ifdef _TRACE
+      else if(fatSccs[i].isRotationallySymmetric) {
+        uint64_t encoded = encode(i, true, connectionPoints, connectionMaps);
+        if(encoded < minEncoded) {
+	  std::cout << "FAIL! Init=" << i << ": " << minEncoded << "->" << encoded << std::endl;
+	  assert(false);
+	}
+      }
+#endif
+
     }
     return minEncoded;
   }
 
   void decode(uint64_t encoded, ConnectionList &list) const {
+#ifdef _TRACE
+    std::cout << "..ConfigurationEncoder::decode(" << encoded << "):" << std::endl;
+#endif
     for(unsigned int i = 0; i < fatSccSize-1; ++i) {
       // decode parts:
       ConnectionPointType cp2Type = (ConnectionPointType)(encoded & 0x03);
@@ -534,10 +591,13 @@ struct ConfigurationEncoder {
       list.insert(c);
     }
 
-    std::cout << "..ConfigurationEncoder::decode " << list.size() << " connections: " << list << std::endl;
+#ifdef _TRACE
+    std::cout << "..decode => " << list << std::endl;
+#endif
   }
 
   void testCodec(const ConnectionList &list1) const {
+#ifdef _DEBUG
 #ifdef _TRACE
     std::cout << "INIT testCodec(" << list1 << ")" << std::endl;
 #endif
@@ -574,10 +634,12 @@ struct ConfigurationEncoder {
 
     FatSCC min2 = c2.toMinSCC();
 #ifdef _TRACE
+    std::cout << " min1: " << min1 << std::endl;
     std::cout << " min2: " << min2 << std::endl;
 #endif
 
     assert(min1 == min2);
+#endif
   }
 };
 
