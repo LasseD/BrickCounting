@@ -4,12 +4,11 @@
 #include "Configuration.hpp"
 #include "ConnectionPoint.h"
 #include "StronglyConnectedConfiguration.hpp"
+#include "AngleMapping.h"
 
 #include <vector>
 #include <set>
 #include <map>
-
-typedef unsigned long long counter;
 
 class SingleConfigurationManager {
   unsigned int combinationSize;

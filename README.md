@@ -29,7 +29,7 @@ Findings:
 
   Size 5: 6349112 new, for a total of 10166403.
 
-  Size 6: In progress...
+  Size 6: 653569128 new, for a total of 915103765.
  
  Distinctly corner connected strongly connected configurations (groups models on the set of connection points)
 
@@ -87,7 +87,20 @@ Geometry:
  Length of brick: 31.8mm
  Stud: 4.8mm
  Stud to side: 3.9mm
- Maximum angle for a turn point is thus acrcos(6.3/8) = 0.664054277 radians (38.0475075 degrees). 
+ Maximum angle for a turn point is thus A = acrcos(6.3/8) = 0.664054277 radians (38.0475075 degrees). 
 
 
-Using a byte for angle means precision of 0.664054277/127 = 0.00522877383 Consider the distance between two studs of models consisting of 3 bricks. It is less than sqrt((38)^2+(98)^) < 75.9mm Using two of such models with a shared turn point means that the distance of two studs can at most change 2sin(0.00522877383)75.9 = 0.79 mm between two models
+Maximal angle steps based on number of brick of models on each side of the turn point:
+
+Simple trigonometry implies the bound a on the angle that can be allowed given the distance d (in mm):
+
+sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
+
+- Size 1: Max distance: d=sqrt(12^2+28^2)=30.46mm. Max angle: a<asin(1/20/d)*2=0.0032826623  radians. Steps: A/a < 203 => 407 steps in total.
+
+- Size 2: Max distance: d=sqrt(20^2+52^2)=55.71mm. Max angle: a<asin(1/20/d)*2=0.00179489564 radians. Steps: A/a < 370 => 741 steps in total.
+
+- Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 1076 steps in total.
+
+
+Using a byte for angle means precision of 0.664054277/127 = 0.00522877383. The distance of two points of a model can at most change 2*sin(0.00522877383)*80.99 = 0.85mm.

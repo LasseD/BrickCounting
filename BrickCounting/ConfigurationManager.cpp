@@ -91,7 +91,7 @@ void ConfigurationManager::runForSize(int size) {
 
 ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConnectionLists(0), models(0), problematic(0) {
   StronglyConnectedConfigurationManager sccMgr;
-  for(int i = 0; i < 5; ++i) {
+  for(int i = 0; i < 3; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
     // TODO: Run to 5!
   }
