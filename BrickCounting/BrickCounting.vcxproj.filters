@@ -36,6 +36,27 @@
     <ClInclude Include="StronglyConnectedConfigurationList.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LDRPrinter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RectilinearConfiguration.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RectilinearConfigurationManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigurationManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleConfigurationManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="StronglyConnectedConfigurationManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -47,9 +68,6 @@
     <ClCompile Include="BrickCounting.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RectilinearConfiguration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RectilinearBrick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,6 +75,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="StronglyConnectedConfigurationManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Brick.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LDRPrinter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigurationManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleConfigurationManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
