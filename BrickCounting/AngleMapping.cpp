@@ -1,5 +1,7 @@
 #include "AngleMapping.h"
 
+#include "Brick.h"
+
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<TinyConnection> &cs) : numAngles(numScc-1), numBricks(0) {
   // Simple copying:
   for(int i = 0; i < numScc; ++i) {
@@ -73,7 +75,7 @@ void AngleMapping::setupAngleTypes() {
     int angleI = i/2;
     int sccI = points[i].first.configurationSCCI;
     if(fatSccConnectionCounts[sccI] == 1)
-      angleTypes[angleI] = std::min(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
+      angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
   }
   // Reduce graph by merging leaves into parents:
   for(int i = 0; i < numAngles+1; ++i) {
@@ -90,10 +92,17 @@ void AngleMapping::setupAngleTypes() {
     int angleI = i/2;
     int sccI = points[i].first.configurationSCCI;
     if(fatSccConnectionCounts[sccI] == 1)
-      angleTypes[angleI] = std::min(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
+      angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
   }
 }
 
 void AngleMapping::run(counter &attempts, counter &rectilinear, counter &nonRectilinearConnectionLists, counter &models, counter &problematic) {
   // TODO!
+  // 1: Evaluate S,M,L
+  // - TODO: Create SML-index -> angles function
+
+  // 2: Walk through SML for reporting
+  // TODO: Any additional structures required?
+  // TODO: Update codec to include angles - use separate codec for this.
+  // TODO: Add remaining steps from README.md
 }

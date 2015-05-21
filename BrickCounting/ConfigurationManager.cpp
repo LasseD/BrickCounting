@@ -57,7 +57,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     return;
   }
     
-  for(int i = std::min(prevSize,remaining); i > 0; --i) {
+  for(int i = min(prevSize,remaining); i > 0; --i) {
     std::vector<int> v(combinationType);
     v.push_back(i);
     runForCombinationType(v, remaining-i, i);

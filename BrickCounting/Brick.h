@@ -10,6 +10,8 @@
 //#include <tgmath.h>
 #include <stdint.h>
 #include <iostream>
+// Ensure cross platform compatibility of std::min:
+#define MIN(a,b) (a < b ? a : b)
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8

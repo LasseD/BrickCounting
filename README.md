@@ -92,7 +92,7 @@ Geometry:
 
 Maximal angle steps based on number of brick of models on each side of the turn point:
 
-Simple trigonometry implies the bound a on the angle that can be allowed given the distance d (in mm):
+Simple formulas for an isosceles triangle implies the bound a on the angle that can be allowed given the distance d (in mm):
 
 sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
 
