@@ -21,7 +21,7 @@ public:
   int8_t x, y;
   uint8_t levelShifted;
   //bool horizontal; : last bit of levelShifted
-  RectilinearBrick(int8_t x, int8_t y, int level, bool horizontal) : x(x), y(y), levelShifted((level<<1)+horizontal) {}
+  RectilinearBrick(int8_t x, int8_t y, int level, bool horizontal) : x(x), y(y), levelShifted((uint8_t)((level<<1)+horizontal)) {}
   RectilinearBrick(const RectilinearBrick& b) : x(b.x), y(b.y), levelShifted(b.levelShifted) {}
   RectilinearBrick() : x(0), y(0), levelShifted(0) {}
 
@@ -29,7 +29,7 @@ public:
   bool operator == (const RectilinearBrick &b) const;
   bool operator != (const RectilinearBrick &b) const;
   bool horizontal() const;
-  int level() const;
+  int8_t level() const;
   void setHorizontalTrue();
   void setHorizontalFalse();
   void flipHorizontal();

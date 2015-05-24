@@ -6,6 +6,10 @@
 #include <math.h>
 #include <cmath>
 
+double round(double number) {
+    return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
+}
+
 /*
 Constructor used for finding connection points:
 b: original brick placed in space.
@@ -98,10 +102,6 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
     os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
     os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
-}
-
-double round(double number) {
-    return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
 }
 
 RectilinearBrick Brick::toRectilinearBrick() const {
@@ -289,7 +289,7 @@ bool Brick::boxesIntersect(const Brick &b) const {
 /*
   1: If not even close level-wise: return false.
   2: If on same level: Check that boxes do not collide.
-   - If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22 TODO
+   - If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22
   3: If on adjacent levels:
    - If any of the 8 studs of lower brick inside box of upper: intersect.
    - If intersect: Check if only intersecting one corner stud.
@@ -302,7 +302,6 @@ bool Brick::intersects(const Brick &b, const RectilinearBrick &bSource, bool &co
     return false;
   if(level == b.level) {
     bool ret = boxesIntersect(b);
-    //assert(!ret); // TODO: REM!      
     return ret;
   }
   Brick tmpB(b);

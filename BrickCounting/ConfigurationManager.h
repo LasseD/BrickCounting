@@ -9,7 +9,7 @@ private:
   FatSCC* sccs[5];
   unsigned long sccsSize[5];
 
-  counter attempts, rectilinear, nonRectilinearConnectionLists, models, problematic;
+  counter attempts, rectilinear, nonRectilinearIConnectionPairLists, models, problematic;
 
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex);
 

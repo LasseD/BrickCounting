@@ -9,7 +9,10 @@
 /*
 * MAIN ENTRY POINT!
 */
-int main(int cargs, char** args) {  
+int main(int, char**) {  
+#ifdef _DEBUG
+  std::cout << "DEBUG MODE" << std::endl;
+#endif
   // Create SCC data files:
   //StronglyConnectedConfigurationManager mgr;
   //mgr.create();

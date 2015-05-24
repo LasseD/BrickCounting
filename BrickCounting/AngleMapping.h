@@ -1,5 +1,6 @@
 #include "ConnectionPoint.h"
 #include "Configuration.hpp"
+#include "ConfigurationEncoder.h"
 
 #define STEPS_1 203
 #define STEPS_2 370
@@ -14,23 +15,29 @@ Size 2 => Granularity -370 - 370 => 741 steps.
 Size 2 => Granularity -538 - 538 => 1076 steps.
  */
 class AngleMapping {
-public:
-  int numAngles, numBricks; //, numScc = numAngles+1;
+  unsigned int numAngles, numBricks; //, numScc = numAngles+1;
   unsigned long long sizeMappings; 
   FatSCC sccs[6];
   bool *S, *M, *L; 
   IConnectionPoint points[10];
-  int angleTypes[5]; // Connection(aka. angle) -> 1, 2, or 3.
+  unsigned int angleTypes[5]; // Connection(aka. angle) -> 1, 2, or 3.
+  unsigned short angleSteps[5]; // Connection(aka. angle) -> 203, 370, or 538.
+  const ConfigurationEncoder &encoder;
 
-  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<TinyConnection> &cs);
+public:
+  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder);
   ~AngleMapping();
 
   /*
     1) For all possible angles: Comput S,M,L.
     2) Combine regions in S,M,L in order to determine new models.
    */
-  void run(counter &attempts, counter &rectilinear, counter &nonRectilinearConnectionLists, counter &models, counter &problematic);
+  std::vector<Configuration> findNewConfigurations(std::set<uint64_t> &foundCircularConfigurationsEncoded, counter &attempts, counter &rectilinear, counter &nonRectilinearIConnectionPairLists, counter &models, counter &problematic);
 
 private:
+  void evalSML(unsigned int angleI, short *angleSteps, counter &attempts);
   void setupAngleTypes();
+  uint64_t smlIndex(short *angleStep) const;
+  Configuration getConfiguration(short *angleStep) const;
+  bool isRectilinear(short *angleStep) const;
 };

@@ -84,13 +84,12 @@
     <ClInclude Include="AngleMapping.h" />
     <ClInclude Include="Brick.h" />
     <ClInclude Include="Configuration.hpp" />
+    <ClInclude Include="ConfigurationEncoder.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="ConnectionPoint.h" />
     <ClInclude Include="LDRPrinter.h" />
     <ClInclude Include="RectilinearBrick.h" />
     <ClInclude Include="RectilinearConfiguration.h" />
-    <ClInclude Include="RectilinearConfiguration.hpp" />
-    <ClInclude Include="RectilinearConfigurationManager.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StronglyConnectedConfiguration.hpp" />
@@ -102,6 +101,7 @@
     <ClCompile Include="AngleMapping.cpp" />
     <ClCompile Include="Brick.cpp" />
     <ClCompile Include="BrickCounting.cpp" />
+    <ClCompile Include="ConfigurationEncoder.cpp" />
     <ClCompile Include="ConfigurationManager.cpp" />
     <ClCompile Include="ConnectionPoint.cpp" />
     <ClCompile Include="LDRPrinter.cpp" />

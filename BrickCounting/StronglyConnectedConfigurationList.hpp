@@ -97,7 +97,7 @@ public:
     infile.close();
     unsigned long res = s.size();
     std::cout << "Read " << res << " sorted elements of hash " << hash << std::endl;
-    //printLDRFile(hash, s); // TODO: Comment in for great visual debugging!
+    //printLDRFile(hash, s); // Comment in for great visual debugging!
     s.clear();
     return res;    
   }

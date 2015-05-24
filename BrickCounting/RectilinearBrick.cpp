@@ -22,7 +22,7 @@ bool RectilinearBrick::operator != (const RectilinearBrick &b) const {
 bool RectilinearBrick::horizontal() const {
   return (levelShifted & 1) == 1; 
 }
-int RectilinearBrick::level() const {
+int8_t RectilinearBrick::level() const {
   return levelShifted >> 1;
 }
 void RectilinearBrick::setHorizontalTrue() {

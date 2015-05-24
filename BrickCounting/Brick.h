@@ -27,6 +27,8 @@ typedef std::pair<double,double> Point;
 #define X first
 #define Y second
 
+double round(double number);
+
 /*
 A Brick at any location and angle.
 Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
