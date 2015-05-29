@@ -145,6 +145,12 @@ void SingleConfigurationManager::run() {
   run(l, abovePool, belowPool, remaining, remainingSize);
   // Print:
   //printLDRFile();
+#ifdef _INFO
+  std::cout << "SingleConfigurationManager::run() INTERNAL RESULTS: " << std::endl;
+  std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
+  std::cout << " foundCircularConfigurationsEncoded: " << foundCircularConfigurationsEncoded.size() << std::endl;
+  std::cout << " foundConfigurations: " << foundConfigurations.size() << std::endl;
+#endif
 }
 
 void SingleConfigurationManager::printLDRFile() const {

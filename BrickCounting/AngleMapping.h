@@ -36,6 +36,7 @@ public:
 
 private:
   void evalSML(unsigned int angleI, short *angleSteps, counter &attempts);
+  bool firstExtreme(unsigned int angleI, short *angleSteps, counter &attempts, Configuration &c);
   void setupAngleTypes();
   uint64_t smlIndex(short *angleStep) const;
   Configuration getConfiguration(short *angleStep) const;

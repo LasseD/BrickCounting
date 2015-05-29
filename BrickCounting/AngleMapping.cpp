@@ -25,11 +25,17 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
     switch(angleTypes[i]) {
     case 1:
       angleSteps[i] = STEPS_1;
+      break;
     case 2:
       angleSteps[i] = STEPS_2;
+      break;
     case 3:
       angleSteps[i] = STEPS_3;
+      break;
     }
+#ifdef _ANGLE
+    std::cout << "Angle type for angle " << i << ": " << angleTypes[i] << " => steps=" << angleSteps[i] << std::endl;
+#endif
   }
 
   // sizeMappings:
@@ -37,20 +43,20 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
   for(i = 0; i < numAngles; ++i) {
     sizeMappings *= (2*angleSteps[i]+1);
   }
-#ifdef _INFO
-  std::cout << "Angle mappings of size " << sizeMappings << std::endl;
+#ifdef _ANGLE
+  std::cout << "SML size " << sizeMappings << std::endl;
 #endif
   
   // S, M & L:
-  S = new bool[sizeMappings];
-  M = new bool[sizeMappings];
-  L = new bool[sizeMappings];
+  //S = new bool[sizeMappings];
+  //M = new bool[sizeMappings];
+  //L = new bool[sizeMappings];
 }
 
 AngleMapping::~AngleMapping() {
-  delete[] S;
-  delete[] M;
-  delete[] L;
+  //delete[] S;
+  //delete[] M;
+  //delete[] L;
 }
 
 void AngleMapping::setupAngleTypes() {
@@ -72,6 +78,22 @@ void AngleMapping::setupAngleTypes() {
     fatSccSizes[i] = sccs[i].size;
   }
 
+#ifdef _ANGLE
+  std::cout << "Angle mappings of size " << numAngles << std::endl;
+  std::cout << " Connection counts: " << std::endl;
+  for(unsigned int i = 0; i < numAngles+1; ++i) {
+    std::cout << "  " << i << "->" << fatSccConnectionCounts[i] << std::endl;
+  }
+  std::cout << " Last connected to: " << std::endl;
+  for(unsigned int i = 0; i < numAngles+1; ++i) {
+    std::cout << "  " << i << "->" << lastConnectedTo[i] << std::endl;
+  }
+  std::cout << " Initial sizes (no merging): " << std::endl;
+  for(unsigned int i = 0; i < numAngles+1; ++i) {
+    std::cout << "  " << i << "->" << fatSccSizes[i] << std::endl;
+  }
+#endif
+
   // Angle types computed based on size of components on side of turn point:
   for(unsigned int i = 0; i < numAngles; ++i)
     angleTypes[i] = 3;
@@ -92,6 +114,23 @@ void AngleMapping::setupAngleTypes() {
       fatSccConnectionCounts[i] = 0; // same as --
     }
   }
+
+#ifdef _ANGLE
+  std::cout << "After first round of minimizing " << std::endl;
+  std::cout << " angleTypes (initially all 3): " << std::endl;
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    std::cout << "  " << i << "->" << angleTypes[i] << std::endl;
+  }
+  std::cout << " Current sizes: " << std::endl;
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    std::cout << "  " << i << "->" << fatSccSizes[i] << std::endl;
+  }
+  std::cout << " Number of connections: " << std::endl;
+  for(unsigned int i = 0; i < numAngles+1; ++i) {
+    std::cout << "  " << i << "->" << fatSccConnectionCounts[i] << std::endl;
+  }
+#endif
+
   // Perform initial minimizing again:
   for(unsigned int i = 0; i < numAngles*2; ++i) {
     int angleI = i/2;
@@ -99,6 +138,14 @@ void AngleMapping::setupAngleTypes() {
     if(fatSccConnectionCounts[sccI] == 1)
       angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
   }
+
+#ifdef _ANGLE
+  std::cout << "After second round" << std::endl;
+  std::cout << " angleTypes: " << std::endl;
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    std::cout << "  " << i << "->" << angleTypes[i] << std::endl;
+  }
+#endif
 }
 
 uint64_t AngleMapping::smlIndex(short *angleStep) const {
@@ -113,8 +160,9 @@ uint64_t AngleMapping::smlIndex(short *angleStep) const {
 
 bool AngleMapping::isRectilinear(short *angleStep) const {
   for(unsigned int i = 0; i < numAngles; ++i) {
-    if(angleStep[i] != (int)angleSteps[i] + 1)
+    if(angleStep[i] != 0) {
       return false;
+    }
   }
   return true;
 }
@@ -133,7 +181,7 @@ Configuration AngleMapping::getConfiguration(short *angleStep) const {
 
 void AngleMapping::evalSML(unsigned int angleI, short *angleStep, counter &attempts) {
   if(angleI < numAngles) {
-    short steps = 0;//TOOD! = angleSteps[angleI];
+    short steps = angleSteps[angleI];
     for(short i = -steps; i <= steps; ++i) {
       angleStep[angleI] = i;
       evalSML(angleI+1, angleStep, attempts);
@@ -150,24 +198,63 @@ void AngleMapping::evalSML(unsigned int angleI, short *angleStep, counter &attem
   M[iM] = c.isRealizable(found);
 
   // TODO L and S.
+#ifdef _INFO
+  std::cout << "EVAL SML(" << angleStep[0];
+  for(unsigned int i = 1; i < numAngles; ++i) {
+    std::cout << "," << angleStep[i];
+  }
+  std::cout << ") = " << M[iM] << ", size found=" << found.size() << std::endl;
+#endif
+}
+
+bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, counter &attempts, Configuration &c) {
+  if(angleI < numAngles) {
+    angleStep[angleI] = -angleSteps[angleI];
+    if(firstExtreme(angleI+1, angleStep, attempts, c))
+      return true;
+    angleStep[angleI] = angleSteps[angleI];
+    if(firstExtreme(angleI+1, angleStep, attempts, c))
+      return true;
+  }
+  ++attempts;
+
+  c = getConfiguration(angleStep);
+  std::vector<IConnectionPair> found; // Currently ignored.
+  return c.isRealizable(found);
 }
 
 std::vector<Configuration> AngleMapping::findNewConfigurations(std::set<uint64_t> &foundCircularConfigurationsEncoded, counter &attempts, counter &rectilinear, counter &nonRectilinearIConnectionPairLists, counter &models, counter &problematic) {
-  // 1: Evaluate S,M,L
-  short angleStep[5];
-  evalSML(0, angleStep, attempts);
+  short angleStep[5] = {0,0,0,0,0};
 
-  // 2: Walk through SML for reporting
   std::vector<Configuration> newConfigurations;
 
-  // TODO! Currently just for 0-angles to check construction of SML is OK
-  uint64_t iM = smlIndex(angleStep);
-  if(!M[iM])
-    return newConfigurations;
-
+  //Initially try rectilinear:
   Configuration c = getConfiguration(angleStep);
-  std::vector<IConnectionPair> found;
-  c.isRealizable(found); // Ignore return value.
+  std::vector<IConnectionPair> found; // Currently ignored.
+  ++attempts;
+  if(c.isRealizable(found)) {
+    // Rectilinear OK!
+  }
+  else {
+    if(firstExtreme(0, angleStep, attempts, c)) {
+      c.isRealizable(found); // Ignore return value.
+    }
+    else {
+      return newConfigurations;
+    }
+  }
+
+  //evalSML(0, angleStep, attempts);
+
+
+  // TODO! Currently just for 0-angles to check construction of SML is OK
+  //uint64_t iM = smlIndex(angleStep);
+  //if(!M[iM])
+  //  return newConfigurations;
+
+  //Configuration c = getConfiguration(angleStep);
+  //std::vector<IConnectionPair> found;
+  //c.isRealizable(found); // Ignore return value.
   const IConnectionPairList cpl(found);
   uint64_t encoded = encoder.encode(cpl);
   if(found.size() > numAngles) { // With extra connection(s)

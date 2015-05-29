@@ -82,10 +82,10 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << "Results for size " << size << ":" << std::endl;
   std::cout << " Strongly connected configurations (SCC): " << sccsSize[size-1] << std::endl;
   std::cout << " Attempts: " << attempts << std::endl;
-  std::cout << " Rectilinear configurations (should be the same as previous results): " << sccsSize[size-1] << " + " << rectilinear << " = " << (sccsSize[size-1]+rectilinear) << std::endl;
+  std::cout << " Rectilinear configurations: " << sccsSize[size-1] << " + " << rectilinear << " = " << (sccsSize[size-1]+rectilinear) << std::endl;
   std::cout << " Ways to connect SCCs resulting in new models: " << nonRectilinearIConnectionPairLists << std::endl;
   std::cout << " Models: " << models << std::endl;
-  std::cout << " Models requiring manual confirmation (see 'manual' folder): " << problematic << std::endl;
+  std::cout << " Models requiring manual confirmation: " << problematic << std::endl;
   std::cout << std::endl;
 }
 
