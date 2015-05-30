@@ -73,17 +73,14 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     if(!isRotationallyMinimal(list))
       return;
 
-    uint64_t encoded = encoder.encode(list);
-    if(investigatedConnectionPairListsEncoded.find(encoded) != investigatedConnectionPairListsEncoded.end())
+    Encoding encoded = encoder.encode(list);
+    if(investigatedConnectionPairListsEncoded.find(encoded.first) != investigatedConnectionPairListsEncoded.end())
       return;
 
-    investigatedConnectionPairListsEncoded.insert(encoded);
+    investigatedConnectionPairListsEncoded.insert(encoded.first);
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder);
-    Configuration c;
-    if(angleMapping.findNewConfiguration(c, foundRectilinearConfigurationsEncoded, attempts)) {
-      foundNonRectilinearConfigurations.push_back(c);
-    }
+    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, configurationsToWriteToLdr, attempts);
     return;
   }
 
@@ -155,19 +152,19 @@ void SingleConfigurationManager::run() {
 }
 
 void SingleConfigurationManager::printLDRFile() const {
-  if(foundNonRectilinearConfigurations.size() == 0)
+  if(configurationsToWriteToLdr.size() == 0)
     return;
 
   LDRPrinterHandler h;
 
   // Actual printing:
-  for(std::vector<Configuration>::const_iterator it = foundNonRectilinearConfigurations.begin(); it != foundNonRectilinearConfigurations.end(); ++it)
+  for(std::vector<Configuration>::const_iterator it = configurationsToWriteToLdr.begin(); it != configurationsToWriteToLdr.end(); ++it)
     h.add(&(*it));
   std::stringstream ss;
   int size = 0;
   for(unsigned int i = 0; i < combinationSize; ++i)
     size += combination[i].size;
-  ss << "rc\\" << size << "\\";
+  ss << "ccscc\\" << size << "\\";
   ss << "size" << size << "_sccs" << combinationSize << "_sccsizes";  
   for(unsigned int i = 0; i < combinationSize; ++i)
     ss << "_" << combination[i].size;

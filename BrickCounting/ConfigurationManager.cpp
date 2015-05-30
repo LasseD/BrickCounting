@@ -11,10 +11,9 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     mgr.run();
     attempts+=mgr.attempts;
     rectilinear+=mgr.foundRectilinearConfigurationsEncoded.size();
-    nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurations.size();
+    nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurationsEncoded.size();
     models+=mgr.models;
     problematic+=mgr.problematic;
-    //std::cout << "Found " << mgr.rectilinear << " rectilinear combinations in " << mgr.attempts << " attempts." << std::endl;
     return;
   }
 
@@ -35,7 +34,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << "ConfigurationManager::runForCombinationType(";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
     std::cout << *it << " ";
-  std::cout << ") started!" << std::endl;//*/
+  std::cout << ") started!" << std::endl;
 
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
@@ -44,14 +43,15 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     runForCombination(v, combinationType, i);
   }
 
-  std::cout << "Found " << rectilinear << " rectilinear combinations in " << attempts << " attempts." << std::endl;
-
+  std::cout << "Current counts: " << std::endl;
+  std::cout << " " << rectilinear << " rectilinear combinations." << std::endl;
+  std::cout << " " << attempts << " attempts." << std::endl;
+  std::cout << " " << nonRectilinearConfigurations << " corner connected SCCs." << std::endl;
 
   // TODO: Thread here!
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize) {
-  //std::cout << "ConfigurationManager::runForCombinationType(remaining=" << remaining << ") started!" << std::endl;
   if(remaining == 0) {
     runForCombinationType(combinationType);
     return;
@@ -65,12 +65,6 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 }
 
 void ConfigurationManager::runForSize(int size) {
-  std::cout << "ConfigurationManager::runForSize(" << size << ") started!" << std::endl;
-  if(size < 2) {
-    std::cerr << "Error: ConfigurationManager::run must be for at least size 2!" << std::endl;
-    return;
-  }
-
   // For base being 1..size-1:
   for(int base = size-1; base > 0; --base) {
     std::vector<int> combination;
@@ -80,33 +74,35 @@ void ConfigurationManager::runForSize(int size) {
 
   // Output results:
   std::cout << "Results for size " << size << ":" << std::endl;
-  std::cout << " Attempts: " << attempts << std::endl;
-  std::cout << " Strongly connected configurations (SCC): " << sccsSize[size-1] << std::endl;
-  std::cout << " Rectilinear configurations: " << sccsSize[size-1] << " + " << rectilinear << " = " << (sccsSize[size-1]+rectilinear) << std::endl;
-  std::cout << " Non-rectilinear corner connected SCCs: " << nonRectilinearConfigurations << std::endl;
-  std::cout << " Models: " << models << std::endl;
-  std::cout << " Models requiring manual confirmation: " << problematic << std::endl;
+  std::cout << " Attempts:                                 " << attempts << std::endl;
+  std::cout << " Strongly connected configurations (SCCs): " << sccsSize[size-1] << std::endl;
+  std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
+  std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
+  std::cout << " Models:                                   " << models << std::endl;
+  std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << std::endl;
 }
 
 ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
   StronglyConnectedConfigurationManager sccMgr;
-  for(int i = 0; i < 4; ++i) {
+  int upTo = 5;
+#ifdef _DEBUG
+  upTo = 4; // Decreases file loading time - never run for full input in bebug mode!
+#endif
+  for(int i = 0; i < upTo; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
-    // TODO: Run to 5!
   }
 }
 
 void ConfigurationManager::test() const {
-  /*ConfigurationManager mgr;
+  ConfigurationManager mgr;
   std::vector<int> v;
-  v.push_back(1);
-  v.push_back(1);
-  v.push_back(1);
+  v.push_back(2);
+  v.push_back(2);
   v.push_back(1);
 
-  //mgr.runForCombinationType(v);
-  
+  mgr.runForCombinationType(v);
+  /*
   std::vector<FatSCC> v2;
   v2.push_back(sccs[0][0]);
   v2.push_back(sccs[0][0]);

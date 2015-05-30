@@ -27,8 +27,6 @@ public:
     std::stringstream ss;
     ss << "scc\\" << ELEMENT_SIZE;
     std::string s = ss.str();
-    //CreateDirectory(s.c_str(), NULL);
-    //CreateDirectory(std::wstring(s.begin(),s.end()).c_str(), NULL);
     ss << "\\hash" << hash << ".dat";
 
     fileName = ss.str();    

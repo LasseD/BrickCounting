@@ -6,6 +6,8 @@
 #include "StronglyConnectedConfiguration.hpp"
 #include "Configuration.hpp"
 
+typedef std::pair<uint64_t,uint64_t> Encoding;
+
 /*
 Used for uniquely encoding:
 - A configuration, not necessarily valid, without given angles, into a uint64_t.
@@ -47,8 +49,9 @@ public:
   - If multiple min(size,diskI): Try all min.
   - If min is rotationally symmetric, try turned 180.
   */
-  uint64_t encode(const IConnectionPairList &list) const;
+  Encoding encode(const IConnectionPairList &list) const;
 
+  void decode(Encoding encoded, IConnectionPairList &list) const;
   void decode(uint64_t encoded, IConnectionPairList &list) const;
 
   void testCodec(const IConnectionPairList &list1) const;
@@ -61,7 +64,8 @@ private:
   - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
   - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
   */
-  uint64_t encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  Encoding encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  uint64_t encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const;
 };
 
 #endif // CONFIGURATION_ENCODER_HPP

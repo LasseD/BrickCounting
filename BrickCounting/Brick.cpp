@@ -32,9 +32,16 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
 Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
 */
 Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv-p.brick.level()) {  
+#ifdef _BRICK
+  std::cout << "Building brick. RB=" << b << std::endl;
+  std::cout << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
+  std::cout << " Level=" << (int)b.level() << "+" << (int)originLv << "-" << (int)p.brick.level() << std::endl;
+#endif
+
+  assert(level > -8);
+  assert(level < 8);
   if(p.brick.horizontal())
     angle += M_PI/2;
-  //std::cout << "Building brick. RB=" << b << std::endl << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
   // center is now on b. Move by turn angle, then translate to origin:
   // Rotate:
   double sina = sin(angle);
@@ -217,6 +224,9 @@ bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bo
   //std::cout << "  After axis aligning this. b=" << b << std::endl;
   Point studsOfB[NUMBER_OF_STUDS];
   b.getStudPositions(studsOfB);
+  const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE;
+  const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP;
+
   // X handle four inner:
   for(int i = 0; i < 4; ++i) {
     Point &stud = studsOfB[i];
@@ -224,17 +234,16 @@ bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bo
       stud.X = -stud.X;
     if(stud.Y < 0)
       stud.Y = -stud.Y;
-    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE+STUD_RADIUS && 
-       stud.Y < VERTICAL_BRICK_CENTER_TO_TOP+STUD_RADIUS) {
+
+    if(stud.X < cornerX+STUD_RADIUS && 
+       stud.Y < cornerY+STUD_RADIUS) {
       // Might intersect - check corner case:
-      const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE-STUD_RADIUS;
-      const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP-STUD_RADIUS;
-      if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE ||
-         stud.Y < VERTICAL_BRICK_CENTER_TO_TOP ||
-         STUD_DIAM*STUD_DIAM > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
-          connected = false;
-          return true;
+      if(stud.X < cornerX ||
+         stud.Y < cornerY ||
+         STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+        //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
+        connected = false;
+        return true;
       }
     }
   }
@@ -247,8 +256,8 @@ bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bo
     if(stud.Y < 0)
       stud.Y = -stud.Y;
 
-    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE+STUD_RADIUS && 
-       stud.Y < VERTICAL_BRICK_CENTER_TO_TOP+STUD_RADIUS) {
+    if(stud.X < cornerX+STUD_RADIUS && 
+       stud.Y < cornerY+STUD_RADIUS) {
       // X check if it hits stud:
       const double studX = HALF_STUD_DISTANCE;
       const double studY = STUD_AND_A_HALF_DISTANCE;   
@@ -275,14 +284,12 @@ bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bo
       }
 
       // Might intersect - check corner case:
-      const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE-STUD_RADIUS;
-      const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP-STUD_RADIUS;
-      if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE ||
-         stud.Y < VERTICAL_BRICK_CENTER_TO_TOP ||
-         STUD_DIAM*STUD_DIAM > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
-          connected = false;
-          return true;
+      if(stud.X < cornerX ||
+         stud.Y < cornerY ||
+         STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+        //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
+        connected = false;
+        return true;
       }
     }
   }

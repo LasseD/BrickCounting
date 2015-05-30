@@ -13,9 +13,6 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
 }
 
 void StronglyConnectedConfigurationManager::create() {
-  // First. Ensure output folder exists:
-  //CreateDirectory("scc", NULL); // TODO: Make usable on both VS and G++
-
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
@@ -49,8 +46,9 @@ void StronglyConnectedConfigurationManager::create() {
   writeToFile(3);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
 
-  //l4.countAllFor(l3);
+#ifdef _DEBUG
   return;
+#endif
 
   // 5:
   l5.addAllFor(l4);
@@ -58,17 +56,16 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << l5 << std::endl;
   writeToFile(4);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 5" << std::endl << std::endl;
-  //system("cmd /C pause");
-  //system("pause");
-  //l5.countAllFor(l4);
 
   // 6:
+  std::cout << "NOW STARTING TO COUNT ALL STRONGLY CONNECTED CONFIGURATIONS OF SIZE 6. RESTART TO SKIP!" << std::endl << std::endl;
   l6.countAllFor(l5);
+  l5.s.clear();
+  l6.s.clear();
 }
 
 void StronglyConnectedConfigurationManager::createOld() {
   // First. Ensure output folder exists:
-  //CreateDirectory("old_rc", NULL); // TODO: make usable in both VS and G++
 
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
@@ -149,7 +146,7 @@ void StronglyConnectedConfigurationManager::writeToFile(int i, bool old) {
 FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long &size) const {
   std::ifstream is;
   std::stringstream ss;
-  ss << "scc/" << (i+1) << ".dat";
+  ss << "scc\\" << (i+1) << ".dat";
   is.open(ss.str().c_str(), std::ios::binary | std::ios::in);
   std::cout << "Reading file with strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
 

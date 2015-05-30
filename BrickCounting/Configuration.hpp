@@ -33,8 +33,16 @@ struct Angle {
   unsigned short d; // denominator
 
   Angle() {}
-  Angle(short n, unsigned short d) : n(n), d(d) {}
-  Angle(const Angle &a) : n(a.n), d(a.d) {}
+  Angle(short n, unsigned short d) : n(n), d(d) {
+    assert(d != 0);
+    assert(-d <= n);
+    assert(n <= d);
+  }
+  Angle(const Angle &a) : n(a.n), d(a.d) {
+    assert(d != 0);  
+    assert(-d <= n);
+    assert(n <= d);
+  }
   Angle(ConnectionPoint p1, Brick b1, ConnectionPoint p2, Brick b2, unsigned short d) : d(d) {
     if(!p1.above) {
       std::swap(p1,p2); // ensure px.above=true is first.
@@ -46,9 +54,9 @@ struct Angle {
 
     // Transform to n:
     while(angleDiff < -M_PI)
-        angleDiff += 2*M_PI;
+      angleDiff += 2*M_PI;
     while(angleDiff > M_PI)
-        angleDiff -= 2*M_PI;
+      angleDiff -= 2*M_PI;
     assert(angleDiff >= -MAX_ANGLE_RADIANS);
     assert(angleDiff <= MAX_ANGLE_RADIANS);
     n = (short)round(angleDiff/MAX_ANGLE_RADIANS*d);
@@ -77,8 +85,11 @@ inline std::ostream& operator<<(std::ostream &os, const Angle& c) {
 }
 
 struct Connection {
-  IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
+private:
   Angle angle;
+
+public:
+  IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
   Connection(){}
   Connection(const IConnectionPair &c, const Angle &angle) : p1(c.first), p2(c.second), angle(angle) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
@@ -91,6 +102,9 @@ struct Connection {
       std::swap(this->p1, this->p2); // ensures connections are always with p1->above = true.
     }  
   } 
+  double angleToRadians() const {
+    return p1.second.above ? angle.toRadians() : -angle.toRadians();
+  }
   bool operator<(const Connection &c) const {
     if(angle != c.angle)      
       return angle < c.angle;
@@ -106,7 +120,7 @@ struct Connection {
   }
 };
 inline std::ostream& operator<<(std::ostream &os, const Connection& c) {
-  os << "Connection[" << c.p1 << "-" << c.p2 << ",a=" << c.angle << "]";
+  os << "Connection[" << c.p1 << "-" << c.p2 << ",a=" << c.angleToRadians() << "]";
   return os;
 }
 
@@ -187,18 +201,34 @@ public:
   }
 
   bool isRealizable(std::vector<IConnectionPair> &found) const {
+#ifdef _TRACE
+    std::cout << "  isRealizable: " << std::endl;
+#endif
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick &ib = bricks[i];
       for(int j = i+1; j < bricksSize; ++j) {
         const IBrick &jb = bricks[j];
-        //std::cout << "   isRealizable step " << ib.bi << "/" << ib.b << "<>" << jb.bi << "/" << jb.b << std::endl;
-        if(ib.bi.configurationSCCI == jb.bi.configurationSCCI)
+#ifdef _TRACE
+        std::cout << "   " << ib.bi << "/" << ib.b << " VS " << jb.bi << "/" << jb.b << std::endl;
+#endif
+        if(ib.bi.configurationSCCI == jb.bi.configurationSCCI) {
+#ifdef _TRACE
+          std::cout << "   same configurationSCCI => OK" << std::endl;
+#endif
           continue; // from same scc.
+        }
         bool connected;
         ConnectionPoint pi, pj;
         if(ib.b.intersects(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
-          if(!connected)
+          if(!connected) {
+#ifdef _TRACE
+            std::cout << "   Intersect, no connect => fail!" << std::endl;
+#endif
             return false;
+          }
+#ifdef _TRACE
+          std::cout << "   Connect!" << std::endl;
+#endif
           pi.brickI = ib.bi.sccBrickI;
           pj.brickI = jb.bi.sccBrickI;
           IConnectionPair c(IConnectionPoint(ib.bi, pi), IConnectionPoint(jb.bi, pj));
@@ -206,10 +236,16 @@ public:
         }
       }
     }
+#ifdef _TRACE
+    std::cout << "   OK!" << std::endl;
+#endif
     return true;
   }
 
   void initSCC(const FatSCC &scc) {
+#ifdef _TRACE
+    std::cout << "Configuration::init(" << scc << ")" << std::endl;
+#endif
     RectilinearBrick b;
     origBricks[0] = Brick(b);
     for(int i = 0; i < scc.size; b=scc.otherBricks[i++]) {
@@ -223,8 +259,11 @@ public:
     initSCC(scc);
   }
 
-  void add(const FatSCC &scc, const Connection &c) {
+  void add(const FatSCC &scc, int configurationSCCI, Connection c) {
     // Get objects of interest:
+    if(configurationSCCI == c.p1.first.configurationSCCI) {
+      std::swap(c.p1,c.p2);
+    }
     int prevBrickI = c.p1.first.configurationSCCI;
     int currBrickI = c.p2.first.configurationSCCI;
     Brick &prevOrigBrick = origBricks[prevBrickI];
@@ -235,15 +274,19 @@ public:
     //std::cout << "ADD: Prev: " << prevBrick << " w. stud " << prevStud.X << "," << prevStud.Y << std::endl;
 
     // Compute position of bricks:
-    double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angle.toRadians();
+    double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angleToRadians();
     int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
-    //std::cout << "Configuration::add(" << scc << ")" << std::endl;
+#ifdef _TRACE
+    std::cout << "Configuration::add(" << scc << "," << c << ")" << std::endl;
+#endif
     RectilinearBrick rb;
     origBricks[currBrickI] = Brick(rb, currPoint, prevStud, angle, level);
     for(int i = 0; i < scc.size; rb=scc.otherBricks[i++]) {
       Brick brick(rb, currPoint, prevStud, angle, level);
-      //std::cout << " ADD brick " << brick << std::endl;
+#ifdef _TRACE
+      std::cout << " ADD brick " << brick << std::endl;
+#endif
 
       IBrick ib(rb, brick, BrickIdentifier(scc.index, i, currBrickI));
       bricks[bricksSize++] = ib;
@@ -276,19 +319,17 @@ public:
         }
 
         if(addedSccs[i1]) {
-          add(sccs[i2], c);
+          add(sccs[i2], i2, c);
           addedSccs[i2] = true;
 #ifdef _TRACE
-          std::cout << " Adding " << sccs[i2] << " using " << c << std::endl;
+          std::cout << " Adding " << i2 << ":" << sccs[i2] << " using " << c << std::endl;
 #endif
         }
         else {
-          Connection flipped(c);
-          std::swap(flipped.p1, flipped.p2);
-          add(sccs[i1], flipped);	  
+          add(sccs[i1], i1, c);
           addedSccs[i1] = true;
 #ifdef _TRACE
-          std::cout << " Adding " << sccs[i1] << " using " << flipped << std::endl;
+          std::cout << " Adding " << i1 << ":" << sccs[i1] << " using " << c << std::endl;
 #endif
         }
         remainingConnections.erase(it);

@@ -174,8 +174,8 @@ Configuration AngleMapping::getConfiguration(short *angleStep) const {
     const IConnectionPoint &ip2 = points[2*i+1];
     const Angle angle(angleStep[i], angleSteps[i]);
     const Connection cc(ip1, ip2, angle);
-    assert(ip2.first.configurationSCCI != 0);
-    c.add(sccs[ip2.first.configurationSCCI], cc);
+    assert(ip2.P1.configurationSCCI != 0);
+    c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
   }
   return c;
 }
@@ -208,16 +208,56 @@ void AngleMapping::evalSML(unsigned int angleI, short *angleStep, counter &attem
 #endif
 }
 
-bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, counter &attempts, Configuration &c) {
+void AngleMapping::findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts) {
   if(angleI < numAngles) {
     angleStep[angleI] = -angleSteps[angleI];
-    if(firstExtreme(angleI+1, angleStep, attempts, c))
+    findExtremeConfigurations(angleI+1, angleStep, false, rect, nonRect, toLdr, attempts);
+
+    angleStep[angleI] = angleSteps[angleI];
+    findExtremeConfigurations(angleI+1, angleStep, false, rect, nonRect, toLdr, attempts);
+
+    // Also try no angle - just in case:
+    angleStep[angleI] = 0;
+    findExtremeConfigurations(angleI+1, angleStep, allZero, rect, nonRect, toLdr, attempts);
+
+    return;
+  }
+  if(allZero)
+    return;
+
+  Configuration c = getConfiguration(angleStep);
+  std::vector<IConnectionPair> found;
+  bool realizable = c.isRealizable(found);
+  if(!realizable)
+    return; // Not possible to build.
+  Encoding encoded = encoder.encode(found);
+  if(rect.find(encoded) != rect.end())
+    return; // Already known as rect.
+  if(nonRect.find(encoded) != nonRect.end())
+    return; // Already known as nonRect.
+  nonRect.insert(encoded);
+  if(found.size() != numAngles) {
+    toLdr.push_back(c); // cyclic!
+  }
+}
+
+bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, bool allZero, counter &attempts, Configuration &c) {
+  if(angleI < numAngles) {
+    angleStep[angleI] = -angleSteps[angleI];
+    if(firstExtreme(angleI+1, angleStep, false, attempts, c))
       return true;
     angleStep[angleI] = angleSteps[angleI];
-    if(firstExtreme(angleI+1, angleStep, attempts, c))
+    if(firstExtreme(angleI+1, angleStep, false, attempts, c))
       return true;
+    // Also try no angle - just in case:
+    angleStep[angleI] = 0;
+    if(firstExtreme(angleI+1, angleStep, allZero, attempts, c))
+      return true;
+
     return false;
   }
+  if(allZero)
+    return false;
   ++attempts;
 
   c = getConfiguration(angleStep);
@@ -226,94 +266,19 @@ bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, counter &
   return realizable && found.size() == numAngles; // Don't trust new configurations with circles!
 }
 
-bool AngleMapping::findNewConfiguration(Configuration &c, std::set<uint64_t> &foundRectilinearConfigurationsEncoded, counter &attempts) {
+void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts) {
   short angleStep[5] = {0,0,0,0,0};
 
   //Initially try rectilinear:
-  c = getConfiguration(angleStep);
+  Configuration rectilinear = getConfiguration(angleStep);
   std::vector<IConnectionPair> found; // Currently ignored.
   ++attempts;
-  if(c.isRealizable(found)) { // Rectilinear:
-    uint64_t encoded = encoder.encode(found);
-    if(foundRectilinearConfigurationsEncoded.find(encoded) == foundRectilinearConfigurationsEncoded.end()) {
-      foundRectilinearConfigurationsEncoded.insert(encoded);
-    }
-    if(found.size() == numAngles) { // No cycles:
-      return false; // Rectilinear no cycles => can't trust any non-rectilinear when rectilinear is realizable.
+  if(rectilinear.isRealizable(found)) { // Rectilinear:
+    assert(found.size() >= numAngles);
+    Encoding encoded = encoder.encode(found);
+    if(rect.find(encoded) == rect.end()) {
+      rect.insert(encoded);
     }
   }
-  return firstExtreme(0, angleStep, attempts, c);
+  findExtremeConfigurations(0, angleStep, true, rect, nonRect, toLdr, attempts);
 }
-
-/*
-COPIED FROM OLD SINGLECONFIGURATIONMANAGER CODE:
-
-
-    Configuration c(combination[0]);
-    // Build Configuration and investigate
-#ifdef _TRACE
-    std::cout << " Investigating for: " << std::endl;
-#endif
-    for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it) {
-#ifdef _TRACE
-      std::cout << " - " << *it << std::endl;
-#endif
-      c.add(combination[it->P2.first.configurationSCCI], Connection(*it, Angle()/*TODO: Replace with SML walk));
-    }
-
-    // Investigate!
-    // TODO: Use AngleMapping for investigation!
-    //IConnectionPairList found;
-    std::vector<Connection> found;
-    if(c.isRealizable(found)) {
-      /*if(!isRotationallyMinimal(found)) {
-        return; // The rotationally minimal is eventually found... check not needed anymore.
-      }
-
-#ifdef _DEBUG
-//      encoder.testCodec(found);
-#endif
-
-      // Check if new:
-      //std::cout << "Encoding " << found << std::endl;
-
-      EncodedConfiguration encoded;//TODO! = encoder.encode(found);
-
-      //std::cout << "Encoding found: " << encoded << std::endl;
-      if(foundConfigurationsEncoded.find(encoded) == foundConfigurationsEncoded.end()) {
-        ++rectilinear;
-
-        foundConfigurationsEncoded.insert(encoded);
-        //foundIConnectionPairLists.insert(found);
-        /*
-#ifdef _DEBUG
-        // Test code:
-        std::vector<Connection> cs;
-        for(std::set<IConnectionPair>::const_iterator it = found.begin(); it != found.end(); ++it)
-          cs.push_back(Connection(*it));
-        Configuration c1(combination, cs);
-        FatSCC min1 = c1.toMinSCC();
-        FatSCC min2 = c.toMinSCC();
-        assert(min1 == min2);
-#ifdef _TRACE
-        std::cout << "Found " << min1 << ". Encoded: " << encoded << ", connections: ";
-        IConnectionPairList minList;
-        encoder.decode(encoded, minList);
-        std::cout << minList << std::endl; 	
-#endif
-        assert(foundSCCs.find(min1) == foundSCCs.end());
-        foundSCCs.insert(min1);
-        foundSCCsMap.insert(std::make_pair(encoded,min1)); // For debugging only!
-      }
-      else {
-        FatSCC min2 = c.toMinSCC();
-        if(foundSCCs.find(min2) == foundSCCs.end()) {
-          std::cout << "Error! " << encoded << ": " << min2 << std::endl;
-          std::cout << "^^ Not found in scc set! Conflicts with: " << foundSCCsMap[encoded] << std::endl;
-
-          assert(false);
-        }
-#endif 
-      }
-    }
-*/

@@ -314,7 +314,7 @@ public:
     rotationBrickPosition = scc.rotationBrickPosition();
   }
 
-  FatSCC(std::vector<Brick> v) : size(v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
+  FatSCC(std::vector<Brick> v) : size((int)v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
     //std::cout << "CONVERTING!" << std::endl;
     // Ensure level starts at 0:
     int8_t minLv = 99;

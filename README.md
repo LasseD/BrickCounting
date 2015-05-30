@@ -11,33 +11,33 @@ Findings:
 
 - Size 2: 20
 
-- Size 3: 1004
+- Size 3: 1.004
 
-- Size 4: 58862
+- Size 4: 58.862
 
-- Size 5: 3817291
+- Size 5: 3.817.291
 
-- Size 6: 261534637
+- Size 6: 261.534.637
 
  Rectilinear configurations (excluding SCC's. Should match the previous results)
 
 - Size 2: 4 new, for a total of 24 rectilinear configurations, matching previous results.
 
-- Size 3: 556 new, for a total of 1560.
+- Size 3: 556 new, for a total of 1.560, matching previous results.
 
-- Size 4: 60718 new, for a total of 119580.
+- Size 4: 60.718 new, for a total of 119.580, matching previous results.
 
-- Size 5: 6349112 new, for a total of 10166403.
+- Size 5: 6.349.112 new, for a total of 10.166.403, matching previous results.
 
-- Size 6: 653569128 new, for a total of 915103765.
+- Size 6: 653.569.128 new, for a total of 915.103.765, matching previous results.
  
  Distinctly corner connected SCCs (groups models on the set of connection points)
 
-- Size 4: At least 542.
+- Size 4: At least 552.
 
-- Size 5: In progress...
+- Size 5: At least 116.790.
 
-- Size 6: In progress...
+- Size 6: At least 15.729.426.
 
  Models:
 
@@ -62,8 +62,6 @@ Construct all models using SCCs turned at angles (distinctly corner connected SC
 
 Getting to this point requires the following tasks:
 
-- Construct angle mapping structure
-
 - Expand modelling of bricks to the size sets 'S' (brick dimensions 15.6mm x 31.6mm), 'M' (brick dimensions 15.8mm x 31.8mm), and 'L' (brick dimensions 16mm x 32mm).
 
 - Perform angle mapping for each possible model and for size sets S, M and L.
@@ -74,11 +72,11 @@ Getting to this point requires the following tasks:
 
 - Optimize code to allow computations for models of size 5 and 6:
 
-- - Add timing information to code to track progression of performance.
+ - Add timing information to code to track progression of performance.
 
-- - Use profiling to identify places to improve performance.
+ - Use profiling to identify places to improve performance.
 
-- - Add multi processor support.
+ - Add multi processor support.
 
 
 Geometry:
@@ -107,17 +105,3 @@ sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
 - Size 2: Max distance: d=sqrt(20^2+52^2)=55.71mm. Max angle: a<asin(1/20/d)*2=0.00179489564 radians. Steps: A/a < 370 => 2*370+1=741 steps in total.
 
 - Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 2*538+1=1077 steps in total.
-
-
-
-
-
-CURRENT TODO
-
-- Extend AngleMapper to include extreme angle computations.
-
-- Extend angleMapper to include all SML computations of size 4.
-
-- Update paper and report findings.
-
-- Optimize algorithm to find results for size 5 and size 6.

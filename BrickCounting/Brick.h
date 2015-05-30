@@ -1,6 +1,8 @@
 #ifndef BRICK_H
 #define BRICK_H
 
+//#define _TRACE
+
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
 #include "LDRPrinter.h"

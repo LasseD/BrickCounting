@@ -13,9 +13,10 @@
 
 class SingleConfigurationManager {
 public:
-  std::set<uint64_t> foundRectilinearConfigurationsEncoded;
-  std::vector<Configuration> foundNonRectilinearConfigurations;
+  std::set<Encoding> foundRectilinearConfigurationsEncoded; // Both with and without cycles
+  std::set<Encoding> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
 private:
+  std::vector<Configuration> configurationsToWriteToLdr;
   std::set<uint64_t> investigatedConnectionPairListsEncoded;
   unsigned int combinationSize;
   FatSCC combination[6];
