@@ -32,11 +32,11 @@ public:
     1) For all possible angles: Comput S,M,L.
     2) Combine regions in S,M,L in order to determine new models.
    */
-  void findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts);
+  void findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr, counter &attempts);
 
 private:
   void evalSML(unsigned int angleI, short *angleSteps, counter &attempts);
-  void findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts);
+  void findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr, counter &attempts);
   bool firstExtreme(unsigned int angleI, short *angleStep, bool allZero, counter &attempts, Configuration &c);
   void setupAngleTypes();
   uint64_t smlIndex(short *angleStep) const;

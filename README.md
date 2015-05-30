@@ -37,7 +37,7 @@ Findings:
 
 - Size 5: At least 116.790.
 
-- Size 6: At least 15.729.426.
+- Size 6: At least 19.481.010.
 
  Models:
 

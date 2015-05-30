@@ -47,6 +47,7 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
 
 #ifdef _DEBUG
+  l5.countAllFor(l4);
   return;
 #endif
 

@@ -208,7 +208,7 @@ void AngleMapping::evalSML(unsigned int angleI, short *angleStep, counter &attem
 #endif
 }
 
-void AngleMapping::findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts) {
+void AngleMapping::findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr, counter &attempts) {
   if(angleI < numAngles) {
     angleStep[angleI] = -angleSteps[angleI];
     findExtremeConfigurations(angleI+1, angleStep, false, rect, nonRect, toLdr, attempts);
@@ -222,13 +222,13 @@ void AngleMapping::findExtremeConfigurations(unsigned int angleI, short *angleSt
 
     return;
   }
+  ++attempts;
   if(allZero)
     return;
 
   Configuration c = getConfiguration(angleStep);
   std::vector<IConnectionPair> found;
-  bool realizable = c.isRealizable(found);
-  if(!realizable)
+  if(!c.isRealizable(found))
     return; // Not possible to build.
   Encoding encoded = encoder.encode(found);
   if(rect.find(encoded) != rect.end())
@@ -236,9 +236,8 @@ void AngleMapping::findExtremeConfigurations(unsigned int angleI, short *angleSt
   if(nonRect.find(encoded) != nonRect.end())
     return; // Already known as nonRect.
   nonRect.insert(encoded);
-  if(found.size() != numAngles) {
+  if(found.size() != numAngles)
     toLdr.push_back(c); // cyclic!
-  }
 }
 
 bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, bool allZero, counter &attempts, Configuration &c) {
@@ -266,7 +265,7 @@ bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, bool allZ
   return realizable && found.size() == numAngles; // Don't trust new configurations with circles!
 }
 
-void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> toLdr, counter &attempts) {
+void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr, counter &attempts) {
   short angleStep[5] = {0,0,0,0,0};
 
   //Initially try rectilinear:
