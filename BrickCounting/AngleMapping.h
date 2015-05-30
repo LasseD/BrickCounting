@@ -32,7 +32,7 @@ public:
     1) For all possible angles: Comput S,M,L.
     2) Combine regions in S,M,L in order to determine new models.
    */
-  std::vector<Configuration> findNewConfigurations(std::set<uint64_t> &foundCircularConfigurationsEncoded, counter &attempts, counter &rectilinear, counter &nonRectilinearIConnectionPairLists, counter &models, counter &problematic);
+  bool findNewConfiguration(Configuration &c, std::set<uint64_t> &foundRectilinearConfigurationsEncoded, counter &attempts);
 
 private:
   void evalSML(unsigned int angleI, short *angleSteps, counter &attempts);

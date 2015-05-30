@@ -5,7 +5,7 @@
 #include <map>
 #include <algorithm>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize(combination.size()), encoder(combination), attempts(0), rectilinear(0), nonRectilinearIConnectionPairLists(0), models(0), problematic(0)
+SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize(combination.size()), encoder(combination), attempts(0), models(0), problematic(0) // rectilinear(0), nonRectilinearConfigurations(0), 
 {
 #ifdef _TRACE
   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
@@ -80,9 +80,10 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     investigatedConnectionPairListsEncoded.insert(encoded);
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder);
-    std::vector<Configuration> newConfigurations = angleMapping.findNewConfigurations(foundCircularConfigurationsEncoded, attempts, rectilinear, nonRectilinearIConnectionPairLists, models, problematic);
-    for(std::vector<Configuration>::const_iterator it = newConfigurations.begin(); it != newConfigurations.end(); ++it)
-      foundConfigurations.push_back(*it);
+    Configuration c;
+    if(angleMapping.findNewConfiguration(c, foundRectilinearConfigurationsEncoded, attempts)) {
+      foundNonRectilinearConfigurations.push_back(c);
+    }
     return;
   }
 
@@ -144,33 +145,29 @@ void SingleConfigurationManager::run() {
 
   run(l, abovePool, belowPool, remaining, remainingSize);
   // Print:
-  //printLDRFile();
-#ifdef _INFO
+  printLDRFile();
+#ifdef _TRACE
   std::cout << "SingleConfigurationManager::run() INTERNAL RESULTS: " << std::endl;
   std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
-  std::cout << " foundCircularConfigurationsEncoded: " << foundCircularConfigurationsEncoded.size() << std::endl;
-  std::cout << " foundConfigurations: " << foundConfigurations.size() << std::endl;
+  std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
+  std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurations.size() << std::endl;
 #endif
 }
 
 void SingleConfigurationManager::printLDRFile() const {
-  if(foundConfigurations.size() == 0)
+  if(foundNonRectilinearConfigurations.size() == 0)
     return;
 
   LDRPrinterHandler h;
 
-  std::vector<Configuration> v;
-  for(std::vector<Configuration>::const_iterator it = foundConfigurations.begin(); it != foundConfigurations.end(); ++it)
-    v.push_back(*it);
-
   // Actual printing:
-  for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it)
+  for(std::vector<Configuration>::const_iterator it = foundNonRectilinearConfigurations.begin(); it != foundNonRectilinearConfigurations.end(); ++it)
     h.add(&(*it));
   std::stringstream ss;
   int size = 0;
   for(unsigned int i = 0; i < combinationSize; ++i)
     size += combination[i].size;
-  ss << "rc\\";
+  ss << "rc\\" << size << "\\";
   ss << "size" << size << "_sccs" << combinationSize << "_sccsizes";  
   for(unsigned int i = 0; i < combinationSize; ++i)
     ss << "_" << combination[i].size;

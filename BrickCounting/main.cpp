@@ -20,9 +20,9 @@ int main(int, char**) {
   // Rund RC:
   ConfigurationManager mgr;
   //mgr.runForSize(2); 
-  mgr.runForSize(3);
+  //mgr.runForSize(3);
   //mgr.runForSize(4);
-  //mgr.runForSize(5);
+  mgr.runForSize(5);
   //mgr.runForSize(6);
   return 0;
 }

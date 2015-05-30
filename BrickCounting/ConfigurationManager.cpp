@@ -10,8 +10,8 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     SingleConfigurationManager mgr(combination);
     mgr.run();
     attempts+=mgr.attempts;
-    rectilinear+=mgr.rectilinear;
-    nonRectilinearIConnectionPairLists+=mgr.nonRectilinearIConnectionPairLists;
+    rectilinear+=mgr.foundRectilinearConfigurationsEncoded.size();
+    nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurations.size();
     models+=mgr.models;
     problematic+=mgr.problematic;
     //std::cout << "Found " << mgr.rectilinear << " rectilinear combinations in " << mgr.attempts << " attempts." << std::endl;
@@ -80,18 +80,18 @@ void ConfigurationManager::runForSize(int size) {
 
   // Output results:
   std::cout << "Results for size " << size << ":" << std::endl;
-  std::cout << " Strongly connected configurations (SCC): " << sccsSize[size-1] << std::endl;
   std::cout << " Attempts: " << attempts << std::endl;
+  std::cout << " Strongly connected configurations (SCC): " << sccsSize[size-1] << std::endl;
   std::cout << " Rectilinear configurations: " << sccsSize[size-1] << " + " << rectilinear << " = " << (sccsSize[size-1]+rectilinear) << std::endl;
-  std::cout << " Ways to connect SCCs resulting in new models: " << nonRectilinearIConnectionPairLists << std::endl;
+  std::cout << " Non-rectilinear corner connected SCCs: " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models: " << models << std::endl;
   std::cout << " Models requiring manual confirmation: " << problematic << std::endl;
   std::cout << std::endl;
 }
 
-ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearIConnectionPairLists(0), models(0), problematic(0) {
+ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
   StronglyConnectedConfigurationManager sccMgr;
-  for(int i = 0; i < 3; ++i) {
+  for(int i = 0; i < 4; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
     // TODO: Run to 5!
   }

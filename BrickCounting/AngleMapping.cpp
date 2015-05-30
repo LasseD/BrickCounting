@@ -172,9 +172,10 @@ Configuration AngleMapping::getConfiguration(short *angleStep) const {
   for(unsigned int i = 0; i < numAngles; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
     const IConnectionPoint &ip2 = points[2*i+1];
-    const Angle angle(angleStep[i] - angleSteps[i], angleSteps[i]);
+    const Angle angle(angleStep[i], angleSteps[i]);
     const Connection cc(ip1, ip2, angle);
-    c.add(sccs[ip1.first.configurationSCCI], cc);
+    assert(ip2.first.configurationSCCI != 0);
+    c.add(sccs[ip2.first.configurationSCCI], cc);
   }
   return c;
 }
@@ -215,63 +216,33 @@ bool AngleMapping::firstExtreme(unsigned int angleI, short *angleStep, counter &
     angleStep[angleI] = angleSteps[angleI];
     if(firstExtreme(angleI+1, angleStep, attempts, c))
       return true;
+    return false;
   }
   ++attempts;
 
   c = getConfiguration(angleStep);
-  std::vector<IConnectionPair> found; // Currently ignored.
-  return c.isRealizable(found);
+  std::vector<IConnectionPair> found;
+  bool realizable = c.isRealizable(found);
+  return realizable && found.size() == numAngles; // Don't trust new configurations with circles!
 }
 
-std::vector<Configuration> AngleMapping::findNewConfigurations(std::set<uint64_t> &foundCircularConfigurationsEncoded, counter &attempts, counter &rectilinear, counter &nonRectilinearIConnectionPairLists, counter &models, counter &problematic) {
+bool AngleMapping::findNewConfiguration(Configuration &c, std::set<uint64_t> &foundRectilinearConfigurationsEncoded, counter &attempts) {
   short angleStep[5] = {0,0,0,0,0};
 
-  std::vector<Configuration> newConfigurations;
-
   //Initially try rectilinear:
-  Configuration c = getConfiguration(angleStep);
+  c = getConfiguration(angleStep);
   std::vector<IConnectionPair> found; // Currently ignored.
   ++attempts;
-  if(c.isRealizable(found)) {
-    // Rectilinear OK!
-  }
-  else {
-    if(firstExtreme(0, angleStep, attempts, c)) {
-      c.isRealizable(found); // Ignore return value.
+  if(c.isRealizable(found)) { // Rectilinear:
+    uint64_t encoded = encoder.encode(found);
+    if(foundRectilinearConfigurationsEncoded.find(encoded) == foundRectilinearConfigurationsEncoded.end()) {
+      foundRectilinearConfigurationsEncoded.insert(encoded);
     }
-    else {
-      return newConfigurations;
+    if(found.size() == numAngles) { // No cycles:
+      return false; // Rectilinear no cycles => can't trust any non-rectilinear when rectilinear is realizable.
     }
   }
-
-  //evalSML(0, angleStep, attempts);
-
-
-  // TODO! Currently just for 0-angles to check construction of SML is OK
-  //uint64_t iM = smlIndex(angleStep);
-  //if(!M[iM])
-  //  return newConfigurations;
-
-  //Configuration c = getConfiguration(angleStep);
-  //std::vector<IConnectionPair> found;
-  //c.isRealizable(found); // Ignore return value.
-  const IConnectionPairList cpl(found);
-  uint64_t encoded = encoder.encode(cpl);
-  if(found.size() > numAngles) { // With extra connection(s)
-    if(foundCircularConfigurationsEncoded.find(encoded) != foundCircularConfigurationsEncoded.end()) {
-      return newConfigurations;
-    }
-    foundCircularConfigurationsEncoded.insert(encoded);
-  }
-  newConfigurations.push_back(c);
-
-  ++models;
-  if(isRectilinear(angleStep))
-    ++rectilinear;
-  else
-    ++nonRectilinearIConnectionPairLists;
-
-  return newConfigurations;
+  return firstExtreme(0, angleStep, attempts, c);
 }
 
 /*

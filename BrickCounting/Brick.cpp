@@ -7,14 +7,14 @@
 #include <cmath>
 
 double round(double number) {
-    return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
+  return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
 }
 
 /*
 Constructor used for finding connection points:
 b: original brick placed in space.
 rb: rb in same configuration as b where b is original brick.
- */
+*/
 Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level(b.level + rb.level()) {
   double sina = sin(angle);
   double cosa = cos(angle);
@@ -29,8 +29,8 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
 }
 
 /*
- Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
- */
+Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
+*/
 Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv-p.brick.level()) {  
   if(p.brick.horizontal())
     angle += M_PI/2;
@@ -89,18 +89,18 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   Point studs[8];
   getStudPositions(studs);
   for(int i = 0; i < 8; ++i) {
-    Point p = studs[i];
-    os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
-    os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
+  Point p = studs[i];
+  os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
+  os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
   /*
   // 7 POIs:
   Point studs[6];
   getBoxPOIs(studs);
   for(int i = 0; i < 6; ++i) {
-    Point p = studs[i];
-    os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
-    os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
+  Point p = studs[i];
+  os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
+  os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
 }
 
@@ -203,16 +203,16 @@ bool Brick::boxIntersectsPOIsFrom(Brick &b) const {
 }
 
 /*
-  Assumes b is on same level.
- */
+Assumes b is on same level.
+*/
 bool Brick::boxesIntersect(const Brick &b) const {
   Brick tmpB(b);
   Brick tmpThis(*this);
   return boxIntersectsPOIsFrom(tmpB) || b.boxIntersectsPOIsFrom(tmpThis);
 }
 
- bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-   //std::cout << " Checking stud intersection between " << *this << " and " << b << std::endl;
+bool Brick::boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+  //std::cout << " Checking stud intersection between " << *this << " and " << b << std::endl;
   moveBrickSoThisIsAxisAlignedAtOrigin(b);
   //std::cout << "  After axis aligning this. b=" << b << std::endl;
   Point studsOfB[NUMBER_OF_STUDS];
@@ -224,15 +224,18 @@ bool Brick::boxesIntersect(const Brick &b) const {
       stud.X = -stud.X;
     if(stud.Y < 0)
       stud.Y = -stud.Y;
-    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE && stud.Y < VERTICAL_BRICK_CENTER_TO_TOP) {
+    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE+STUD_RADIUS && 
+       stud.Y < VERTICAL_BRICK_CENTER_TO_TOP+STUD_RADIUS) {
       // Might intersect - check corner case:
       const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE-STUD_RADIUS;
       const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP-STUD_RADIUS;
-      if(stud.X > cornerX && stud.Y > cornerY) {
-	return STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY);
+      if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE ||
+         stud.Y < VERTICAL_BRICK_CENTER_TO_TOP ||
+         STUD_DIAM*STUD_DIAM > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
+          connected = false;
+          return true;
       }
-      //std::cout << "  Inner stud intersection " << stud.X << "," << stud.Y << std::endl;
-      return true;
     }
   }
   // Handle four outer specially as they might cause connection:
@@ -244,41 +247,42 @@ bool Brick::boxesIntersect(const Brick &b) const {
     if(stud.Y < 0)
       stud.Y = -stud.Y;
 
-    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE && stud.Y < VERTICAL_BRICK_CENTER_TO_TOP) {
+    if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE+STUD_RADIUS && 
+       stud.Y < VERTICAL_BRICK_CENTER_TO_TOP+STUD_RADIUS) {
       // X check if it hits stud:
       const double studX = HALF_STUD_DISTANCE;
       const double studY = STUD_AND_A_HALF_DISTANCE;   
       //std::cout << " snap distance sq " << SNAP_DISTANCE*SNAP_DISTANCE << " vs " << ((stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) << std::endl;
       if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
-	// We are already connected:
-	if(connected) {
-	  connected = false;
-	  //std::cout << "  Double outer stud intersection " << stud.X << "," << stud.Y << std::endl;
-	  return true;
-	}
-	// Compute corner:
-	connected = true;
-	if(studsOfB[i].X < 0 && studsOfB[i].Y < 0)
-	  foundConnectionThis = ConnectionPoint(SW, source, false, -1);
-	else if(studsOfB[i].X < 0 && studsOfB[i].Y > 0)
-	  foundConnectionThis = ConnectionPoint(NW, source, false, -1);
-	else if(studsOfB[i].X > 0 && studsOfB[i].Y < 0)
-	  foundConnectionThis = ConnectionPoint(SE, source, false, -1);
-	else // if(stud.X > 0 && stud.Y > 0)
-	  foundConnectionThis = ConnectionPoint(NE, source, false, -1);
-	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
-	continue;
-      }      
+        // We are already connected:
+        if(connected) {
+          connected = false;
+          //std::cout << "  Double outer stud intersection " << stud.X << "," << stud.Y << std::endl;
+          return true;
+        }
+        // Compute corner:
+        connected = true;
+        if(studsOfB[i].X < 0 && studsOfB[i].Y < 0)
+          foundConnectionThis = ConnectionPoint(SW, source, false, -1);
+        else if(studsOfB[i].X < 0 && studsOfB[i].Y > 0)
+          foundConnectionThis = ConnectionPoint(NW, source, false, -1);
+        else if(studsOfB[i].X > 0 && studsOfB[i].Y < 0)
+          foundConnectionThis = ConnectionPoint(SE, source, false, -1);
+        else // if(stud.X > 0 && stud.Y > 0)
+          foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+        foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
+        continue;
+      }
 
       // Might intersect - check corner case:
       const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE-STUD_RADIUS;
       const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP-STUD_RADIUS;
-      if(stud.X < cornerX || 
-	 stud.Y < cornerY || 
-         STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-        //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
-	connected = false;
-        return true;
+      if(stud.X < VERTICAL_BRICK_CENTER_TO_SIDE ||
+         stud.Y < VERTICAL_BRICK_CENTER_TO_TOP ||
+         STUD_DIAM*STUD_DIAM > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
+          connected = false;
+          return true;
       }
     }
   }
@@ -287,14 +291,14 @@ bool Brick::boxesIntersect(const Brick &b) const {
 }
 
 /*
-  1: If not even close level-wise: return false.
-  2: If on same level: Check that boxes do not collide.
-   - If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22
-  3: If on adjacent levels:
-   - If any of the 8 studs of lower brick inside box of upper: intersect.
-   - If intersect: Check if only intersecting one corner stud.
-   - If only one corner stud, check if corner connected.
- */
+1: If not even close level-wise: return false.
+2: If on same level: Check that boxes do not collide.
+- If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22
+3: If on adjacent levels:
+- If any of the 8 studs of lower brick inside box of upper: intersect.
+- If intersect: Check if only intersecting one corner stud.
+- If only one corner stud, check if corner connected.
+*/
 bool Brick::intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
   //std::cout << "! Checking intersection between " << *this << " and " << b << std::endl;
   connected = false;

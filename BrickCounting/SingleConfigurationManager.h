@@ -12,11 +12,14 @@
 #include <map>
 
 class SingleConfigurationManager {
+public:
+  std::set<uint64_t> foundRectilinearConfigurationsEncoded;
+  std::vector<Configuration> foundNonRectilinearConfigurations;
+private:
+  std::set<uint64_t> investigatedConnectionPairListsEncoded;
   unsigned int combinationSize;
   FatSCC combination[6];
-  std::set<uint64_t> investigatedConnectionPairListsEncoded, foundCircularConfigurationsEncoded;
   ConfigurationEncoder encoder;
-  std::vector<Configuration> foundConfigurations;
   
   //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
   //std::set<FatSCC> foundSCCs; // For debugging only!
@@ -35,7 +38,7 @@ public:
   void printLDRFile() const;
   bool isRotationallyMinimal(const IConnectionPairList &l) const;
 
-  counter attempts, rectilinear, nonRectilinearIConnectionPairLists, models, problematic;
+  counter attempts, models, problematic; // rectilinear, nonRectilinearConfigurations, 
 };
 
 #endif // SINGLE_CONFIGURATION_MANAGER_H

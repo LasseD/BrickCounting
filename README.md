@@ -5,60 +5,60 @@ Paper at http://c-mt.dk/counting
 
 Findings:
 
- StronglyConnectedComponents (SCC):
+ Strongly Connected Configurations (SCC):
 
-  Size 1: 1
+- Size 1: 1
 
-  Size 2: 20
+- Size 2: 20
 
-  Size 3: 1004
+- Size 3: 1004
 
-  Size 4: 58862
+- Size 4: 58862
 
-  Size 5: 3817291
+- Size 5: 3817291
 
-  Size 6: 261534637
+- Size 6: 261534637
 
  Rectilinear configurations (excluding SCC's. Should match the previous results)
 
-  Size 2: 4 new, for a total of 24 rectilinear configurations, matching previous results.
+- Size 2: 4 new, for a total of 24 rectilinear configurations, matching previous results.
 
-  Size 3: 556 new, for a total of 1560.
+- Size 3: 556 new, for a total of 1560.
 
-  Size 4: 60718 new, for a total of 119580.
+- Size 4: 60718 new, for a total of 119580.
 
-  Size 5: 6349112 new, for a total of 10166403.
+- Size 5: 6349112 new, for a total of 10166403.
 
-  Size 6: 653569128 new, for a total of 915103765.
+- Size 6: 653569128 new, for a total of 915103765.
  
- Distinctly corner connected strongly connected configurations (groups models on the set of connection points)
+ Distinctly corner connected SCCs (groups models on the set of connection points)
 
-  Size 4: In progress...
+- Size 4: At least 542.
 
-  Size 5: In progress...
+- Size 5: In progress...
 
-  Size 6: In progress...
+- Size 6: In progress...
 
  Models:
 
-  Size 4: In progress...
+- Size 4: In progress...
 
-  Size 5: In progress...
+- Size 5: In progress...
 
-  Size 6: In progress...
+- Size 6: In progress...
 
  Models requiring manual verification:
 
-  Size 4: In progress...
+- Size 4: In progress...
 
-  Size 5: In progress...
+- Size 5: In progress...
 
-  Size 6: In progress...
+- Size 6: In progress...
 
 
 TODO: 
 
-Construct all models using SCCs turned at angles (distinctly corner connected strongly connected configurations are a sub-result of finding the models). 
+Construct all models using SCCs turned at angles (distinctly corner connected SCCs are a sub-result of finding the models). 
 
 Getting to this point requires the following tasks:
 
@@ -116,11 +116,7 @@ CURRENT TODO
 
 - Extend AngleMapper to include extreme angle computations.
 
-- Run and check all newly found models look OK.
-
-- Extend angleMapper to include all SML computations.
-
-- Run and check all newly found models look OK.
+- Extend angleMapper to include all SML computations of size 4.
 
 - Update paper and report findings.
 
