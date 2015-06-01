@@ -109,46 +109,6 @@ If a circle has 3 turn points then there are so few ways in which the turn point
 
 <TODO - perform calculations with 4 bricks first!>
 
-Now the fun starts: 5 bricks
-----------------------------
-5 circle not possible
-4 circle can be locked
-4 circle + 1 turn point possible
-multiple 3-circles possible!
-
-
-Continuing the success: 6 bricks
-----------------------------
-TODO!
-
-
-
-Code Design
------------
-Stud numbering:
- 6 7
- 4 5
- 2 3
- 0 1
-State classes:
- Brick: any brick 
-  attributes: x,y,angle,level
- RectilinearBrick: angle *= 90. 
-  attributes(all int): x,y,angle,lv.
-  structs: ConnectionPointType, connectionPoint: int x, int y, ConnectionPointType type
- StronglyConnectedConfiguration<uint SIZE>: Assume size > 1, otherwise use RectilinearBrick
-  attributes: RectilinearBrick[SIZE-1] otherBricks; // first brick 0,0, vertical at lv. 0
-  functions:
-   - <x,y,dir> getConnectionPointsAbove() / Below()
- RectilinearConfiguration<int SIZE, int SIZE1SUBS>: Type: SIZE-SIZE1SUBS-SUB_SIZES (var not permisible in C++ prior 11)
-  attributes: StronglyConnectedConfiguration[SIZE-SIZE1SUBS] subConfigurations; Brick[SIZE1SUBS] size1Subs;
-Funcion classes:
- main:
-  - Given a size for models. Delegate computations to threads: One thread for each type of RectilinearConfiguration.
-
- StronglyConnectedConfigurationManager:
-  - constructAllStronglyConnectedConfigurations(int size)
- 
 
 References
 ----------

@@ -365,7 +365,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 
   Encoding encoded = encode(list1);
 #ifdef _TRACE
-  std::cout << " encoded: " << encoded << std::endl;
+  std::cout << " encoded: " << encoded.first << std::endl;
 #endif
   IConnectionPairList list2;
   IConnectionPairList list3;

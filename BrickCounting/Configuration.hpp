@@ -78,7 +78,6 @@ struct Angle {
     return n == c.n && d == c.d;
   }
 };
-
 inline std::ostream& operator<<(std::ostream &os, const Angle& c) {
   os << c.n << "/" << c.d;
   return os;
@@ -162,11 +161,10 @@ public:
   std::set<IConnectionPair>::const_iterator end() const {
     return v.end();
   }
-  unsigned int size() const {
+  size_t size() const {
     return v.size();
   }
 };
-
 inline std::ostream& operator<<(std::ostream &os, const IConnectionPairList& l) {
   for(std::set<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it) {
     os << it->first << "/" << it->second << " ";
@@ -200,10 +198,8 @@ public:
     }
   }
 
+  template <int ADD_X, int ADD_Y>
   bool isRealizable(std::vector<IConnectionPair> &found) const {
-#ifdef _TRACE
-    std::cout << "  isRealizable: " << std::endl;
-#endif
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick &ib = bricks[i];
       for(int j = i+1; j < bricksSize; ++j) {
@@ -219,7 +215,7 @@ public:
         }
         bool connected;
         ConnectionPoint pi, pj;
-        if(ib.b.intersects(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
+        if(ib.b.intersects<ADD_X,ADD_Y>(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
           if(!connected) {
 #ifdef _TRACE
             std::cout << "   Intersect, no connect => fail!" << std::endl;
@@ -355,7 +351,6 @@ public:
     return ret;
   }
 };
-
 inline std::ostream& operator<<(std::ostream& os, const Configuration& c) {
   os << "CONF[size=" << c.bricksSize << ",";
   for(int i = 0; i < c.bricksSize; ++i)

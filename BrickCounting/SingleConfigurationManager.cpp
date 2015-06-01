@@ -78,9 +78,10 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       return;
 
     investigatedConnectionPairListsEncoded.insert(encoded.first);
+    ++attempts;
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder);
-    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, configurationsToWriteToLdr, attempts);
+    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, configurationsToWriteToLdr, problematic);
     return;
   }
 
@@ -147,7 +148,7 @@ void SingleConfigurationManager::run() {
   std::cout << "SingleConfigurationManager::run() INTERNAL RESULTS: " << std::endl;
   std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
   std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
-  std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurations.size() << std::endl;
+  std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
 #endif
 }
 

@@ -5,7 +5,7 @@ Paper at http://c-mt.dk/counting
 
 Findings:
 
- Strongly Connected Configurations (SCC):
+Strongly Connected Configurations (SCC):
 
 - Size 1: 1
 
@@ -19,7 +19,7 @@ Findings:
 
 - Size 6: 261.534.637
 
- Rectilinear configurations (excluding SCC's. Should match the previous results)
+Rectilinear configurations (excluding SCC's. Should match the previous results)
 
 - Size 2: 4 new, for a total of 24 rectilinear configurations, matching previous results.
 
@@ -31,15 +31,15 @@ Findings:
 
 - Size 6: 653.569.128 new, for a total of 915.103.765, matching previous results.
  
- Distinctly corner connected SCCs (groups models on the set of connection points)
+Distinctly corner connected SCCs (groups models on the set of connection points)
 
 - Size 4: At least 552.
 
-- Size 5: At least 116.790.
+- Size 5: At least 116.998.
 
-- Size 6: At least 19.481.010.
+- Size 6: At least 19.701.710.
 
- Models:
+Models:
 
 - Size 4: In progress...
 
@@ -47,7 +47,7 @@ Findings:
 
 - Size 6: In progress...
 
- Models requiring manual verification:
+Models requiring manual verification:
 
 - Size 4: In progress...
 
@@ -64,11 +64,9 @@ Getting to this point requires the following tasks:
 
 - Expand modelling of bricks to the size sets 'S' (brick dimensions 15.6mm x 31.6mm), 'M' (brick dimensions 15.8mm x 31.8mm), and 'L' (brick dimensions 16mm x 32mm).
 
-- Perform angle mapping for each possible model and for size sets S, M and L.
+- Extract model information from mapping of the three size sets.
 
-- Extract model information from mapping of size sets.
-
-- Construct humanly readable and verification information for any model requiring manual verification.
+- Construct humanly readable information for any model requiring manual verification.
 
 - Optimize code to allow computations for models of size 5 and 6:
 
