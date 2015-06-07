@@ -16,7 +16,7 @@ public:
   std::set<Encoding> foundRectilinearConfigurationsEncoded; // Both with and without cycles
   std::set<Encoding> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
 private:
-  std::vector<Configuration> configurationsToWriteToLdr;
+  std::vector<std::vector<Connection> > manual;
   std::set<uint64_t> investigatedConnectionPairListsEncoded;
   unsigned int combinationSize;
   FatSCC combination[6];

@@ -81,7 +81,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder);
-    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, configurationsToWriteToLdr, problematic);
+    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, problematic);
     return;
   }
 
@@ -153,24 +153,21 @@ void SingleConfigurationManager::run() {
 }
 
 void SingleConfigurationManager::printLDRFile() const {
-  if(configurationsToWriteToLdr.size() == 0)
+  if(manual.size() == 0)
     return;
 
-  LDRPrinterHandler h;
-
   // Actual printing:
-  for(std::vector<Configuration>::const_iterator it = configurationsToWriteToLdr.begin(); it != configurationsToWriteToLdr.end(); ++it)
-    h.add(&(*it));
-  std::stringstream ss;
-  int size = 0;
-  for(unsigned int i = 0; i < combinationSize; ++i)
-    size += combination[i].size;
-  ss << "ccscc\\" << size << "\\";
-  ss << "size" << size << "_sccs" << combinationSize << "_sccsizes";  
-  for(unsigned int i = 0; i < combinationSize; ++i)
-    ss << "_" << combination[i].size;
-  ss << "_sccindices";
-  for(unsigned int i = 0; i < combinationSize; ++i)
-    ss << "_" << combination[i].index;
-  h.print(ss.str());
+  for(std::vector<std::vector<Connection> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
+    LDRPrinterHandler h;
+    Configuration c(combination, *it);    
+    h.add(&c);
+
+    std::stringstream ss;
+    int size = 0;
+    for(unsigned int i = 0; i < combinationSize; ++i)
+      size += combination[i].size;
+    ss << "manual\\" << size << "\\";
+    encoder.writeFileName(ss, *it);
+    h.print(ss.str());    
+  }
 }

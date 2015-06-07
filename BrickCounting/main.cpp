@@ -10,7 +10,7 @@ void ensureFoldersAreCreated() {
   std::cout << "Ensuring that the necessary folders exist." << std::endl;
   std::cout << "Please ensure this program has permissions to create folders and write files here." << std::endl;
 
-#ifdef WIN32
+#ifdef _WIN32
   CreateDirectory(L"scc", NULL);
 /*  CreateDirectory(L"scc\\1", NULL);
   CreateDirectory(L"scc\\2", NULL);
@@ -18,18 +18,21 @@ void ensureFoldersAreCreated() {
   CreateDirectory(L"scc\\4", NULL);
   CreateDirectory(L"scc\\5", NULL);*/
   CreateDirectory(L"scc\\6", NULL); // For hash lists.
-  CreateDirectory(L"ccscc", NULL);
-  CreateDirectory(L"ccscc\\4", NULL);
-  CreateDirectory(L"ccscc\\5", NULL);
-  CreateDirectory(L"ccscc\\6", NULL);
+  CreateDirectory(L"models", NULL);
+  CreateDirectory(L"manual", NULL);
+  CreateDirectory(L"manual\\4", NULL);
+  CreateDirectory(L"manual\\5", NULL);
+  CreateDirectory(L"manual\\6", NULL);
   CreateDirectory(L"old_rc", NULL); // Using the simple (old) way of counting all rectilinear configurations.
-#else // G++:
+#else
+  // G++:
   CreateDirectory("scc", NULL);
   CreateDirectory("scc\\6", NULL);
-  CreateDirectory("ccscc", NULL);
-  CreateDirectory("ccscc\\4", NULL);
-  CreateDirectory("ccscc\\5", NULL);
-  CreateDirectory("ccscc\\6", NULL);
+  CreateDirectory("models", NULL);
+  CreateDirectory("manual", NULL);
+  CreateDirectory("manual\\4", NULL);
+  CreateDirectory("manual\\5", NULL);
+  CreateDirectory("manual\\6", NULL);
   CreateDirectory("old_rc", NULL);
 #endif
 

@@ -55,6 +55,7 @@ public:
   void decode(uint64_t encoded, IConnectionPairList &list) const;
 
   void testCodec(const IConnectionPairList &list1) const;
+  void writeFileName(std::ostream &ss, const std::vector<Connection> &l) const;
 
 private:
   void rotateSCC(int i, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;

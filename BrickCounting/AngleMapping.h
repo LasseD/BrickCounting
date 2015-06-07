@@ -1,6 +1,11 @@
+#ifndef ANGLEMAPPING_H
+#define ANGLEMAPPING_H
+
+#include <stdint.h>
 #include "ConnectionPoint.h"
 #include "Configuration.hpp"
 #include "ConfigurationEncoder.h"
+#include "UnionFind.h"
 
 #define STEPS_1 203
 #define STEPS_2 370
@@ -22,6 +27,7 @@ public:
   unsigned long long sizeMappings; 
   FatSCC sccs[6];
   bool *S, *M, *L; 
+  SimpleUnionFind *ufS, *ufM, *ufL;
   IConnectionPoint points[10];
   unsigned int angleTypes[5]; // Connection(aka. angle) -> 1, 2, or 3.
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 203, 370, or 538.
@@ -36,156 +42,91 @@ public:
     1) For all possible angles: Comput S,M,L.
     2) Combine regions in S,M,L in order to determine new models.
    */
-  void findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr, counter &problematic);
+  void findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, counter &problematic);
   uint64_t smlIndex(short const * const angleStep) const;
 
 private:
-  void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr);
+  void reportProblematic(short const * const angleStep, bool counted, std::vector<std::vector<Connection> > &toLdr) const;
+  void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void evalSML(unsigned int angleI, short *angleStep);
-  void findIslands(unsigned int angleI, short *angleStep, std::vector<SIsland> &sIslands);
-  void findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<Configuration> &toLdr);
+  void findIslands(std::vector<SIsland> &sIslands);
+  void findExtremeConfigurations(unsigned int angleI, short *angleStep, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
   Configuration getConfiguration(short const * const angleStep) const;
+  std::vector<Connection> getConfigurationConnections(short const * const angleStep) const;
   bool isRectilinear(short *angleStep) const;
 };
 
 struct LIsland {
-private:
-  AngleMapping *a;
-  uint64_t clear(short *position) const {
-    assert(a->L[a->smlIndex(position)]);
-    //std::cout << " M Island add " << a->smlIndex(position) << std::endl;
-    a->L[a->smlIndex(position)] = false; // Perform actual clearing.
-    uint64_t res = 1;
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
-      if(position[i] > -a->angleSteps[i]) {
-        --position[i];
-        if(a->L[a->smlIndex(position)])
-          res += clear(position);
-        ++position[i];
-      }
-      if(position[i] < a->angleSteps[i]) {
-        ++position[i];
-        if(a->L[a->smlIndex(position)])
-          res += clear(position);
-        --position[i];
-      }
-    }
-    return res;
-  }
-public:
+  unsigned int sizeRep;
   short representative[5];
-  uint64_t size;
-  LIsland(AngleMapping *a, short const * const init) : a(a) {
-    short position[5];
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+
+  LIsland(unsigned int sizeRep, unsigned short const * const init) : sizeRep(sizeRep) {
+    for(unsigned int i = 0; i < sizeRep; ++i)
       representative[i] = init[i];
-      position[i] = init[i];
-    }
-    size = clear(position);
   }
   LIsland() {}
-  LIsland(const LIsland &l) : a(l.a), size(l.size) {
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+  LIsland(const LIsland &l) : sizeRep(l.sizeRep) {
+    for(unsigned int i = 0; i < sizeRep; ++i)
       representative[i] = l.representative[i];
-    }    
   }
 };
 struct MIsland {
   std::vector<LIsland> lIslands;
   bool rectilinear;
-private:
-  AngleMapping *a;
-  uint64_t clear(short *position) {
-    uint64_t index = a->smlIndex(position);
-    //std::cout << " M Island add " << index << std::endl;
-    assert(a->M[index]);
-    if(a->rectilinearIndex == index) {
-      rectilinear = true;
-      //std::cout << " rectilinear!" << std::endl;
-    }
-    if(a->L[index])
-      lIslands.push_back(LIsland(a, position));
-    a->M[index] = false; // Perform actual clearing.
-    uint64_t res = 1;
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
-      if(position[i] > -a->angleSteps[i]) {
-        --position[i];
-        if(a->M[a->smlIndex(position)])
-          res += clear(position);
-        ++position[i];
-      }
-      if(position[i] < a->angleSteps[i]) {
-        ++position[i];
-        if(a->M[a->smlIndex(position)])
-          res += clear(position);
-        --position[i];
-      }
-    }
-    return res;
-  }
-public:
+  unsigned int sizeRep;
   short representative[5];
-  uint64_t size;
-  MIsland(AngleMapping *a, short const * const init) : rectilinear(false), a(a) {
-    short position[5];
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+
+  MIsland(AngleMapping *a, uint8_t unionFindIndex, unsigned short const * const init) : sizeRep(a->numAngles) {
+    for(unsigned int i = 0; i < sizeRep; ++i)
       representative[i] = init[i];
-      position[i] = init[i];
+
+    rectilinear = a->ufM->get(init) == unionFindIndex;
+    // Add all L-islands:
+    for(unsigned int i = 0; i < a->ufL->numReducedUnions; ++i) {
+      unsigned short rep[5];
+      uint8_t unionI = a->ufL->reducedUnions[i];
+      a->ufL->getRepresentative(unionI, rep);
+      uint64_t repI = a->ufL->indexOf(rep);
+      if(a->L[repI]) {
+	lIslands.push_back(LIsland(sizeRep, rep));      
+      }
     }
-    size = clear(position);
   }
   MIsland() {}
-  MIsland(const MIsland &l) : rectilinear(l.rectilinear), a(l.a), lIslands(l.lIslands), size(l.size) {
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+  MIsland(const MIsland &l) : lIslands(l.lIslands), rectilinear(l.rectilinear), sizeRep(l.sizeRep) {
+    for(unsigned int i = 0; i < sizeRep; ++i) {
       representative[i] = l.representative[i];
     }    
   }
 };
+
 struct SIsland {
   std::vector<MIsland> mIslands;
-private:
-  AngleMapping *a;
-  uint64_t clear(short *position) {
-    uint64_t index = a->smlIndex(position);
-    assert(a->S[index]);
-    if(a->M[index])
-      mIslands.push_back(MIsland(a, position));
-    a->S[index] = false; // Perform actual clearing.
-    uint64_t res = 1;
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
-      if(position[i] > -a->angleSteps[i]) {
-        --position[i];
-        if(a->S[a->smlIndex(position)])
-          res += clear(position);
-        ++position[i];
-      }
-      if(position[i] < a->angleSteps[i]) {
-        ++position[i];
-        if(a->S[a->smlIndex(position)])
-          res += clear(position);
-        --position[i];
-      }
-    }
-    return res;
-  }
-public:
+  unsigned int sizeRep;
   short representative[5];
-  uint64_t size;
-  SIsland(AngleMapping *a, short const * const init) : a(a) {
-    //std::cout << " S Island add " << a->smlIndex(init) << std::endl;
-    short position[5];
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+
+  SIsland(AngleMapping *a, uint8_t unionFindIndex, unsigned short const * const init) : sizeRep(a->numAngles) {
+    for(unsigned int i = 0; i < sizeRep; ++i)
       representative[i] = init[i];
-      position[i] = init[i];
+
+    // Add all M-islands:
+    for(unsigned int i = 0; i < a->ufM->numReducedUnions; ++i) {
+      unsigned short rep[5];
+      uint8_t unionI = a->ufM->reducedUnions[i];
+      a->ufM->getRepresentative(unionI, rep);
+      uint64_t repI = a->ufM->indexOf(rep);
+      if(a->M[repI]) {
+	mIslands.push_back(MIsland(a, unionI, rep));      
+      }
     }
-    size = clear(position);
   }
   SIsland() {}
-  SIsland(const SIsland &l) : a(l.a), mIslands(l.mIslands), size(l.size) {
-    for(unsigned int i = 0; i < a->numAngles; ++i) {
+  SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep) {
+    for(unsigned int i = 0; i < sizeRep; ++i) {
       representative[i] = l.representative[i];
-    }
+    }    
   }
 };
 
+#endif // ANGLEMAPPING_H

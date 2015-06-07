@@ -84,19 +84,16 @@ inline std::ostream& operator<<(std::ostream &os, const Angle& c) {
 }
 
 struct Connection {
-private:
   Angle angle;
-
-public:
   IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
   Connection(){}
-  Connection(const IConnectionPair &c, const Angle &angle) : p1(c.first), p2(c.second), angle(angle) {
+  Connection(const IConnectionPair &c, const Angle &angle) : angle(angle), p1(c.first), p2(c.second) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
       std::swap(p1, p2); // ensures connections are always
     }
   }
-  Connection(const Connection &c) : p1(c.p1), p2(c.p2), angle(c.angle) {}
-  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const Angle &angle) : p1(p1), p2(p2), angle(angle) {
+  Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
+  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const Angle &angle) : angle(angle), p1(p1), p2(p2) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
       std::swap(this->p1, this->p2); // ensures connections are always with p1->above = true.
     }  

@@ -393,3 +393,23 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
   assert(min1 == min2);
 #endif
 }
+
+void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Connection> &l) const {
+  Configuration c(fatSccs, l);
+  IConnectionPairList icpl;
+  for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
+    icpl.insert(*it);
+  
+  Encoding encoded = encode(icpl);
+
+  ss << "size" << c.bricksSize << "_sccs" << fatSccSize << "_sccsizes";  
+  for(unsigned int i = 0; i < fatSccSize; ++i)
+    ss << "_" << fatSccs[i].size;
+  ss << "_sccindices";
+  for(unsigned int i = 0; i < fatSccSize; ++i)
+    ss << "_" << fatSccs[i].index;
+  ss << "_cc" << encoded.first << "_angles";
+  for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
+    ss << "_" << it->angle.n;
+}
+

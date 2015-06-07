@@ -14,6 +14,7 @@
 #include <iostream>
 // Ensure cross platform compatibility of std::min:
 #define MIN(a,b) (a < b ? a : b)
+#define EPSILON 1e-6
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
@@ -62,8 +63,8 @@ public:
     double sina = sin(angle);
     double cosa = cos(angle);
     // 4 corners:
-    double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
     pois[0] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
     pois[1] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
     pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
@@ -83,8 +84,8 @@ public:
 
   template <int ADD_X, int ADD_Y>
   bool boxIntersectsPOIsFrom(Brick &b) const {
-    double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
     //std::cout << "Testing " << *this << " vs " << b << std::endl; 
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
     // Get POIs:
@@ -97,7 +98,7 @@ public:
         poi.X = -poi.X;
       if(poi.Y < 0)
         poi.Y = -poi.Y;
-      if(poi.X < dx && poi.Y < dy) {
+      if(poi.X + EPSILON < dx && poi.Y + EPSILON < dy) {
         //std::cout << *this << " intersects " << b << std::endl; 
         return true;      
       }
