@@ -21,7 +21,7 @@ public:
   ConfigurationManager();
   void runForSize(int size);
 
-  void test() const;
+  void test();
 };
 
 #endif // CONFIGURATION_MANAGER_H

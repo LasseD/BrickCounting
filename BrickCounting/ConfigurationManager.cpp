@@ -94,14 +94,13 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
   }
 }
 
-void ConfigurationManager::test() const {
-  ConfigurationManager mgr;
+void ConfigurationManager::test() {
   std::vector<int> v;
   v.push_back(2);
-  v.push_back(2);
+  v.push_back(1);
   v.push_back(1);
 
-  mgr.runForCombinationType(v);
+  runForCombinationType(v);
   /*
   std::vector<FatSCC> v2;
   v2.push_back(sccs[0][0]);

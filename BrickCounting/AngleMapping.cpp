@@ -53,9 +53,11 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
 #endif
 
   // S, M & L:
+  std::cout << "SML size " << sizeMappings;
   S = new bool[sizeMappings];
   M = new bool[sizeMappings];
   L = new bool[sizeMappings];
+  std::cout << " OK" << std::endl;
 }
 
 AngleMapping::~AngleMapping() {
@@ -159,7 +161,7 @@ uint64_t AngleMapping::smlIndex(short const * const angleStep) const {
   uint64_t ret = angleStep[0] + angleSteps[0];
 
   for(unsigned int i = 1; i < numAngles; ++i) {
-    int push = 2*angleSteps[i-1]+1;
+    int push = 2*angleSteps[i-1] + 1;
     ret = (ret * push) + angleStep[i] + angleSteps[i];
   }
   return ret;
@@ -187,12 +189,36 @@ Configuration AngleMapping::getConfiguration(short const * const angleStep) cons
   return c;
 }
 
+Configuration AngleMapping::getConfigurationFromUnionFind(unsigned short const * const angleStep) const {
+  Configuration c(sccs[0]);
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    const IConnectionPoint &ip1 = points[2*i];
+    const IConnectionPoint &ip2 = points[2*i+1];
+    const Angle angle(angleStep[i]-(short)angleSteps[i], angleSteps[i]);
+    const Connection cc(ip1, ip2, angle);
+    assert(ip2.P1.configurationSCCI != 0);
+    c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
+  }
+  return c;
+}
+
 std::vector<Connection> AngleMapping::getConfigurationConnections(short const * const angleStep) const {
   std::vector<Connection> res;
   for(unsigned int i = 0; i < numAngles; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
     const IConnectionPoint &ip2 = points[2*i+1];
     const Angle angle(angleStep[i], angleSteps[i]);
+    res.push_back(Connection(ip1, ip2, angle));
+  }
+  return res;
+}
+
+std::vector<Connection> AngleMapping::getConfigurationConnectionsFromUnionFind(unsigned short const * const angleStep) const {
+  std::vector<Connection> res;
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    const IConnectionPoint &ip1 = points[2*i];
+    const IConnectionPoint &ip2 = points[2*i+1];
+    const Angle angle(angleStep[i]-(short)angleSteps[i], angleSteps[i]);
     res.push_back(Connection(ip1, ip2, angle));
   }
   return res;
@@ -207,6 +233,7 @@ void AngleMapping::evalSML(unsigned int angleI, short *angleStep) {
     }
     return;
   }
+  //std::cout << "<";
 
   uint64_t i = smlIndex(angleStep);
   Configuration c = getConfiguration(angleStep);
@@ -224,6 +251,7 @@ void AngleMapping::evalSML(unsigned int angleI, short *angleStep) {
   }
   std::cout << ") = " << S[i] <<" "<< M[i] <<" "<< L[i] << std::endl;
 #endif
+  //std::cout << ">";
 }
 
 void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
@@ -233,9 +261,10 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     uint8_t unionI = ufS->reducedUnions[i];
     ufS->getRepresentative(unionI, rep);
     uint64_t repI = ufS->indexOf(rep);
-    if(S[repI]) {
-      sIslands.push_back(SIsland(this, unionI, rep));      
-    }
+    uint8_t unionI2 = ufS->get(rep);
+    assert(unionI2 == unionI);
+    assert(S[repI]);
+    sIslands.push_back(SIsland(this, unionI, rep));
   }
 }
 
@@ -286,9 +315,9 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
   findExtremeConfigurations(0, angleStep, true, rect, nonRect, toLdr);
 }
 
-void AngleMapping::reportProblematic(short const * const angleStep, bool counted, std::vector<std::vector<Connection> > &toLdr) const {
-  Configuration c = getConfiguration(angleStep);
-  std::vector<Connection> cc = getConfigurationConnections(angleStep);
+void AngleMapping::reportProblematic(unsigned short const * const angleStep, bool counted, std::vector<std::vector<Connection> > &toLdr) const {
+  Configuration c = getConfigurationFromUnionFind(angleStep);
+  std::vector<Connection> cc = getConfigurationConnectionsFromUnionFind(angleStep);
   toLdr.push_back(cc);
   // Report
   std::cout << " Configuration requires manual verification!" <<std::endl;
@@ -304,7 +333,7 @@ void AngleMapping::reportProblematic(short const * const angleStep, bool counted
 }
 
 void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, counter &problematic) {
-  std::cout << "Finding new configurations" << std::endl;
+  std::cout << " findNewConfigurations init" << std::endl;
   if(numAngles > 3) { // Can't really do this for 4+ angles... sorry.
     findNewExtremeConfigurations(rect, nonRect, toLdr);
     return;
@@ -314,20 +343,21 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   short angleStep[5] = {0,0,0,0,0};
   rectilinearIndex = smlIndex(angleStep);
   evalSML(0, angleStep);
-  std::cout << "Done finding SML." << std::endl;
 
+  std::cout << " creating sufs" << std::endl;
   // Evaluate union-find:
-  ufS = new SimpleUnionFind(numAngles, angleSteps, S);
-  ufM = new SimpleUnionFind(numAngles, angleSteps, M);
-  ufL = new SimpleUnionFind(numAngles, angleSteps, L);
-  std::cout << "Done performing union-find." << std::endl;
+  unsigned short sizes[5];
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    sizes[i] = 2*angleSteps[i]+1;
+  }
+  ufS = new SimpleUnionFind(numAngles, sizes, S);
+  ufM = new SimpleUnionFind(numAngles, sizes, M);
+  ufL = new SimpleUnionFind(numAngles, sizes, L);
 
+  std::cout << " finding islands" << std::endl;
   // Find islands:
-  //std::cout << "Finding islands" << std::endl;
   std::vector<SIsland> sIslands;
   findIslands(sIslands);
-
-  std::cout << "Done finding islands" << std::endl;
 
   /* Perform analysis:
   Walk through S. Once a 1 is found in S, expand to whole region and report M and L islands.
@@ -340,7 +370,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   if(sIslands.size() == 0)
     return;
 
-  //std::cout << "Investigating islands" << std::endl;
+  std::cout << " Investigating islands" << std::endl;
   for(std::vector<SIsland>::const_iterator itS = sIslands.begin(); itS != sIslands.end(); ++itS) {
     const SIsland &sIsland = *itS;
     //std::cout << " S island at " << smlIndex(sIsland.representative) << std::endl;
@@ -354,7 +384,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM) {
       const MIsland &mIsland = *itM;
       //std::cout << " Investigating M islands. Rectilinear: " << mIsland.rectilinear << std::endl;
-      Configuration c = getConfiguration(mIsland.representative);
+      Configuration c = getConfigurationFromUnionFind(mIsland.representative);
       std::vector<IConnectionPair> found; // Currently ignored.
       c.isRealizable<0,0>(found);
       Encoding encoded = encoder.encode(found);
@@ -363,10 +393,6 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
       // No L-islands => problematic, but still count.
       if(multipleMIslands || mIsland.lIslands.size() != 1) { 
         std::cout << "  Manual handling: " << sIsland.mIslands.size() << " M-islands, " << mIsland.lIslands.size() << " L-islands." << std::endl;
-        for(std::vector<LIsland>::const_iterator itL = mIsland.lIslands.begin(); itL != mIsland.lIslands.end(); ++itL) {
-          const LIsland &lIsland = *itL;
-          std::cout << "  L island: " << smlIndex(lIsland.representative) << std::endl;
-        }
         ++problematic;
         reportProblematic(sIsland.representative, true, toLdr);
       }
