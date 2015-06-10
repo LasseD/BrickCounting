@@ -18,7 +18,7 @@ public:
   std::ofstream *os;
   std::string fileName;
   unsigned long written, hash;
-  
+
   StronglyConnectedConfigurationHashList() {} // to satisfy array constructor.
 
   StronglyConnectedConfigurationHashList(const unsigned long hash) : written(0), hash(hash) {}
@@ -73,16 +73,16 @@ public:
         continue;
       }
       if(candidate.canTurn90()) {
-	bool found = false;
+        bool found = false;
         for(int i = 0; i < 3; ++i) {
           candidate.turn90();
           if(s.find(candidate) != s.end()) {
-	    found = true;
-	    break;
+            found = true;
+            break;
           }
         }
-	if(found)
-	  continue;
+        if(found)
+          continue;
       }
       else {
         candidate.turn180();
@@ -118,7 +118,6 @@ public:
   }
   FatSCC* deserialize(std::ifstream &is, unsigned long &size) const {
     is.read((char*)&size, sizeof(unsigned long));
-    //std::cout << " StronglyConnectedConfigurationList::deserialize FatSCCs of size " << ELEMENT_SIZE << ". " << size << " elements to deserialize." << std::endl;
     FatSCC* v = new FatSCC[size];
     for(unsigned int i = 0; i < size; ++i) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
@@ -130,7 +129,6 @@ public:
   void deserialize(std::ifstream &is, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) const {
     unsigned long size;
     is.read((char*)&size, sizeof(unsigned long));
-    //std::cout << " StronglyConnectedConfigurationList::deserialize FatSCCs of size " << ELEMENT_SIZE << ". " << size << " elements to deserialize." << std::endl;
     for(int i = 0; i < size; ++i) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
       scc.deserialize(is);
@@ -150,9 +148,9 @@ public:
       b.constructAllStronglyConnected(tmp, tmpSize, includeCorners);
 
       for(int j = 0; j < tmpSize; ++j) {
-	RectilinearBrick &b2 = tmp[j];
-	if(!smaller.intersects(b2))
-	  newBricks.insert(b2);
+        RectilinearBrick &b2 = tmp[j];
+        if(!smaller.intersects(b2))
+          newBricks.insert(b2);
       }
     }
   }
@@ -168,25 +166,23 @@ public:
     getAllNewBricks(smaller, newBricks, includeCorners);
 
     // Try all new scc's:
-    //std::cout << " Found " << newBricks.size() << " potential new scc's" << std::endl;
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
       StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
-      //std::cout << " Trying candidate " << candidate << ", can turn 90: " << candidate.canTurn90() << std::endl;
 
       if(s.find(candidate) != s.end()) {
         continue;
       }
       if(candidate.canTurn90()) {
-	bool found = false;
+        bool found = false;
         for(int i = 0; i < 3; ++i) {
           candidate.turn90();
           if(s.find(candidate) != s.end()) {
-	    found = true;
-	    break;
+            found = true;
+            break;
           }
         }
-	if(found)
-	  continue;
+        if(found)
+          continue;
       }
       else {
         candidate.turn180();

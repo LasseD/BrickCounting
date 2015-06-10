@@ -264,7 +264,6 @@ public:
     const ConnectionPoint &currPoint = c.p2.second;
     Brick prevBrick(prevOrigBrick, c.p1.second.brick);
     Point prevStud = prevBrick.getStudPosition(prevPoint.type);
-    //std::cout << "ADD: Prev: " << prevBrick << " w. stud " << prevStud.X << "," << prevStud.Y << std::endl;
 
     // Compute position of bricks:
     double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angleToRadians();

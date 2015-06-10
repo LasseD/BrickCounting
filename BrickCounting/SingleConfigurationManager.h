@@ -17,6 +17,8 @@ public:
   std::set<Encoding> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
 private:
   std::vector<std::vector<Connection> > manual;
+  std::vector<Configuration> nrcToPrint; // Used when there are non-rectilinear models, but not multiple non-rectilinear models for a given connection set.
+  std::vector<Configuration> modelsToPrint; // Used when there are multiple models for a given connection set.
   std::set<uint64_t> investigatedConnectionPairListsEncoded;
   unsigned int combinationSize;
   FatSCC combination[6];
@@ -36,7 +38,8 @@ public:
 
   void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize);
   void run();
-  void printLDRFile() const;
+  void printLDRFile(bool selectNrc) const;
+  void printManualLDRFiles() const;
   bool isRotationallyMinimal(const IConnectionPairList &l) const;
 
   counter attempts, models, problematic; // rectilinear, nonRectilinearConfigurations, 

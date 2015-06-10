@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <time.h>
 
 void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex) {
   if(combination.size() == combinationType.size()) {
@@ -31,6 +32,9 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType) {
+  time_t startTime, endTime;
+  time(&startTime);
+
   std::cout << "ConfigurationManager::runForCombinationType(";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
     std::cout << *it << " ";
@@ -47,6 +51,11 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " " << rectilinear << " rectilinear combinations." << std::endl;
   std::cout << " " << attempts << " attempts." << std::endl;
   std::cout << " " << nonRectilinearConfigurations << " corner connected SCCs." << std::endl;
+  std::cout << " " << models << " models." << std::endl;
+  std::cout << " " << problematic << " problematic." << std::endl;
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
+  std::cout << " " << seconds << " seconds." << std::endl;
 
   // TODO: Thread here!
 }

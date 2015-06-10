@@ -315,7 +315,6 @@ public:
   }
 
   FatSCC(std::vector<Brick> v) : size((int)v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
-    //std::cout << "CONVERTING!" << std::endl;
     // Ensure level starts at 0:
     int8_t minLv = 99;
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
@@ -325,7 +324,6 @@ public:
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
       it->level-=minLv;
     }
-    //std::cout << " min level: " << minLv << std::endl;
 
     // Turn into RectilinearBricks and find min:
     std::vector<RectilinearBrick> rbricks;
@@ -335,13 +333,10 @@ public:
       if(rb < min)
         min = rb;
       rbricks.push_back(rb);
-      //std::cout << "  - " << *it << " -> " << rb << std::endl;
     }
-    //std::cout << " min: " << min << std::endl;
 
     // Turn 90 degrees if min is vertical:
     if(min.horizontal()) {
-      //std::cout << " Turning 90 degrees." << std::endl;
       for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
         int8_t oldX = it->x;
         it->x = it->y;
@@ -374,10 +369,6 @@ public:
         continue; // don't save origin.
       otherBricks[i] = *it;
     }
-    /*std::cout << " Resulting rbs: " << std::endl;
-    for(i = 0; i < size-1; ++i) {
-    std::cout << "  - " << otherBricks[i] << std::endl;
-    }//*/
   }
 
   template <unsigned int SIZE>
@@ -407,7 +398,6 @@ public:
   }
 
   void getConnectionPoints(std::set<ConnectionPoint> &above, std::set<ConnectionPoint> &below) const {
-    //std::cout << "Connection points for " << size << "," << index << ":" << std::endl;
     // Find bricks that might block every level:
     std::set<RectilinearBrick> blockers[6];
     { // using block so that b can be re-used below.
@@ -425,14 +415,12 @@ public:
       for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
           above.insert(tmp[j]);
-          //std::cout << " - " << tmp[j] << std::endl;
         }
       }
       b.getConnectionPointsBelow(tmp, i);
       for(int j = 0; j < 4; ++j) {
         if(!blocked(tmp[j])) {
           below.insert(tmp[j]);
-          //std::cout << " - " << tmp[j] << std::endl;
         }
       }
     }    
@@ -450,7 +438,6 @@ public:
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
-        //std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
         return false;
       }
       if(*it1 < *it2) {
@@ -476,12 +463,11 @@ public:
 
     for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
-        //std::cout << "Not rotationally minimal because " << *it2 << "<" << *it1 << " when rotated on " << rotationBrickPosition.X << "," << rotationBrickPosition.Y << std::endl;
-	rotSym = false;
-	minimal = false;
+        rotSym = false;
+        minimal = false;
       }
       if(*it1 < *it2) {
-	rotSym = false;
+        rotSym = false;
       }
     }
   }
@@ -665,13 +651,13 @@ public:
     }
     return min;
   }
-  
+
   int getBrickIndex(const RectilinearBrick &b) const {
     if(b.isBase())
       return 0;
     for(int i = 0; i < size-1; ++i)
       if(b == otherBricks[i])
-	return i+1;
+        return i+1;
     assert(false);
     return -1;
   }

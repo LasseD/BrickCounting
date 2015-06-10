@@ -86,7 +86,6 @@ public:
   bool boxIntersectsPOIsFrom(Brick &b) const {
     const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
     const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
-    //std::cout << "Testing " << *this << " vs " << b << std::endl; 
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
     // Get POIs:
     Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
@@ -99,7 +98,6 @@ public:
       if(poi.Y < 0)
         poi.Y = -poi.Y;
       if(poi.X + EPSILON < dx && poi.Y + EPSILON < dy) {
-        //std::cout << *this << " intersects " << b << std::endl; 
         return true;      
       }
     }
@@ -118,9 +116,7 @@ public:
 
   template <int ADD_X, int ADD_Y>
   bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-    //std::cout << " Checking stud intersection between " << *this << " and " << b << std::endl;
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
-    //std::cout << "  After axis aligning this. b=" << b << std::endl;
     Point studsOfB[NUMBER_OF_STUDS];
     b.getStudPositions(studsOfB);
     const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
@@ -140,7 +136,6 @@ public:
         if(stud.X < cornerX ||
            stud.Y < cornerY ||
            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
           connected = false;
           return true;
         }
@@ -149,7 +144,6 @@ public:
     // Handle four outer specially as they might cause connection:
     for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
       Point stud = studsOfB[i];
-      //std::cout << "  stud: " << stud.X << "," << stud.Y << std::endl;
       if(stud.X < 0)
         stud.X = -stud.X;
       if(stud.Y < 0)
@@ -160,12 +154,10 @@ public:
         // X check if it hits stud:
         const double studX = HALF_STUD_DISTANCE;
         const double studY = STUD_AND_A_HALF_DISTANCE;   
-        //std::cout << " snap distance sq " << SNAP_DISTANCE*SNAP_DISTANCE << " vs " << ((stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) << std::endl;
         if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
           // We are already connected:
           if(connected) {
             connected = false;
-            //std::cout << "  Double outer stud intersection " << stud.X << "," << stud.Y << std::endl;
             return true;
           }
           // Compute corner:
@@ -186,13 +178,11 @@ public:
         if(stud.X < cornerX ||
            stud.Y < cornerY ||
            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          //std::cout << "  Corner case " << stud.X << "," << stud.Y << std::endl;
           connected = false;
           return true;
         }
       }
     }
-    //std::cout << "  All checked. No problems. Returning connected=" << connected << std::endl;
     return connected;
   }
 
@@ -209,7 +199,6 @@ public:
   */
   template <int ADD_X, int ADD_Y>
   bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-    //std::cout << "! Checking intersection between " << *this << " and " << b << std::endl;
     connected = false;
     if(level > b.level+1 || b.level > level+1)
       return false;

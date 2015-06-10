@@ -12,13 +12,15 @@ void ensureFoldersAreCreated() {
 
 #ifdef _WIN32
   CreateDirectory(L"scc", NULL);
-/*  CreateDirectory(L"scc\\1", NULL);
-  CreateDirectory(L"scc\\2", NULL);
-  CreateDirectory(L"scc\\3", NULL);
-  CreateDirectory(L"scc\\4", NULL);
-  CreateDirectory(L"scc\\5", NULL);*/
   CreateDirectory(L"scc\\6", NULL); // For hash lists.
+  CreateDirectory(L"nrc", NULL);
+  CreateDirectory(L"nrc\\4", NULL);
+  CreateDirectory(L"nrc\\5", NULL);
+  CreateDirectory(L"nrc\\6", NULL);
   CreateDirectory(L"models", NULL);
+  CreateDirectory(L"models\\4", NULL);
+  CreateDirectory(L"models\\5", NULL);
+  CreateDirectory(L"models\\6", NULL);
   CreateDirectory(L"manual", NULL);
   CreateDirectory(L"manual\\4", NULL);
   CreateDirectory(L"manual\\5", NULL);
@@ -28,7 +30,14 @@ void ensureFoldersAreCreated() {
   // G++:
   CreateDirectory("scc", NULL);
   CreateDirectory("scc\\6", NULL);
+  CreateDirectory("nrc", NULL);
+  CreateDirectory("nrc\\4", NULL);
+  CreateDirectory("nrc\\5", NULL);
+  CreateDirectory("nrc\\6", NULL);
   CreateDirectory("models", NULL);
+  CreateDirectory("models\\4", NULL);
+  CreateDirectory("models\\5", NULL);
+  CreateDirectory("models\\6", NULL);
   CreateDirectory("manual", NULL);
   CreateDirectory("manual\\4", NULL);
   CreateDirectory("manual\\5", NULL);
@@ -77,10 +86,10 @@ int main(int, char**) {
 
   // RC:
   ConfigurationManager mgr;
-  mgr.test();
+  //mgr.test();
   //mgr.runForSize(2); 
   //mgr.runForSize(3);
-  //mgr.runForSize(4);
+  mgr.runForSize(4);
   //mgr.runForSize(5);
   //mgr.runForSize(6);
   return 0;

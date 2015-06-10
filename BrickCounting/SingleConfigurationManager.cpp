@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include <time.h>
 
 SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize(combination.size()), encoder(combination), attempts(0), models(0), problematic(0) // rectilinear(0), nonRectilinearConfigurations(0), 
 {
@@ -57,7 +58,6 @@ bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList
   for(unsigned int i = 0; i < combinationSize; ++i) {
     std::sort(pointsForSccs[i].begin(), pointsForSccs[i].end());
     if(!combination[i].isRotationallyMinimal(pointsForSccs[i])) {
-      //std::cout << " NOT ROT MIN: " << combination[i] << std::endl;
       return false;
     }
   }
@@ -121,6 +121,9 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
 }
 
 void SingleConfigurationManager::run() {
+  time_t startTime, endTime;
+  time(&startTime);
+
 #ifdef _TRACE
   std::cout << "INIT SingleConfigurationManager::run()" << std::endl;
 #endif
@@ -143,16 +146,57 @@ void SingleConfigurationManager::run() {
 
   run(l, abovePool, belowPool, remaining, remainingSize);
   // Print:
-  printLDRFile();
+  printManualLDRFiles();
+  printLDRFile(true);
+  printLDRFile(false);
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
 #ifdef _TRACE
   std::cout << "SingleConfigurationManager::run() INTERNAL RESULTS: " << std::endl;
   std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
   std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
 #endif
+//#ifdef _INFO
+  std::cout << " Single configuration (sizes";
+  for(int i = 0; i < combinationSize; ++i)
+    std::cout << " " << combination[i].size;
+  std::cout << ") (indices";
+  for(int i = 0; i < combinationSize; ++i)
+    std::cout << " " << combination[i].index;
+  std::cout << ") handled in " << seconds << " seconds." << std::endl;
+//#endif
 }
 
-void SingleConfigurationManager::printLDRFile() const {
+void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
+  const std::vector<Configuration> &v = selectNrc ? nrcToPrint : modelsToPrint;
+
+  if(v.size() == 0)
+    return;
+
+  LDRPrinterHandler h;
+
+  for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it)
+    h.add(&*it);
+
+  std::stringstream ss;
+  int size = 0;
+  for(unsigned int i = 0; i < combinationSize; ++i)
+    size += combination[i].size;
+  if(selectNrc)
+    ss << "nrc\\";
+  else
+    ss << "models\\";
+  ss << size << "\\size_" << size << "_sccsizes";
+  for(unsigned int i = 0; i < combinationSize; ++i)
+    ss << "_" << combination[i].size;
+  ss << "_sccindices";
+  for(unsigned int i = 0; i < combinationSize; ++i)
+    ss << "_" << combination[i].index;
+  h.print(ss.str());    
+}
+
+void SingleConfigurationManager::printManualLDRFiles() const {
   if(manual.size() == 0)
     return;
 

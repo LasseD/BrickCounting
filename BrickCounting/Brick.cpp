@@ -50,14 +50,11 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   center.X = center.X*cosa - center.Y*sina;
   center.Y = oldX*sina + center.Y*cosa;
 
-  //std::cout << " Center compared to connection after rotating " << angle << ": " << center.X << "," << center.Y << std::endl;
-
   // Translate:
   center.X += origin.X;
   center.Y += origin.Y;
   if(b.horizontal())
     angle -= M_PI/2;
-  //std::cout << " After translation: " << center.X << "," << center.Y << "," << ((int)level) << " angle " << angle << std::endl;
 }
 
 void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
