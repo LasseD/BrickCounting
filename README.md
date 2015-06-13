@@ -1,83 +1,30 @@
 # BrickCounting
 Count all combinations of six 2x4 LEGO bricks
 
-Paper at http://c-mt.dk/counting
+Project page at http://c-mt.dk/counting
 
-Findings:
+## Teminology
 
-Strongly Connected Configurations (SCC):
+* Brick: A standard "2 by 4" LEGO brick with 8 studs on top.
+* Configuration: Some bricks connected by their studs.
+* Strongly Connected Configuration (SCC): The configuration consisting of one brick is a SCC. An SCC with N bricks is made by adding a brick to an SCC with N-1 bricks where there is a brick connecting to at least 2 studs on the new brick.
+* Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. 
+* Non-rectilinear configuration (NRC): A configuration with odd angles.
+* Model: A set of congirutations with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
 
-- Size 1: 1
+## Findings
 
-- Size 2: 20
-
-- Size 3: 1.004
-
-- Size 4: 58.862
-
-- Size 5: 3.817.291
-
-- Size 6: 261.534.637
-
-Rectilinear configurations (excluding SCC's. Should match the previous results)
-
-- Size 2: 4 new, for a total of 24 rectilinear configurations, matching previous results.
-
-- Size 3: 556 new, for a total of 1.560, matching previous results.
-
-- Size 4: 60.718 new, for a total of 119.580, matching previous results.
-
-- Size 5: 6.349.112 new, for a total of 10.166.403, matching previous results.
-
-- Size 6: 653.569.128 new, for a total of 915.103.765, matching previous results.
- 
-Distinctly corner connected SCCs (groups models on the set of connection points)
-
-- Size 4: At least 552.
-
-- Size 5: At least 116.998.
-
-- Size 6: At least 19.701.710.
-
-Models:
-
-- Size 4: In progress...
-
-- Size 5: In progress...
-
-- Size 6: In progress...
-
-Models requiring manual verification:
-
-- Size 4: In progress...
-
-- Size 5: In progress...
-
-- Size 6: In progress...
+| Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
+|------------------|--:|--:|--:|--:|--:|--:|
+| SCC | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
+| RC (exclusing SCC) | 0 | 4  | 556   | 60.718  | 6.349.112  | 653.569.128 |
+| RC                  | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
+| NRC (* means at least)               | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
+| Models (? for unknown)               | 0 | 0 | 0 | ? | ? | ? |
+| Models requiring manual verification | 0 | 0 | 0 | ? | ? | ? |
 
 
-TODO: 
-
-Construct all models using SCCs turned at angles (distinctly corner connected SCCs are a sub-result of finding the models). 
-
-Getting to this point requires the following tasks:
-
-- Expand modelling of bricks to the size sets 'S' (brick dimensions 15.6mm x 31.6mm), 'M' (brick dimensions 15.8mm x 31.8mm), and 'L' (brick dimensions 16mm x 32mm).
-
-- Extract model information from mapping of the three size sets.
-
-- Construct humanly readable information for any model requiring manual verification.
-
-- Optimize code to allow computations for models of size 5 and 6:
-
- - Add timing information to code to track progression of performance.
-
- - Use profiling to identify places to improve performance.
-
- - Add multi processor support.
-
-
-Geometry:
+## Geometry:
 
 - P = 8mm
 
@@ -103,3 +50,9 @@ sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
 - Size 2: Max distance: d=sqrt(20^2+52^2)=55.71mm. Max angle: a<asin(1/20/d)*2=0.00179489564 radians. Steps: A/a < 370 => 2*370+1=741 steps in total.
 
 - Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 2*538+1=1077 steps in total.
+
+
+## Current optimization progress
+
+- Initial program running time for models of size 3: 341 seconds.
+
