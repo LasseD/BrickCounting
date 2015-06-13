@@ -1,7 +1,6 @@
 #include "ConfigurationEncoder.h"
 
-ConfigurationEncoder::ConfigurationEncoder(const std::vector<FatSCC> &combination) { 
-  fatSccSize = combination.size();
+ConfigurationEncoder::ConfigurationEncoder(const std::vector<FatSCC> &combination) :  fatSccSize((unsigned int)combination.size()) { 
 #ifdef _TRACE
   std::cout << "INIT ConfigurationEncoder(";
   for(unsigned int i = 0; i < fatSccSize; ++i)

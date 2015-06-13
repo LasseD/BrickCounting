@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <time.h>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize(combination.size()), encoder(combination), attempts(0), models(0), problematic(0) // rectilinear(0), nonRectilinearConfigurations(0), 
+SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize((unsigned int)combination.size()), encoder(combination), attempts(0), models(0), problematic(0) // rectilinear(0), nonRectilinearConfigurations(0), 
 {
 #ifdef _TRACE
   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
@@ -81,7 +81,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder);
-    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, problematic);
+    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
     return;
   }
 
@@ -137,7 +137,7 @@ void SingleConfigurationManager::run() {
   remaining[0] = false;
   for(unsigned int i = 1; i < combinationSize; ++i) {
     remaining[i] = true;
-  }  
+  }
 
   for(std::set<ConnectionPoint>::const_iterator it = above[0].begin(); it != above[0].end(); ++it)
     abovePool.push_back(IConnectionPoint(BrickIdentifier(combination[0].index, it->brickI, 0), *it));
@@ -156,13 +156,14 @@ void SingleConfigurationManager::run() {
   std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
   std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
+  std::cout << " models found: " << models << std::endl;
 #endif
 //#ifdef _INFO
   std::cout << " Single configuration (sizes";
-  for(int i = 0; i < combinationSize; ++i)
+  for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << " " << combination[i].size;
   std::cout << ") (indices";
-  for(int i = 0; i < combinationSize; ++i)
+  for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << " " << combination[i].index;
   std::cout << ") handled in " << seconds << " seconds." << std::endl;
 //#endif

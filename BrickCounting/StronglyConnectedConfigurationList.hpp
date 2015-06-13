@@ -93,7 +93,7 @@ public:
       s.insert(candidate);
     }
     infile.close();
-    unsigned long res = s.size();
+    unsigned int res = (unsigned int)s.size();
     std::cout << "Read " << res << " sorted elements of hash " << hash << std::endl;
     //printLDRFile(hash, s); // Comment in for great visual debugging!
     s.clear();
@@ -108,7 +108,7 @@ public:
   std::map<unsigned int,StronglyConnectedConfigurationHashList<ELEMENT_SIZE> > hashLists;
 
   void serialize(std::ofstream &os) {
-    unsigned long size = s.size();
+    unsigned int size = (unsigned int)s.size();
     os.write(reinterpret_cast<const char *>(&size), sizeof(unsigned long));
 
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it;

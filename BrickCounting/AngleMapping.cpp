@@ -231,17 +231,22 @@ void AngleMapping::evalSML(unsigned int angleI, unsigned short *angleStep) {
 #endif
 }
 
-void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
+void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
   // Add all S-islands:
   for(unsigned int i = 0; i < ufS->numReducedUnions; ++i) {
     unsigned short rep[5];
     uint16_t unionI = ufS->reducedUnions[i];
     ufS->getRepresentative(unionI, rep);
-    uint64_t repI = ufS->indexOf(rep);
-    uint16_t unionI2 = ufS->get(rep);
-    assert(unionI2 == unionI);
-    assert(S[repI]);
-    sIslands.push_back(SIsland(this, unionI, rep));
+    assert(ufS->get(rep) == unionI);
+    assert(S[ufS->indexOf(rep)]);
+
+    Configuration c = getConfiguration(rep);
+    std::vector<IConnectionPair> found;
+    c.isRealizable<0,0>(found);
+    Encoding encoding = encoder.encode(found);
+    sIslands.insert(std::make_pair(encoding, SIsland(this, unionI, rep)));
+    if(keys.find(encoding) == keys.end())
+      keys.insert(encoding);
   }
 }
 
@@ -309,7 +314,9 @@ void AngleMapping::reportProblematic(unsigned short const * const angleStep, int
   std::cout << std::endl;
 }
 
-void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, counter &problematic) {
+void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, 
+                                         std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, 
+                                         counter &models, counter &problematic) {
   if(numAngles > 3) { // Can't really do this for 4+ angles... sorry.
     findNewExtremeConfigurations(rect, nonRect, toLdr);
     return;
@@ -335,8 +342,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
   //std::cout << " finding islands" << std::endl;
   // Find islands:
-  std::vector<SIsland> sIslands;
-  findIslands(sIslands);
+  std::multimap<Encoding, SIsland> sIslands;
+  std::set<Encoding> sIslandKeys;
+  findIslands(sIslands, sIslandKeys);
 
   /* Perform analysis:
   Walk through S. Once a 1 is found in S, expand to whole region and report M and L islands.
@@ -346,47 +354,68 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
    - If no L-island. Report problematic. Count 1.
    - If more than one L-island: Report problematic. Still only count 1.
   */
-  if(sIslands.size() == 0)
+  if(sIslandKeys.size() == 0) {
+    //std::cout << "No islands!" << std::endl;
     return;
+  }
 
-  //std::cout << " Investigating islands" << std::endl;
-  for(std::vector<SIsland>::const_iterator itS = sIslands.begin(); itS != sIslands.end(); ++itS) {
-    const SIsland &sIsland = *itS;
-    //std::cout << " S island at " << smlIndex(sIsland.representative) << std::endl;
-
-    if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
-      reportProblematic(sIsland.representative, 0, 0, 0, toLdr);
-      ++problematic;
-      continue;
+  for(std::set<Encoding>::const_iterator itKeys = sIslandKeys.begin(); itKeys != sIslandKeys.end(); ++itKeys) {
+    Encoding encoding = *itKeys;
+    if(rect.find(encoding) != rect.end() || nonRect.find(encoding) != nonRect.end()) {
+      //std::cout << "Already known encoding: " << encoding.first << std::endl;
+      continue; // Already found!
     }
 
-    int mIslandI = 0;
-    for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
-      const MIsland &mIsland = *itM;
-      //std::cout << " Investigating M islands. Rectilinear: " << mIsland.rectilinear << std::endl;
-      Configuration c = getConfiguration(mIsland.representative);
-      std::vector<IConnectionPair> found; // Currently ignored.
-      c.isRealizable<0,0>(found);
-      Encoding encoded = encoder.encode(found);
+    std::pair<std::multimap<Encoding, SIsland>::const_iterator,std::multimap<Encoding, SIsland>::const_iterator> r = sIslands.equal_range(encoding);
+    bool rangeIsRect = false;
+    std::vector<Configuration> allNrcInRange;
 
-      // Multiple M-islands inside => problematic. Count.
-      // No L-islands => problematic, but still count.
-      if(sIsland.mIslands.size() > 1 || mIsland.lIslands.size() != 1) { 
+    //std::cout << " Investigating islands" << std::endl;
+    for(std::multimap<Encoding, SIsland>::const_iterator itS = r.first; itS != r.second; ++itS) {
+      const SIsland &sIsland = itS->second;
+      //std::cout << " S island at " << smlIndex(sIsland.representative) << std::endl;
+
+      if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
+        reportProblematic(sIsland.representative, 0, 0, 0, toLdr);
         ++problematic;
-        reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), (int)mIsland.lIslands.size(), toLdr);
+        continue;
       }
 
-      if(mIsland.rectilinear) {
-        if(rect.find(encoded) == rect.end()) {
-          rect.insert(encoded);
+      int mIslandI = 0;
+      for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
+        const MIsland &mIsland = *itM;
+
+        Configuration c = getConfiguration(mIsland.representative);
+        if(mIsland.rectilinear) {
+          rangeIsRect = true;
         }
-      }
-      else {
-        if(nonRect.find(encoded) == nonRect.end()) {
-          nonRect.insert(encoded);
+        else {
+          allNrcInRange.push_back(c);
+        }
+        //std::cout << " Investigating M islands. Rectilinear: " << mIsland.rectilinear << std::endl;
+
+        // Multiple M-islands inside => problematic. Count only this M-island.
+        // No L-islands => problematic, but still count.
+        if(sIsland.mIslands.size() != 1 || mIsland.lIslands.size() != 1) { 
+          ++problematic;
+          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), (int)mIsland.lIslands.size(), toLdr);
         }
       }
     }
+
+    // Update output:
+    if(!allNrcInRange.empty()) {
+      nrcToPrint.push_back(*allNrcInRange.begin());
+      for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
+        modelsToPrint.push_back(*itR);
+      }
+      models+=allNrcInRange.size();
+    }
+
+    if(rangeIsRect)
+      rect.insert(encoding);
+    else
+      nonRect.insert(encoding);
   }
 
   // Cleanup:

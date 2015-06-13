@@ -10,7 +10,7 @@ ConnectionPoint::ConnectionPoint() : brickI(-1) {}
 
 ConnectionPoint::ConnectionPoint(const ConnectionPoint &p) : type(p.type), brick(p.brick), above(p.above), angleLocked(p.angleLocked), brickI(p.brickI) {}
 
-ConnectionPoint::ConnectionPoint(const ConnectionPoint &p, std::pair<int,int> rotationPoint) : type((ConnectionPointType)((p.type+2)%4)), brick(p.brick), above(p.above), angleLocked(false), brickI(-1) {
+ConnectionPoint::ConnectionPoint(const ConnectionPoint &p, std::pair<int8_t, int8_t> rotationPoint) : type((ConnectionPointType)((p.type+2)%4)), brick(p.brick), above(p.above), angleLocked(false), brickI(-1) {
   // Relocate position of brick:
   brick.y = rotationPoint.second - brick.y;
   brick.x = rotationPoint.first - brick.x;

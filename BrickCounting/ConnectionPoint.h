@@ -17,7 +17,7 @@ struct ConnectionPoint {
   ConnectionPoint(ConnectionPointType type, const RectilinearBrick &brick, bool above, int brickI);
   ConnectionPoint();
   ConnectionPoint(const ConnectionPoint &p);
-  ConnectionPoint(const ConnectionPoint &p, std::pair<int,int> rotationPoint);
+  ConnectionPoint(const ConnectionPoint &p, std::pair<int8_t, int8_t> rotationPoint);
 
   // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
   int8_t x4x4() const;

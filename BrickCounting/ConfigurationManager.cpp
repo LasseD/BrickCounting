@@ -74,12 +74,18 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 }
 
 void ConfigurationManager::runForSize(int size) {
+  time_t startTime, endTime;
+  time(&startTime);
+
   // For base being 1..size-1:
   for(int base = size-1; base > 0; --base) {
     std::vector<int> combination;
     combination.push_back(base);
     runForCombinationType(combination, size-base, base);
   }
+
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
 
   // Output results:
   std::cout << "Results for size " << size << ":" << std::endl;
@@ -89,6 +95,7 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  std::cout << " Program execution time (seconds):         " << seconds << std::endl;
   std::cout << std::endl;
 }
 
