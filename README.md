@@ -1,5 +1,4 @@
-# BrickCounting
-Count all combinations of six 2x4 LEGO bricks
+# All Combinations of Six 2x4 LEGO Bricks
 
 Project page at http://c-mt.dk/counting
 
@@ -16,12 +15,17 @@ Project page at http://c-mt.dk/counting
 
 | Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
 |------------------|--:|--:|--:|--:|--:|--:|
-| SCC | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
-| RC (exclusing SCC) | 0 | 4  | 556   | 60.718  | 6.349.112  | 653.569.128 |
-| RC                  | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| NRC (* means at least)               | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
-| Models (? for unknown)               | 0 | 0 | 0 | ? | ? | ? |
-| Models requiring manual verification | 0 | 0 | 0 | ? | ? | ? |
+| **SCC** | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
+| **RC (exclusing SCC)** | 0 | 4  | 556   | 60.718  | 6.349.112  | 653.569.128 |
+| **RC**                  | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
+| **NRC (* means at least)**               | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
+| **Models (? for unknown)**               | 0 | 0 | 0 | ? | ? | ? |
+| **Models requiring manual verification** | 0 | 0 | 0 | ? | ? | ? |
+
+
+## Current optimization progress
+
+- Initial program running time for models of size 3: 341 seconds.
 
 
 ## Geometry:
@@ -51,8 +55,4 @@ sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
 
 - Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 2*538+1=1077 steps in total.
 
-
-## Current optimization progress
-
-- Initial program running time for models of size 3: 341 seconds.
 
