@@ -27,6 +27,7 @@ public:
   uint64_t indexOf(unsigned short const * const position) const;
   uint16_t get(unsigned short const * const position) const;
   void getRepresentative(unsigned int unionI, unsigned short * rep) const;
+
   uint16_t reducedUnions[MAX_UNIONS]; // index -> original index for unionRepresentatives
   unsigned int numReducedUnions;
 };

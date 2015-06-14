@@ -84,10 +84,10 @@ struct MIsland {
     rectilinear = a->ufM->get(init) == unionFindIndex;
     // Add all L-islands:
     for(unsigned int i = 0; i < a->ufL->numReducedUnions; ++i) {
-      uint16_t unionI = a->ufL->reducedUnions[i];
+      const uint16_t unionI = a->ufL->reducedUnions[i];
       unsigned short rep[5];
       a->ufL->getRepresentative(unionI, rep);
-      //uint64_t repI = a->ufL->indexOf(rep);
+      assert(a->M[a->ufL->indexOf(rep)]);
       if(a->ufM->get(rep) == unionFindIndex) {
         lIslands.push_back(LIsland(sizeRep, rep));      
       }
@@ -111,10 +111,10 @@ struct SIsland {
 
     // Add all M-islands:
     for(unsigned int i = 0; i < a->ufM->numReducedUnions; ++i) {
-      uint16_t unionI = a->ufM->reducedUnions[i];
+      const uint16_t unionI = a->ufM->reducedUnions[i];
       unsigned short rep[5];
       a->ufM->getRepresentative(unionI, rep);
-      //uint64_t repI = a->ufM->indexOf(rep);
+      assert(a->S[a->ufM->indexOf(rep)]);
       if(a->ufS->get(rep) == unionFindIndex) {
         mIslands.push_back(MIsland(a, unionI, rep));      
       }

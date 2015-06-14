@@ -15,18 +15,14 @@ SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short cons
 
   // Initially fill v:
   unsigned short position[MAX_DIMENSIONS];
-  for(unsigned int i = 0; i < numDimensions; ++i)
-    position[i] = 0;
   initialFillV(0, position, M);
 
   // Initially fill unions:
-  for(uint16_t i = 0; i < numUnions; ++i)
+  for(uint32_t i = 0; i < numUnions; ++i)
     unions[i] = i;
 
   // Join unions (perform union-find):
-  for(unsigned int i = 0; i < numDimensions; ++i)
-    position[i] = 0;
-  joinUnions(0, position, M);
+  //joinUnions(0, position, M);
 
   // Create reduced unions for quick lookup:
   createReducedUnions();
@@ -44,7 +40,10 @@ uint64_t SimpleUnionFind::indexOf(unsigned short const * const position) const {
 }
 
 uint16_t SimpleUnionFind::get(unsigned short const * const position) const {
-  return unions[v[indexOf(position)]];
+  const uint64_t indexOfPosition = indexOf(position);
+  assert(indexOfPosition < sizeV);
+  const uint16_t unionIndex = v[indexOfPosition];
+  return unions[unionIndex];
 }
 
 void SimpleUnionFind::getRepresentative(unsigned int unionI, unsigned short * rep) const {
@@ -53,15 +52,21 @@ void SimpleUnionFind::getRepresentative(unsigned int unionI, unsigned short * re
 }
 
 void SimpleUnionFind::createReducedUnions() {
+  //std::cout << "Creating reduced unions" << std::endl;
+  assert(numReducedUnions == 0);
+  assert(numUnions <= MAX_UNIONS);
   bool indexed[MAX_UNIONS];
   for(unsigned int i = 0; i < numUnions; ++i)
     indexed[i] = false;
 
   for(unsigned int i = 0; i < numUnions; ++i) {
     uint16_t unionI = unions[i];
+    assert(unionI < numUnions);
+    //std::cout << " unions[" << i << "]: " << unionI << ", indexed: " << indexed[unionI] << std::endl;
     if(indexed[unionI])
       continue;
     indexed[unionI] = true;
+    //std::cout << "  reducedUnions[" << numReducedUnions << "] becomes " << unionI << std::endl;
     reducedUnions[numReducedUnions++] = unionI;
   }
 }
@@ -79,9 +84,8 @@ void SimpleUnionFind::initialFillV(unsigned int positionI, unsigned short *posit
   }
   uint64_t positionIndex = indexOf(position);
   if(!M[positionIndex]) {
-    v[positionIndex] = 0;
     return;
-  }    
+  }
 
   if(numUnions == MAX_UNIONS) {
     //Die!
@@ -117,7 +121,7 @@ void SimpleUnionFind::initialFillV(unsigned int positionI, unsigned short *posit
 
   if(unionI == numUnions) { // Create new union:
     for(unsigned int i = 0; i < numDimensions; ++i)
-      unionRepresentatives[MAX_DIMENSIONS*unionI + i] = position[i];    
+      unionRepresentatives[MAX_DIMENSIONS*unionI + i] = position[i];
     ++numUnions;
   }
 }
@@ -130,13 +134,17 @@ void SimpleUnionFind::joinUnions(unsigned int positionI, unsigned short *positio
     }
     return;
   }
+
   uint64_t positionIndex = indexOf(position);
+  assert(positionIndex < sizeV);
   if(!M[positionIndex]) {
     return; // No union work to be done.
   }
 
   // Compute min in region:
-  uint16_t minInRegion = unions[v[positionIndex]];
+  uint16_t unionI = v[positionIndex];
+  assert(unionI < numUnions);
+  uint16_t minInRegion = unions[unionI];
   for(unsigned int i = 0; i < numDimensions; ++i) {
     int oldPosition = position[i];
     for(int addI = -1; addI <= 1; addI+=2) {
@@ -164,12 +172,12 @@ void SimpleUnionFind::joinUnions(unsigned int positionI, unsigned short *positio
           position[j] = (unsigned short)oldPositionJ;
         }
       }
-
-      position[i] = (unsigned short)oldPosition;
     }
+    position[i] = (unsigned short)oldPosition;
   }
 
-  // Join region (Push minInRegion to all neighbours):
+  // Join region (Push minInRegion to self and all neighbours):
+  unions[v[positionIndex]] = minInRegion;
   for(unsigned int i = 0; i < numDimensions; ++i) {
     int oldPosition = position[i];
     for(int addI = -1; addI <= 1; addI+=2) {

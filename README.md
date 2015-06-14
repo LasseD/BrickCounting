@@ -13,8 +13,8 @@ Project page at http://c-mt.dk/counting
 
 ## Findings
 
-| Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
-|------------------|--:|--:|--:|--:|--:|--:|
+|   Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
+|:------------------:|--:|--:|--:|--:|--:|--:|
 | **SCC** | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
 | **RC (exclusing SCC)** | 0 | 4  | 556   | 60.718  | 6.349.112  | 653.569.128 |
 | **RC**                  | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
@@ -25,7 +25,7 @@ Project page at http://c-mt.dk/counting
 
 ## Current optimization progress
 
-- Initial program running time for models of size 3: 341 seconds.
+- Initial program running time for models of size 3: 180 seconds (debug mode).
 
 
 ## Geometry:

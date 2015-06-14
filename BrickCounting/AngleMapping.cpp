@@ -161,7 +161,7 @@ uint64_t AngleMapping::smlIndex(unsigned short const * const angleStep) const {
   uint64_t ret = angleStep[0];
 
   for(unsigned int i = 1; i < numAngles; ++i) {
-    int push = 2*angleSteps[i] + 1;
+    const int push = 2*angleSteps[i] + 1;
     ret = (ret * push) + angleStep[i];
   }
   return ret;
@@ -202,7 +202,7 @@ std::vector<Connection> AngleMapping::getConfigurationConnections(unsigned short
 
 void AngleMapping::evalSML(unsigned int angleI, unsigned short *angleStep) {
   if(angleI < numAngles) {
-    unsigned short steps = 2*angleSteps[angleI]+1;
+    const unsigned short steps = 2*angleSteps[angleI]+1;
     for(unsigned short i = 0; i < steps; ++i) {
       angleStep[angleI] = i;
       evalSML(angleI+1, angleStep);
@@ -212,15 +212,14 @@ void AngleMapping::evalSML(unsigned int angleI, unsigned short *angleStep) {
 
   Configuration c = getConfiguration(angleStep);
 
-
   // Investigate!
-  uint64_t i = smlIndex(angleStep);
-  assert(i < sizeMappings);
+  uint64_t smlI = smlIndex(angleStep);
+  assert(smlI < sizeMappings);
 
   std::vector<IConnectionPair> found; // Currently ignored.
-  S[i] = c.isRealizable<-1,-1>(found);
-  M[i] = c.isRealizable<0,0>(found);
-  L[i] = c.isRealizable<1,1>(found);
+  S[smlI] = c.isRealizable<-1,-1>(found);
+  M[smlI] = c.isRealizable<0,0>(found);
+  L[smlI] = c.isRealizable<1,1>(found);
 
 #ifdef _TRACE
   std::cout << "EVAL SML(" << angleStep[0];
@@ -235,14 +234,14 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
   // Add all S-islands:
   for(unsigned int i = 0; i < ufS->numReducedUnions; ++i) {
     unsigned short rep[5];
-    uint16_t unionI = ufS->reducedUnions[i];
+    const uint16_t unionI = ufS->reducedUnions[i];
     ufS->getRepresentative(unionI, rep);
     assert(ufS->get(rep) == unionI);
     assert(S[ufS->indexOf(rep)]);
 
     Configuration c = getConfiguration(rep);
     std::vector<IConnectionPair> found;
-    c.isRealizable<0,0>(found);
+    c.isRealizable<-1,-1>(found);
     Encoding encoding = encoder.encode(found);
     sIslands.insert(std::make_pair(encoding, SIsland(this, unionI, rep)));
     if(keys.find(encoding) == keys.end())
@@ -300,12 +299,24 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
 void AngleMapping::reportProblematic(unsigned short const * const angleStep, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const {
   Configuration c = getConfiguration(angleStep);
   std::vector<Connection> cc = getConfigurationConnections(angleStep);
+  
   toLdr.push_back(cc);
   // Report
   std::cout << " Configuration requires manual verification!" <<std::endl;
+
+  // Special case: If this configuration contains no L-islands, but does contain a loop, then it is most likely OK:
+  if(mIslandTotal == 1 && lIslandTotal == 0 && cc.size() > numAngles) {
+    std::cout << "  Special case for manual verification: Single M-island in S-island. With a loop, but without an L-island." << std::endl;
+  }
+
   std::cout << "  File: ";
   encoder.writeFileName(std::cout, cc);
   std::cout << std::endl;
+  std::cout << "  Angles: " << std::endl;
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    double radian = Angle(angleStep[i]-angleSteps[i], angleSteps[i]).toRadians();
+    std::cout << "   " << (i+1) << ": step " << angleStep[i] << "/" << (2*angleSteps[i]+1) << ", fraction " << (angleStep[i]-angleSteps[i]) << "/" << angleSteps[i] << ", radian " << radian << std::endl;
+  }
   if(mIslandTotal > 0)
     std::cout << "  This configuration represents M-island " << (mIslandI+1) << "/" << mIslandTotal << ". There are " << lIslandTotal << " L-islands in this M-island" << std::endl;
   else
@@ -399,6 +410,16 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
         if(sIsland.mIslands.size() != 1 || mIsland.lIslands.size() != 1) { 
           ++problematic;
           reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), (int)mIsland.lIslands.size(), toLdr);
+
+#ifdef _TRACE
+          unsigned short debugAngleStep[5] = {0,0,0,0,0};
+          for(short i = 0; i < 2*angleSteps[0]+1; ++i) {
+            debugAngleStep[0] = i;
+            uint64_t debugSMLIndex = smlIndex(debugAngleStep);
+            std::cout << "  " << i << " => S/M/L " << S[debugSMLIndex] << "/" << M[debugSMLIndex] << "/" << L[debugSMLIndex] << " " << std::endl;
+          }
+#endif
+
         }
       }
     }
@@ -406,9 +427,10 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     // Update output:
     if(!allNrcInRange.empty()) {
       nrcToPrint.push_back(*allNrcInRange.begin());
-      for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
-        modelsToPrint.push_back(*itR);
-      }
+      if(allNrcInRange.size() > 1)
+        for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
+          modelsToPrint.push_back(*itR);
+        }
       models+=allNrcInRange.size();
     }
 
