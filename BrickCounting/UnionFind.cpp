@@ -103,18 +103,6 @@ void SimpleUnionFind::initialFillV(unsigned int positionI, unsigned short *posit
     uint64_t neighbourPositionIndex = indexOf(position); // TODO: Speed upby pre-computing indexOf.
     if(M[neighbourPositionIndex] && v[neighbourPositionIndex] < unionI)
       unionI = v[neighbourPositionIndex];
-
-    // Including dimension j to avoid small S-islands where two neighboring bricks turn together.
-    for(unsigned int j = i+1; j < numDimensions; ++j) {
-      if(position[j] == 0)
-        continue;
-      --position[j];
-      uint64_t neighbourPositionIndexJ = indexOf(position); // TODO: Speed upby pre-computing indexOf.
-      if(M[neighbourPositionIndexJ] && v[neighbourPositionIndexJ] < unionI)
-        unionI = v[neighbourPositionIndexJ];
-      ++position[j];
-    }
-
     ++position[i];
   }
   v[positionIndex] = unionI;
@@ -157,21 +145,6 @@ void SimpleUnionFind::joinUnions(unsigned int positionI, unsigned short *positio
       uint64_t neighbourPositionIndex = indexOf(position); // TODO: Speed upby pre-computing indexOf.
       if(M[neighbourPositionIndex] && unions[v[neighbourPositionIndex]] < minInRegion)
         minInRegion = unions[v[neighbourPositionIndex]];
-
-      for(unsigned int j = i+1; j < numDimensions; ++j) {
-        int oldPositionJ = position[j];
-        for(int addJ = -1; addJ <= 1; addJ+=2) {
-          int newPositionJ = oldPositionJ + addJ;
-          if(newPositionJ < 0 || newPositionJ >= dimensionSizes[j])
-            continue;
-
-          position[j] = (unsigned short)newPositionJ;
-          uint64_t neighbourPositionIndexJ = indexOf(position); // TODO: Speed upby pre-computing indexOf.
-          if(M[neighbourPositionIndexJ] && unions[v[neighbourPositionIndexJ]] < minInRegion)
-            minInRegion = unions[v[neighbourPositionIndexJ]];
-          position[j] = (unsigned short)oldPositionJ;
-        }
-      }
     }
     position[i] = (unsigned short)oldPosition;
   }
@@ -189,20 +162,6 @@ void SimpleUnionFind::joinUnions(unsigned int positionI, unsigned short *positio
 
       uint64_t neighbourPositionIndex = indexOf(position); // TODO: Speed upby pre-computing indexOf.
       unions[v[neighbourPositionIndex]] = minInRegion;
-
-      for(unsigned int j = i+1; j < numDimensions; ++j) {
-        int oldPositionJ = position[j];
-        for(int addJ = -1; addJ <= 1; addJ+=2) {
-          int newPositionJ = oldPositionJ + addJ;
-          if(newPositionJ < 0 || newPositionJ >= dimensionSizes[j])
-            continue;
-
-          position[j] = (unsigned short)newPositionJ;
-          uint64_t neighbourPositionIndexJ = indexOf(position); // TODO: Speed upby pre-computing indexOf.
-          unions[v[neighbourPositionIndexJ]] = minInRegion;
-          position[j] = (unsigned short)oldPositionJ;
-        }
-      }
 
       position[i] = (unsigned short)oldPosition;
     }
