@@ -42,6 +42,25 @@ int8_t ConnectionPoint::y4x4() const {
     return brick.y+3;
   }
 }
+
+int8_t ConnectionPoint::level() const {
+  if(above)
+    return brick.level()+1;
+  else
+    return brick.level()-1;
+}
+
+bool ConnectionPoint::angleLocks(const ConnectionPoint &p) const {
+  if(level() != p.level()) {
+    //std::cout << "Not same level" << std::endl;
+    return false; // Can't angle lock at different level.
+  }
+  //std::cout << "  " << (int)x4x4() << "," << (int)y4x4() << " vs " << (int)p.x4x4() << "," << (int)p.y4x4() << std::endl;
+  return ((x4x4() == p.x4x4()+1 || x4x4()+1 == p.x4x4()) && y4x4() == p.y4x4()) ||
+         ((y4x4() == p.y4x4()+1 || y4x4()+1 == p.y4x4()) && x4x4() == p.x4x4());
+}
+
+
 /*
 // For specialized use: Position of connection point 
 double ConnectionPoint::x() const {
@@ -114,8 +133,8 @@ std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p) {
     os << "A";
   else
     os << "B";
-  //os << p.brick;
-  //os << p.brickI;
+  os << p.brick;
+  os << p.brickI;
   switch(p.type) {
   case NW : os << "NW"; break;
   case NE : os << "NE"; break;

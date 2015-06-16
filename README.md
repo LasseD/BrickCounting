@@ -6,10 +6,10 @@ Project page at http://c-mt.dk/counting
 
 * Brick: A standard "2 by 4" LEGO brick with 8 studs on top.
 * Configuration: Some bricks connected by their studs.
-* Strongly Connected Configuration (SCC): The configuration consisting of one brick is a SCC. An SCC with N bricks is made by adding a brick to an SCC with N-1 bricks where there is a brick connecting to at least 2 studs on the new brick.
+* Strongly Connected Configuration (SCC): The configuration consisting of one brick is an SCC. An SCC with N bricks is made by adding a brick b to an SCC s with N-1 bricks so that there is a brick in s connecting to at least 2 studs of b.
 * Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. 
 * Non-rectilinear configuration (NRC): A configuration with odd angles.
-* Model: A set of congirutations with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
+* Model: A set of configurations with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
 
 ## Findings
 
@@ -25,7 +25,7 @@ Project page at http://c-mt.dk/counting
 
 ## Current optimization progress
 
-- Initial program running time for models of size 3: 180 seconds (debug mode).
+- Initial program running time: 180 seconds (3 bricks, debug mode).
 
 
 ## Geometry:
@@ -45,9 +45,9 @@ Project page at http://c-mt.dk/counting
 
 Maximal angle steps based on number of brick of models on each side of the turn point:
 
-Simple formulas for an isosceles triangle implies the bound a on the angle that can be allowed given the distance d (in mm):
+Simple formulas for an isosceles triangle implies the bound A on the angle that can be allowed given the distance d (in mm):
 
-sin(a/2)*d < 0.1/2 => a < asin(1/20/d)*2
+sin(A/2)*d < 0.1/2 => A < asin(1/20/d)*2
 
 - Size 1: Max distance: d=sqrt(12^2+28^2)=30.46mm. Max angle: a<asin(1/20/d)*2=0.0032826623  radians. Steps: A/a < 203 => 2*203+1=407 steps in total.
 

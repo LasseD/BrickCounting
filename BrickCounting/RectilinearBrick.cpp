@@ -155,17 +155,16 @@ bool RectilinearBrick::blocks(const ConnectionPoint &p) const {
 bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   if(!atConnectingLevelOf(p))
     return false;
+  // Angle locks when touching a side of the brick:
   if(horizontal()) {
-    return (p.x4x4() == x-1 && inInterval(y+1,y+2,p.y4x4())) ||
-      (p.x4x4() == x+4 && inInterval(y+1,y+2,p.y4x4())) ||
-      (p.y4x4() == y && inInterval(x,x+3,p.x4x4())) ||
-      (p.y4x4() == y+3 && inInterval(x,x+3,p.x4x4()));
+    return 
+      ((p.y4x4() == y   || p.y4x4() == y+3) && inInterval(x,x+3,p.x4x4())) ||
+      ((p.y4x4() == y+1 || p.y4x4() == y+2) && (p.x4x4() == x-1 || p.x4x4() == x+4));
   }
   else {
-    return (p.y4x4() == y-1 && inInterval(x+1,x+2,p.x4x4())) ||
-      (p.y4x4() == y+4 && inInterval(x+1,x+2,p.x4x4())) ||
-      (p.x4x4() == x && inInterval(y,y+3,p.y4x4())) ||
-      (p.x4x4() == x+3 && inInterval(y,y+3,p.y4x4()));
+    return 
+      ((p.x4x4() == x   || p.x4x4() == x+3) && inInterval(y,y+3,p.y4x4())) ||
+      ((p.x4x4() == x+1 || p.y4x4() == x+2) && (p.y4x4() == y-1 || p.y4x4() == y+4));
   }  
 }
 

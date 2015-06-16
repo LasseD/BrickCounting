@@ -7,6 +7,7 @@
 #include "ConfigurationEncoder.h"
 #include "UnionFind.h"
 
+#define STEPS_0 0
 #define STEPS_1 203
 #define STEPS_2 370
 #define STEPS_3 538
@@ -17,6 +18,7 @@ struct SIsland; // forward declaration.
 
 /*
 Mapping angles (See README):
+Size 0 => Granularity 0 - 0 => 1 step.
 Size 1 => Granularity -203 - 203 => 407 steps.
 Size 2 => Granularity -370 - 370 => 741 steps.
 Size 2 => Granularity -538 - 538 => 1076 steps.
@@ -29,8 +31,8 @@ public:
   bool *S, *M, *L; 
   SimpleUnionFind *ufS, *ufM, *ufL;
   IConnectionPoint points[10];
-  unsigned int angleTypes[5]; // Connection(aka. angle) -> 1, 2, or 3.
-  unsigned short angleSteps[5]; // Connection(aka. angle) -> 203, 370, or 538.
+  unsigned int angleTypes[5]; // Connection(aka. angle) -> 0, 1, 2, or 3.
+  unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
   const ConfigurationEncoder &encoder;
   uint64_t rectilinearIndex;
 

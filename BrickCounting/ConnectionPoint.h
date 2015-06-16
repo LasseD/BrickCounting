@@ -22,6 +22,8 @@ struct ConnectionPoint {
   // For specialized use: Pretend brick is at a 4x4 grid. Get x/y of connection point in this grid (+brick pos.).
   int8_t x4x4() const;
   int8_t y4x4() const;
+  int8_t level() const;
+  bool angleLocks(const ConnectionPoint &p) const;
 
   // For specialized use: Position of connection point 
   double x() const;

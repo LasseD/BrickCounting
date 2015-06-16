@@ -23,6 +23,9 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
   // Set up angle steps:
   for(i = 0; i < numAngles; ++i) {
     switch(angleTypes[i]) {
+    case 0:
+      angleSteps[i] = STEPS_0;
+      break;
     case 1:
       angleSteps[i] = STEPS_1;
       break;
@@ -155,6 +158,38 @@ void AngleMapping::setupAngleTypes() {
     std::cout << "  " << i << "->" << angleTypes[i] << std::endl;
   }
 #endif
+
+  // Finally. Set angle types of locked connections to type 0:
+  // First set the ones locked directly on the SCC:
+  for(unsigned int i = 0; i < 2*numAngles; ++i) {
+    int angleI = i/2;
+    int sccI = points[i].first.configurationSCCI;
+    const ConnectionPoint &p = points[i].second;
+    if(sccs[sccI].angleLocked(p)) {
+      angleTypes[angleI] = 0;
+      //std::cout << "Locked angle on " << sccs[sccI] << " vs " << p << std::endl;
+    }
+  }
+  // Secondly, lock all touching connections:
+  for(unsigned int i = 0; i < 2*numAngles; ++i) {
+    int angleI = i/2;
+    int sccI = points[i].first.configurationSCCI;
+    const ConnectionPoint &pi = points[i].second;
+
+    for(unsigned int j = i+1; j < 2*numAngles; ++j) {
+      int angleJ = j/2;
+      int sccJ = points[j].first.configurationSCCI;
+      if(sccI != sccJ)
+	continue;
+      const ConnectionPoint &pj = points[j].second;
+      //std::cout << "Investigating " << pi << " & " << pj << std::endl;
+      if(pi.angleLocks(pj)) {
+	angleTypes[angleI] = 0;
+	angleTypes[angleJ] = 0;	
+	//std::cout << "Locked angles " << pi << " & " << pj << std::endl;
+      }
+    }
+  }
 }
 
 uint64_t AngleMapping::smlIndex(unsigned short const * const angleStep) const {
@@ -181,7 +216,7 @@ Configuration AngleMapping::getConfiguration(unsigned short const * const angleS
   for(unsigned int i = 0; i < numAngles; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
     const IConnectionPoint &ip2 = points[2*i+1];
-    const Angle angle((short)angleStep[i]-(short)angleSteps[i], angleSteps[i]);
+    const Angle angle((short)angleStep[i]-(short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
     const Connection cc(ip1, ip2, angle);
     assert(ip2.P1.configurationSCCI != 0);
     c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
