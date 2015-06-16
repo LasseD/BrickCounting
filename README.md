@@ -8,20 +8,16 @@ Project page at http://c-mt.dk/counting
 * Configuration: Some bricks connected by their studs.
 * Strongly Connected Configuration (SCC): The configuration consisting of one brick is an SCC. An SCC with N bricks is made by adding a brick b to an SCC s with N-1 bricks so that there is a brick in s connecting to at least 2 studs of b.
 * Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. 
-* Non-rectilinear configuration (NRC): A configuration with odd angles.
-* Model: A set of configurations with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
+* Non-rectilinear configuration (Non-RC): A configuration with odd angles.
+* Model: A set of Non-RC's with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
 
 ## Findings
 
 |   Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
 |:------------------:|--:|--:|--:|--:|--:|--:|
-| **SCC** | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
-| **RC (exclusing SCC)** | 0 | 4  | 556   | 60.718  | 6.349.112  | 653.569.128 |
-| **RC**                  | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| **NRC (* means at least)**               | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
-| **Models (? for unknown)**               | 0 | 0 | 0 | ? | ? | ? |
-| **Models requiring manual verification** | 0 | 0 | 0 | ? | ? | ? |
-
+| **SCC**                    | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
+| **RC**                     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
+| **Models (? for unknown)** | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
 
 ## Current optimization progress
 
