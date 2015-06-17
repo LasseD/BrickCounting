@@ -409,10 +409,8 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     bool rangeIsRect = false;
     std::vector<Configuration> allNrcInRange;
 
-    //std::cout << " Investigating islands" << std::endl;
     for(std::multimap<Encoding, SIsland>::const_iterator itS = r.first; itS != r.second; ++itS) {
       const SIsland &sIsland = itS->second;
-      //std::cout << " S island at " << smlIndex(sIsland.representative) << std::endl;
 
       if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
         reportProblematic(sIsland.representative, 0, 0, 0, toLdr);
@@ -426,16 +424,16 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
         Configuration c = getConfiguration(mIsland.representative);
         if(mIsland.rectilinear) {
+	  assert(!rangeIsRect);
           rangeIsRect = true;
         }
         else {
           allNrcInRange.push_back(c);
         }
-        //std::cout << " Investigating M islands. Rectilinear: " << mIsland.rectilinear << std::endl;
 
         // Multiple M-islands inside => problematic. Count only this M-island.
         // No L-islands => problematic, but still count.
-        if(sIsland.mIslands.size() != 1 || mIsland.lIslands.size() != 1) { 
+        if(sIsland.mIslands.size() != 1 || mIsland.lIslands.size() > 1) { 
           ++problematic;
           reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), (int)mIsland.lIslands.size(), toLdr);
 

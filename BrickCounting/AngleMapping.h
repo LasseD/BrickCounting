@@ -74,7 +74,7 @@ struct MIsland {
   Position representative;
 
   MIsland(AngleMapping *a, uint16_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
-    rectilinear = a->ufM->get(p) == unionFindIndex;
+    rectilinear = a->M[a->rectilinearIndex] && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
     // Add all L-islands:
     for(unsigned int i = 0; i < a->ufL->numReducedUnions; ++i) {
       const uint16_t unionI = a->ufL->reducedUnions[i];

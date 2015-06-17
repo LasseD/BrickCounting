@@ -172,8 +172,9 @@ void SingleConfigurationManager::run() {
 void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
   const std::vector<Configuration> &v = selectNrc ? nrcToPrint : modelsToPrint;
 
-  if(v.size() == 0)
+  if(v.size() == 0) {
     return;
+  }
 
   LDRPrinterHandler h;
 
@@ -195,6 +196,7 @@ void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
   for(unsigned int i = 0; i < combinationSize; ++i)
     ss << "_" << combination[i].index;
   h.print(ss.str());    
+  std::cout << "Printing to " << ss.str() << std::endl;
 }
 
 void SingleConfigurationManager::printManualLDRFiles() const {

@@ -41,6 +41,7 @@ public:
 
   uint64_t indexOf(const Position &position) const;
   uint32_t get(const Position &position) const;
+  uint32_t get(uint64_t positionIndex) const;
   void getRepresentative(unsigned int unionI, Position &position) const;
 
   uint32_t reducedUnions[MAX_UNIONS]; // index -> original index for unionRepresentatives

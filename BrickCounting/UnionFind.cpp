@@ -43,8 +43,13 @@ uint64_t SimpleUnionFind::indexOf(const Position &position) const {
 
 uint32_t SimpleUnionFind::get(const Position &position) const {
   const uint64_t indexOfPosition = indexOf(position);
+  return get(indexOfPosition);
+}
+
+uint32_t SimpleUnionFind::get(uint64_t indexOfPosition) const {
   assert(indexOfPosition < sizeV);
   const uint32_t unionIndex = v[indexOfPosition];
+  assert(unionIndex < numUnions);
   return unions[unionIndex];
 }
 
