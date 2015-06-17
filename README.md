@@ -1,6 +1,10 @@
 # All Combinations of Six 2x4 LEGO Bricks
 
-Project page at http://c-mt.dk/counting
+[Main project page](http://c-mt.dk/counting)
+
+## Motivation
+
+[Previous results](http://www.math.ku.dk/~eilers/lego.html) count combinations where 2x4 LEGO bricks are connected at right angles. We seek to find the number of ways six bricks can be connected when not restricting the angles.
 
 ## Terminology
 
@@ -9,7 +13,7 @@ Project page at http://c-mt.dk/counting
 * Strongly Connected Configuration (SCC): The configuration consisting of one brick is an SCC. An SCC with N bricks is made by adding a brick b to an SCC s with N-1 bricks so that there is a brick in s connecting to at least 2 studs of b.
 * Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. 
 * Non-rectilinear configuration (Non-RC): A configuration with odd angles.
-* Model: A set of Non-RC's with the property that any configuration in the set can be turned into all the other configurations simply by turning bricks at turn points. 
+* Model: A set of Non-RC's with the property that any configuration in the set can be turned into any other combination of the set simply by turning bricks at turn points.
 
 ## Findings
 
