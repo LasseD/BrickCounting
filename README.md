@@ -2,7 +2,7 @@
 
 Project page at http://c-mt.dk/counting
 
-## Teminology
+## Terminology
 
 * Brick: A standard "2 by 4" LEGO brick with 8 studs on top.
 * Configuration: Some bricks connected by their studs.
@@ -13,16 +13,17 @@ Project page at http://c-mt.dk/counting
 
 ## Findings
 
-|   Number of bricks | 1 | 2 | 3 | 4 | 5 | 6 | 
-|:------------------:|--:|--:|--:|--:|--:|--:|
-| **SCC**                    | 1 | 20 | 1.004 | 58.862 | 3.817.291 | 261.534.637
-| **RC**                     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| **Models (? for unknown)** | 0 | 0 | 0 | *552 | *116.998 | *19.701.710 |
+|  Bricks    | 1 |  2 |     3 |       4 |          5 |           6 | 
+|:----------:|--:|---:|------:|--------:|-----------:|------------:|
+| **SCC**    | 1 | 20 | 1.004 |  58.862 |  3.817.291 | 261.534.637 |
+| **RC**     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
+| **Models** | 0 |  0 |     0 | At least 552 | At least 116.998 | At least 19.701.710 |
 
 ## Current optimization progress
 
 - Initial program running time: 180 seconds (3 bricks, debug mode).
 
+- After replacing diagonal union-find merging with angle locking: 153 seconds (3 bricks, debug mode).
 
 ## Geometry:
 
