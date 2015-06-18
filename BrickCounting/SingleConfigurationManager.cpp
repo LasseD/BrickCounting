@@ -159,6 +159,8 @@ void SingleConfigurationManager::run() {
   std::cout << " models found: " << models << std::endl;
 #endif
 //#ifdef _INFO
+  if(seconds <= 1)
+    return;
   std::cout << " Single configuration (sizes";
   for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << " " << combination[i].size;

@@ -49,7 +49,7 @@ void StronglyConnectedConfigurationManager::create() {
 #ifdef _DEBUG
   l5.countAllFor(l4);
   return;
-#endif
+#else
 
   // 5:
   l5.addAllFor(l4);
@@ -63,6 +63,7 @@ void StronglyConnectedConfigurationManager::create() {
   l6.countAllFor(l5);
   l5.s.clear();
   l6.s.clear();
+#endif
 }
 
 void StronglyConnectedConfigurationManager::createOld() {

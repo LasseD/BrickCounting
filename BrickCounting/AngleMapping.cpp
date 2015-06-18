@@ -261,7 +261,7 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
   // Add all S-islands:
   for(unsigned int i = 0; i < ufS->numReducedUnions; ++i) {
     Position rep;
-    const uint16_t unionI = ufS->reducedUnions[i];
+    const uint32_t unionI = ufS->reducedUnions[i];
     ufS->getRepresentative(unionI, rep);
     assert(ufS->get(rep) == unionI);
     assert(S[ufS->indexOf(rep)]);
@@ -361,12 +361,13 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     return;
   }
 
-  // Evaluate SML:
   Position angleStep;
-  angleStep.init();
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    angleStep.p[i] = angleSteps[i];
+  }
   rectilinearIndex = smlIndex(angleStep);
 
-  //std::cout << " smlIndex OK" << std::endl;
+  // Evaluate SML:
   evalSML(0, angleStep);
 
   //std::cout << " creating sufs" << std::endl;

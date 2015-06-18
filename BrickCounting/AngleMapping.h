@@ -73,11 +73,11 @@ struct MIsland {
   unsigned int sizeRep;
   Position representative;
 
-  MIsland(AngleMapping *a, uint16_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
+  MIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
     rectilinear = a->M[a->rectilinearIndex] && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
     // Add all L-islands:
     for(unsigned int i = 0; i < a->ufL->numReducedUnions; ++i) {
-      const uint16_t unionI = a->ufL->reducedUnions[i];
+      const uint32_t unionI = a->ufL->reducedUnions[i];
       Position rep;
       a->ufL->getRepresentative(unionI, rep);
       assert(a->M[a->ufL->indexOf(rep)]);
@@ -94,10 +94,10 @@ struct SIsland {
   unsigned int sizeRep;
   Position representative;
 
-  SIsland(AngleMapping *a, uint16_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
+  SIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
     // Add all M-islands:
     for(unsigned int i = 0; i < a->ufM->numReducedUnions; ++i) {
-      const uint16_t unionI = a->ufM->reducedUnions[i];
+      const uint32_t unionI = a->ufM->reducedUnions[i];
       Position rep;
       a->ufM->getRepresentative(unionI, rep);
       assert(a->S[a->ufM->indexOf(rep)]);

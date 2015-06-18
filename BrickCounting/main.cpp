@@ -64,10 +64,11 @@ bool sccFilesExist() {
     return false;
 #ifdef _DEBUG
   return true;
-#endif
+#else
   if(!fileExist("scc\\5.dat"))
     return false;
   return true;
+#endif
 }
 
 /*
@@ -88,8 +89,8 @@ int main(int, char**) {
   ConfigurationManager mgr;
   //mgr.test();
   //mgr.runForSize(2); 
-  mgr.runForSize(3);
-  //mgr.runForSize(4);
+  //mgr.runForSize(3);
+  mgr.runForSize(4);
   //mgr.runForSize(5);
   //mgr.runForSize(6);
   return 0;
