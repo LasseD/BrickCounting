@@ -101,10 +101,7 @@ void ConfigurationManager::runForSize(int size) {
 
 ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
   StronglyConnectedConfigurationManager sccMgr;
-  int upTo = 5;
-#ifdef _DEBUG
-  upTo = 4; // Decreases file loading time - never run for full input in bebug mode!
-#endif
+  int upTo = 3; // Should be 5. Decreases file loading time - never run for full input in bebug mode!
   for(int i = 0; i < upTo; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
   }
@@ -114,8 +111,8 @@ void ConfigurationManager::test() {
   std::vector<int> v;
   //v.push_back(2);
   v.push_back(2);
-  v.push_back(2);
-  //v.push_back(1);
+  //v.push_back(2);
+  v.push_back(1);
 
   runForCombinationType(v);
   /*

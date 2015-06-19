@@ -2,6 +2,7 @@
 
 #include "Brick.h"
 #include "Configuration.hpp"
+#include <time.h>
 
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder) : numAngles(numScc-1), numBricks(0), encoder(encoder) {
   // Simple copying:
@@ -192,6 +193,8 @@ void AngleMapping::setupAngleTypes() {
   }
 }
 
+/*
+Deprecated: Too slow.
 uint64_t AngleMapping::smlIndex(const Position &p) const {
   uint64_t ret = p.p[0];
 
@@ -200,16 +203,7 @@ uint64_t AngleMapping::smlIndex(const Position &p) const {
     ret = (ret * push) + p.p[i];
   }
   return ret;
-}
-
-bool AngleMapping::isRectilinear(const Position &p) const {
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    if(p.p[i] != 0) {
-      return false;
-    }
-  }
-  return true;
-}
+}*/
 
 Configuration AngleMapping::getConfiguration(const Position &p) const {
   Configuration c(sccs[0]);
@@ -224,6 +218,19 @@ Configuration AngleMapping::getConfiguration(const Position &p) const {
   return c;
 }
 
+Configuration AngleMapping::getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const {
+  Configuration c(baseConfiguration);
+
+  const IConnectionPoint &ip1 = points[2*angleI];
+  const IConnectionPoint &ip2 = points[2*angleI+1];
+  const Angle angle((short)angleStep-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
+  const Connection cc(ip1, ip2, angle);
+  assert(ip2.P1.configurationSCCI != 0);
+  c.add(sccs[ip2.P1.configurationSCCI], ip2.first.configurationSCCI, cc);
+
+  return c;
+}
+
 std::vector<Connection> AngleMapping::getConfigurationConnections(const Position &p) const {
   std::vector<Connection> res;
   for(unsigned int i = 0; i < numAngles; ++i) {
@@ -235,26 +242,38 @@ std::vector<Connection> AngleMapping::getConfigurationConnections(const Position
   return res;
 }
 
-void AngleMapping::evalSML(unsigned int angleI, Position &p) {
-  if(angleI < numAngles) {
-    const unsigned short steps = 2*angleSteps[angleI]+1;
-    for(unsigned short i = 0; i < steps; ++i) {
-      p.p[angleI] = i;
-      evalSML(angleI+1, p);
-    }
-    return;
-  }
-
-  Configuration c = getConfiguration(p);
-
-  // Investigate!
-  uint64_t smlI = smlIndex(p);
+/*
+Evaluate the SML matrix.
+Parameters:
+- angleI: Used as recursion index in angles. Initialize with 0. 
+- smlI: Index into SML now being build dynamically, rather than computed using smlIndex(position). Initially 0.
+- c: Configuration being constructed dynamically. Initially containing sccs[0].
+- possibleCollisions: possible connections pre-computed to be used in next step. Remember to initialize!
+ */
+void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configuration &c) {
   assert(smlI < sizeMappings);
+  const unsigned short steps = 2*angleSteps[angleI]+1;
+  smlI *= steps;
 
-  std::vector<IConnectionPair> found; // Currently ignored.
-  S[smlI] = c.isRealizable<-1,-1>(found);
-  M[smlI] = c.isRealizable<0,0>(found);
-  L[smlI] = c.isRealizable<1,1>(found);
+  if(angleI < numAngles-1) {
+    for(unsigned short i = 0; i < steps; ++i) {
+      Configuration c2 = getConfiguration(c, angleI, i);
+      evalSML(angleI+1, smlI + i, c2);
+    }
+  }
+  else {
+    assert(angleI == numAngles-1);
+    const IConnectionPoint &ip1 = points[2*angleI];
+    const IConnectionPoint &ip2 = points[2*angleI+1];
+    std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2.first.configurationSCCI], ip1.first);
+
+    for(unsigned short i = 0; i < steps; ++i) {
+      Configuration c2 = getConfiguration(c, angleI, i);
+      S[smlI+i] = c2.isRealizable<-1,-1>(possibleCollisions, sccs[numAngles].size);
+      M[smlI+i] = c2.isRealizable< 0, 0>(possibleCollisions, sccs[numAngles].size);
+      L[smlI+i] = c2.isRealizable< 1, 1>(possibleCollisions, sccs[numAngles].size);
+    }
+  }
 }
 
 void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
@@ -356,19 +375,19 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
 void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, 
                                          std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, 
                                          counter &models, counter &problematic) {
-  if(numAngles > 3) { // Can't really do this for 4+ angles... sorry.
-    findNewExtremeConfigurations(rect, nonRect, toLdr);
-    return;
-  }
+  time_t startTime, endTime;
+  time(&startTime);
 
-  Position angleStep;
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    angleStep.p[i] = angleSteps[i];
+  // Compute rectilinear index:
+  rectilinearIndex = angleSteps[0];
+  for(unsigned int i = 1; i < numAngles; ++i) {
+    const int push = 2*angleSteps[i] + 1;
+    rectilinearIndex = (rectilinearIndex * push) + angleSteps[i];
   }
-  rectilinearIndex = smlIndex(angleStep);
 
   // Evaluate SML:
-  evalSML(0, angleStep);
+  Configuration c(sccs[0]);
+  evalSML(0, 0, c);
 
   //std::cout << " creating sufs" << std::endl;
   // Evaluate union-find:
@@ -395,14 +414,14 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
    - If more than one L-island: Report problematic. Still only count 1.
   */
   if(sIslandKeys.size() == 0) {
-    //std::cout << "No islands!" << std::endl;
+    std::cout << "No islands!" << std::endl;
     return;
   }
 
   for(std::set<Encoding>::const_iterator itKeys = sIslandKeys.begin(); itKeys != sIslandKeys.end(); ++itKeys) {
     Encoding encoding = *itKeys;
     if(rect.find(encoding) != rect.end() || nonRect.find(encoding) != nonRect.end()) {
-      //std::cout << "Already known encoding: " << encoding.first << std::endl;
+      std::cout << "Already known encoding: " << encoding.first << std::endl;
       continue; // Already found!
     }
 
@@ -434,20 +453,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
         // Multiple M-islands inside => problematic. Count only this M-island.
         // No L-islands => problematic, but still count.
-        if(sIsland.mIslands.size() != 1 || mIsland.lIslands.size() > 1) { 
+        if(sIsland.mIslands.size() != 1 || mIsland.lIslands > 1) { 
           ++problematic;
-          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), (int)mIsland.lIslands.size(), toLdr);
-
-#ifdef _TRACE
-          Position debugAngleStep; 
-	  debugAngleStep.init();
-          for(short i = 0; i < 2*angleSteps[0]+1; ++i) {
-            debugAngleStep.p[0] = i;
-            uint64_t debugSMLIndex = smlIndex(debugAngleStep);
-            std::cout << "  " << i << " => S/M/L " << S[debugSMLIndex] << "/" << M[debugSMLIndex] << "/" << L[debugSMLIndex] << " " << std::endl;
-          }
-#endif
-
+          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, toLdr);
         }
       }
     }
@@ -472,4 +480,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   delete ufS;
   delete ufM;
   delete ufL;
+
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
+  if(seconds > 2)
+    std::cout << "Angle map finding performed in " << seconds << " seconds." << std::endl;
 }

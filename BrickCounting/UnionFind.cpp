@@ -2,16 +2,18 @@
 
 #include <iostream>
 #include <assert.h> 
+#include <time.h>
 
 SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, bool const * const M) : numDimensions(numDimensions), numUnions(0), sizeV(1), numReducedUnions(0) {
+  time_t startTime, endTime;
+  time(&startTime);
+
   // Initialize members:
   for(unsigned int i = 0; i < numDimensions; ++i) {
     this->dimensionSizes[i] = dimensionSizes[i];
     sizeV *= dimensionSizes[i];
   }
-  //std::cout << "Size v=" << sizeV;
   v = new uint32_t[sizeV];
-  //std::cout << " OK" << std::endl;
 
   // Initially fill v:
   Position position;
@@ -27,6 +29,11 @@ SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short cons
 
   // Create reduced unions for quick lookup:
   createReducedUnions();
+
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
+  if(seconds > 2)
+    std::cout << "(Simple) Union find performed in " << seconds << " seconds." << std::endl;
 }
 
 SimpleUnionFind::~SimpleUnionFind() {
@@ -58,7 +65,6 @@ void SimpleUnionFind::getRepresentative(unsigned int unionI, Position &rep) cons
 }
 
 void SimpleUnionFind::createReducedUnions() {
-  //std::cout << "Creating reduced unions" << std::endl;
   assert(numReducedUnions == 0);
   assert(numUnions <= MAX_UNIONS);
   bool *indexed = new bool[numUnions];
@@ -68,13 +74,14 @@ void SimpleUnionFind::createReducedUnions() {
   for(unsigned int i = 0; i < numUnions; ++i) {
     uint32_t unionI = unions[i];
     assert(unionI < numUnions);
-    //std::cout << " unions[" << i << "]: " << unionI << ", indexed: " << indexed[unionI] << std::endl;
     if(indexed[unionI])
       continue;
     indexed[unionI] = true;
-    //std::cout << "  reducedUnions[" << numReducedUnions << "] becomes " << unionI << std::endl;
     reducedUnions[numReducedUnions++] = unionI;
   }
+
+  if(numUnions > numReducedUnions*100)
+    std::cout << "Reducing " << numUnions << " to " << numReducedUnions << "!" << std::endl;
 
   delete[] indexed;
 }

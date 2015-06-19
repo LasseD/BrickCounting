@@ -201,27 +201,15 @@ public:
       const IBrick &ib = bricks[i];
       for(int j = i+1; j < bricksSize; ++j) {
         const IBrick &jb = bricks[j];
-#ifdef _TRACE
-        std::cout << "   " << ib.bi << "/" << ib.b << " VS " << jb.bi << "/" << jb.b << std::endl;
-#endif
         if(ib.bi.configurationSCCI == jb.bi.configurationSCCI) {
-#ifdef _TRACE
-          std::cout << "   same configurationSCCI => OK" << std::endl;
-#endif
           continue; // from same scc.
         }
         bool connected;
         ConnectionPoint pi, pj;
         if(ib.b.intersects<ADD_X,ADD_Y>(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
           if(!connected) {
-#ifdef _TRACE
-            std::cout << "   Intersect, no connect => fail!" << std::endl;
-#endif
             return false;
           }
-#ifdef _TRACE
-          std::cout << "   Connect!" << std::endl;
-#endif
           pi.brickI = ib.bi.sccBrickI;
           pj.brickI = jb.bi.sccBrickI;
           IConnectionPair c(IConnectionPoint(ib.bi, pi), IConnectionPoint(jb.bi, pj));
@@ -229,10 +217,44 @@ public:
         }
       }
     }
-#ifdef _TRACE
-    std::cout << "   OK!" << std::endl;
-#endif
     return true;
+  }
+
+  template <int ADD_X, int ADD_Y>
+  bool isRealizable(const std::vector<int> &possibleCollisions, int end) const {
+    for(int i = 0; i < possibleCollisions.size(); ++i) {
+      const IBrick &ib = bricks[possibleCollisions[i]];
+      for(int j = 0; j < end; ++j) {
+        const IBrick &jb = bricks[j+bricksSize-end];
+        assert(ib.bi.configurationSCCI != jb.bi.configurationSCCI);
+        bool connected;
+        ConnectionPoint pi, pj;
+        if(ib.b.intersects<ADD_X,ADD_Y>(jb.b, jb.rb, connected, pj, pi, ib.rb) && !connected) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  std::vector<int> getPossibleCollisions(const FatSCC &scc, const BrickIdentifier &exclude) const {
+    std::vector<int> ret;
+    for(int i = 0; i < bricksSize; ++i) {
+      const IBrick ib = bricks[i];
+      if(exclude.configurationSCCI == ib.bi.configurationSCCI && exclude.sccBrickI == ib.bi.sccBrickI)
+        continue;
+      const Brick b = ib.b;
+      const int8_t levelI = b.level;
+      RectilinearBrick sccBrick;
+      for(int j = 0; j < scc.size; sccBrick = scc.otherBricks[j], ++j) {
+	const uint8_t levelJ = sccBrick.level();
+	if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
+	  ret.push_back(i);
+	  break;
+	}
+      }
+    }
+    return ret;
   }
 
   void initSCC(const FatSCC &scc) {

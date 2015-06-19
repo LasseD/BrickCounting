@@ -25,9 +25,29 @@
 
 ## Current optimization progress
 
-- Initial program running time: 180 seconds (3 bricks, debug mode).
+All times are in seconds for the program. T440p is a Lenovo Thinkpad T440p from 2014 while "VPC" is a Sony Vaio VPCEB4X1E from 2010'ish running in low performance power saving mode. 
 
-- After replacing diagonal union-find merging with angle locking: 153 seconds (3 bricks, debug mode).
+### Initial peformance improvements
+
+The times are measured by finding models with 3 bricks with the program runnign in debug mode.
+
+| Optimization performed | T440p | VPC |
+|:----------------------:|------:|----:|
+| None | 180 | - |
+| Replacing diagonal union-find merging with angle locking | 153 | 212 |
+| Compute indices for SML-mapping dynamically | - | 202 |
+| Compute configuration for SML-mapping dynamically | - | 199 |
+| Precompute bricks that might intersect SML-mapping | - | 96 |
+| Don't consider connecting brick to be intersectable | - | 62 |
+
+### Dedicated peformance improvement
+
+| Optimization performed | T440p | VPC |
+|:----------------------:|------:|----:|
+| Use divide-and-conquer union-find algorithm | - | - |
+| Identify and handle single brick SCC at the end of a model in SML-mapping | - | - |
+| Reduce memory usage by modifying the SML-result set to accomodate single-brick SCC's | - | - |
+| Handle all single brick SCCs in a model separately - not just the last one | - | - |
 
 ## Geometry:
 
