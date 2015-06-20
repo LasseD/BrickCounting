@@ -414,14 +414,12 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
    - If more than one L-island: Report problematic. Still only count 1.
   */
   if(sIslandKeys.size() == 0) {
-    std::cout << "No islands!" << std::endl;
     return;
   }
 
   for(std::set<Encoding>::const_iterator itKeys = sIslandKeys.begin(); itKeys != sIslandKeys.end(); ++itKeys) {
     Encoding encoding = *itKeys;
     if(rect.find(encoding) != rect.end() || nonRect.find(encoding) != nonRect.end()) {
-      std::cout << "Already known encoding: " << encoding.first << std::endl;
       continue; // Already found!
     }
 
