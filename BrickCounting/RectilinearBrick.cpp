@@ -164,7 +164,7 @@ bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   else {
     return 
       ((p.x4x4() == x   || p.x4x4() == x+3) && inInterval(y,y+3,p.y4x4())) ||
-      ((p.x4x4() == x+1 || p.y4x4() == x+2) && (p.y4x4() == y-1 || p.y4x4() == y+4));
+      ((p.x4x4() == x+1 || p.x4x4() == x+2) && (p.y4x4() == y-1 || p.y4x4() == y+4));
   }  
 }
 

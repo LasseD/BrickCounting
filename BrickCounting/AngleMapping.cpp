@@ -2,6 +2,7 @@
 
 #include "Brick.h"
 #include "Configuration.hpp"
+#include "TurningSingleBrick.h"
 #include <time.h>
 
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder) : numAngles(numScc-1), numBricks(0), encoder(encoder) {
@@ -266,6 +267,30 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     const IConnectionPoint &ip1 = points[2*angleI];
     const IConnectionPoint &ip2 = points[2*angleI+1];
     std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2.first.configurationSCCI], ip1.first);
+
+    // Speed up using TSB:
+    if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
+#ifdef _TRACE
+      std::cout << "Using TSB to check quickly." << std::endl;
+      std::cout << "Angle types:" << std::endl;
+      for(unsigned int i = 0; i < numAngles; ++i)
+	std::cout << " " << i << ": " << angleTypes[i] << std::endl;      
+#endif
+      const IConnectionPoint &ip1 = points[2*angleI];
+      const IConnectionPoint &ip2 = points[2*angleI+1];
+      const IConnectionPair icp(ip1,ip2);
+      
+      TurningSingleBrickInvestigator tsbInvestigator(c, ip2.first.configurationSCCI, icp);
+      if(tsbInvestigator.isClear<-1,-1>(possibleCollisions) &&
+	 tsbInvestigator.isClear<0,0>(possibleCollisions) &&
+	 tsbInvestigator.isClear<1,1>(possibleCollisions)) {
+	for(unsigned short i = 0; i < steps; ++i) {
+	  S[smlI+i] = M[smlI+i] = L[smlI+i] = true;	  
+	}
+	//std::cout << "BOOM!" << std::endl;
+	return;
+      }
+    }
 
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);

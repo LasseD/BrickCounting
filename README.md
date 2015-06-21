@@ -35,8 +35,9 @@ The times are measured (in seconds) by finding models with 3 bricks with the pro
 | Compute configuration for SML-mapping dynamically | - | 199 |
 | Precompute bricks that might intersect SML-mapping | - | 96 |
 | Don't consider connecting brick to be intersectable | - | 62 |
-| Identify and handle single brick SCC at the end of a model in SML-mapping | - | - |
-| Reduce memory usage by modifying the SML-result set to accomodate single-brick SCC's | - | - |
+| Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | - | 24 |
+| Use TSB for SML-mapping when applicable | - | - |
+| Modify the SML-result set to accomodate intervals from TSBs | - | - |
 | Handle any single brick SCCs separately - not just the last one | - | - |
 
 

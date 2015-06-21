@@ -20,8 +20,6 @@
 
 #define MAX_ANGLE_RADIANS 0.664054277
 
-#define P1 first
-#define P2 second
 typedef std::pair<IConnectionPoint,IConnectionPoint> IConnectionPair;
 inline std::ostream& operator<<(std::ostream &os, const IConnectionPair& c) {
   os << c.first << "<>" << c.second;
@@ -179,10 +177,10 @@ struct IBrick {
 };
 
 struct Configuration : public LDRPrinter {
-private:
+//private:
   Brick origBricks[6];
 
-public:
+//public:
   int bricksSize;
   IBrick bricks[6];
 

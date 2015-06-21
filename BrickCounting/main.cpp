@@ -7,7 +7,7 @@
 #include <assert.h>
 
 void ensureFoldersAreCreated() {
-  std::cout << "Ensuring that the necessary folders exist." << std::endl;
+  std::cout << "Ensuring the necessary folders exist." << std::endl;
   std::cout << "Please ensure this program has permissions to create folders and write files here." << std::endl;
 
 #ifdef _WIN32
@@ -89,8 +89,8 @@ int main(int, char**) {
   ConfigurationManager mgr;
   //mgr.test();
   //mgr.runForSize(2); 
-  mgr.runForSize(3);
-  //mgr.runForSize(4);
+  //mgr.runForSize(3);
+  mgr.runForSize(4);
   //mgr.runForSize(5);
   //mgr.runForSize(6);
   return 0;

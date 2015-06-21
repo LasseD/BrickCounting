@@ -10,6 +10,15 @@ double round(double number) {
   return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
 }
 
+std::ostream& operator<<(std::ostream &os, const Point& p) {
+  os << p.X << "," << p.Y;
+  return os;
+}
+std::ostream& operator<<(std::ostream &os, const LineSegment& l) {
+  os << l.P1 << "->" << l.P2;
+  return os;
+}
+
 /*
 Constructor used for finding connection points:
 b: original brick placed in space.
@@ -118,16 +127,20 @@ RectilinearBrick Brick::toRectilinearBrick() const {
   return RectilinearBrick((int8_t)x, (int8_t)y, level, horizontal);
 }
 
-void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
+void Brick::movePointSoThisIsAxisAlignedAtOrigin(Point &b) const {
   // Tranlate to make this->origin = 0,0:
-  b.center.X -= center.X;
-  b.center.Y -= center.Y;
+  b.X -= center.X;
+  b.Y -= center.Y;
   // Rotate to make this->angle = 0.
   double sina = sin(-angle);
   double cosa = cos(-angle);
-  double oldX = b.center.X;
-  b.center.X = oldX*cosa - b.center.Y*sina;
-  b.center.Y = oldX*sina + b.center.Y*cosa;
+  double oldX = b.X;
+  b.X = oldX*cosa - b.Y*sina;
+  b.Y = oldX*sina + b.Y*cosa;
+}
+
+void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
+  movePointSoThisIsAxisAlignedAtOrigin(b.center);
   b.angle -= angle;
 }
 

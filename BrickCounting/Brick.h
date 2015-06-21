@@ -29,9 +29,16 @@
 // 0.0625 is 0.5 mm.
 #define SNAP_DISTANCE 0.0625
 
-typedef std::pair<double,double> Point;
 #define X first
 #define Y second
+#define P1 first
+#define P2 second
+
+typedef std::pair<double,double> Point;
+std::ostream& operator<<(std::ostream &os, const Point& p);
+
+typedef std::pair<Point,Point> LineSegment;
+std::ostream& operator<<(std::ostream &os, const LineSegment& l);
 
 double round(double number);
 
@@ -57,6 +64,7 @@ public:
   RectilinearBrick toRectilinearBrick() const;
 
   void moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const;
+  void movePointSoThisIsAxisAlignedAtOrigin(Point &p) const;
 
   template <int ADD_X, int ADD_Y>
   void getBoxPOIs(Point *pois) const {
@@ -66,9 +74,9 @@ public:
     const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
     const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
     pois[0] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
-    pois[1] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
-    pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
-    pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+    pois[1] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+    pois[2] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+    pois[3] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
     // 4 sides:
     pois[4] = Point(center.X+dx*cosa,  center.Y+dx*sina);
     pois[5] = Point(center.X-dx*cosa, center.Y-dx*sina);
@@ -77,6 +85,19 @@ public:
     // 2 inner:
     pois[8] = Point(center.X+0.75*sina, center.Y+0.75*cosa);
     pois[9] = Point(center.X-0.75*sina, center.Y-0.75*cosa);
+  }
+
+  template <int ADD_X, int ADD_Y>
+  void getBoxLineSegments(LineSegment *segments) const {
+    double sina = sin(angle);
+    double cosa = cos(angle);
+    // 4 corners:
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    segments[0].P2 = segments[1].P1 = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+    segments[1].P2 = segments[2].P1 = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+    segments[2].P2 = segments[3].P1 = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+    segments[3].P2 = segments[0].P1 = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
   }
 
   Point getStudPosition(ConnectionPointType type) const;
@@ -115,16 +136,12 @@ public:
   }
 
   template <int ADD_X, int ADD_Y>
-  bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-    moveBrickSoThisIsAxisAlignedAtOrigin(b);
-    Point studsOfB[NUMBER_OF_STUDS];
-    b.getStudPositions(studsOfB);
+  bool boxIntersectsInnerStud(Point &stud) const {
     const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
     const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
 
     // X handle four inner:
     for(int i = 0; i < 4; ++i) {
-      Point &stud = studsOfB[i];
       if(stud.X < 0)
         stud.X = -stud.X;
       if(stud.Y < 0)
@@ -136,52 +153,79 @@ public:
         if(stud.X < cornerX ||
            stud.Y < cornerY ||
            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          connected = false;
           return true;
         }
+      }
+    }
+    return false;
+  }
+
+  template <int ADD_X, int ADD_Y>
+    bool boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+
+    Point stud(studOfB);
+    if(stud.X < 0)
+      stud.X = -stud.X;
+    if(stud.Y < 0)
+      stud.Y = -stud.Y;
+    
+    if(stud.X < cornerX+STUD_RADIUS && 
+       stud.Y < cornerY+STUD_RADIUS) {
+      // X check if it hits stud:
+      const double studX = HALF_STUD_DISTANCE;
+      const double studY = STUD_AND_A_HALF_DISTANCE;   
+      if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
+	// We are already connected:
+	if(connected) {
+	  connected = false;
+	  return true;
+	}
+	// Compute corner:
+	connected = true;
+	if(studOfB.X < 0 && studOfB.Y < 0)
+	  foundConnectionThis = ConnectionPoint(SW, source, false, -1);
+	else if(studOfB.X < 0 && studOfB.Y > 0)
+	  foundConnectionThis = ConnectionPoint(NW, source, false, -1);
+	else if(studOfB.X > 0 && studOfB.Y < 0)
+	  foundConnectionThis = ConnectionPoint(SE, source, false, -1);
+	else // if(stud.X > 0 && stud.Y > 0)
+	  foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
+	return false;
+      }
+      
+      // Might intersect - check corner case:
+      if(stud.X < cornerX ||
+	 stud.Y < cornerY ||
+	 STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+	connected = false;
+	return true;
+      }
+    }
+    return false;
+  }
+
+  template <int ADD_X, int ADD_Y>
+  bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+    moveBrickSoThisIsAxisAlignedAtOrigin(b);
+    Point studsOfB[NUMBER_OF_STUDS];
+    b.getStudPositions(studsOfB);
+
+    // X handle four inner:
+    for(int i = 0; i < 4; ++i) {
+      Point &stud = studsOfB[i];
+      if(boxIntersectsInnerStud<ADD_X,ADD_Y>(stud)) {
+	connected = false;
+	return true;
       }
     }
     // Handle four outer specially as they might cause connection:
     for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
       Point stud = studsOfB[i];
-      if(stud.X < 0)
-        stud.X = -stud.X;
-      if(stud.Y < 0)
-        stud.Y = -stud.Y;
-
-      if(stud.X < cornerX+STUD_RADIUS && 
-         stud.Y < cornerY+STUD_RADIUS) {
-        // X check if it hits stud:
-        const double studX = HALF_STUD_DISTANCE;
-        const double studY = STUD_AND_A_HALF_DISTANCE;   
-        if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
-          // We are already connected:
-          if(connected) {
-            connected = false;
-            return true;
-          }
-          // Compute corner:
-          connected = true;
-          if(studsOfB[i].X < 0 && studsOfB[i].Y < 0)
-            foundConnectionThis = ConnectionPoint(SW, source, false, -1);
-          else if(studsOfB[i].X < 0 && studsOfB[i].Y > 0)
-            foundConnectionThis = ConnectionPoint(NW, source, false, -1);
-          else if(studsOfB[i].X > 0 && studsOfB[i].Y < 0)
-            foundConnectionThis = ConnectionPoint(SE, source, false, -1);
-          else // if(stud.X > 0 && stud.Y > 0)
-            foundConnectionThis = ConnectionPoint(NE, source, false, -1);
-          foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
-          continue;
-        }
-
-        // Might intersect - check corner case:
-        if(stud.X < cornerX ||
-           stud.Y < cornerY ||
-           STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          connected = false;
-          return true;
-        }
-      }
+      if(boxIntersectsOuterStud<ADD_X,ADD_Y>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
+	return true;
     }
     return connected;
   }
