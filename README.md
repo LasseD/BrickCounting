@@ -25,9 +25,9 @@
 
 ## Current optimization progress
 
-The times are measured (in seconds) by finding models with 3 bricks with the program running in debug mode. T440p is a Lenovo Thinkpad T440p from 2014 while "VPC" is a Sony Vaio VPCEB4X1E from 2010'ish running in low performance power saving mode. 
+The times are measured (in seconds) by finding models with 3 bricks with the program running in debug mode. "i7" is a Lenovo Thinkpad T440p from 2014 while "i5" is a Sony Vaio VPCEB4X1E from 2011 running in low performance power saving mode. 
 
-| Optimization           | T440p | VPC |
+| Optimization           | i7    | i5  |
 |:-----------------------|------:|----:|
 | None | 180 | - |
 | Replacing diagonal union-find merging with angle locking | 153 | 212 |
