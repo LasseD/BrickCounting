@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <iostream>
 // Ensure cross platform compatibility of std::min:
-#define MIN(a,b) (a < b ? a : b)
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define EPSILON 1e-6
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
