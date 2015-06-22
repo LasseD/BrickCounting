@@ -133,8 +133,8 @@ std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p) {
     os << "A";
   else
     os << "B";
-  os << p.brick;
-  os << p.brickI;
+  //os << p.brick;
+  //os << p.brickI;
   switch(p.type) {
   case NW : os << "NW"; break;
   case NE : os << "NE"; break;

@@ -251,53 +251,86 @@ Parameters:
 - c: Configuration being constructed dynamically. Initially containing sccs[0].
 - possibleCollisions: possible connections pre-computed to be used in next step. Remember to initialize!
  */
-void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configuration &c) {
+void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configuration &c, bool noS, bool noM, bool noL) {
+  // Update smlI:
   assert(smlI < sizeMappings);
   const unsigned short steps = 2*angleSteps[angleI]+1;
   smlI *= steps;
 
+  // Find possible collisions:
+  const IConnectionPoint &ip1 = points[2*angleI];
+  const IConnectionPoint &ip2 = points[2*angleI+1];
+  unsigned int ip2I = ip2.first.configurationSCCI;
+  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], ip1.first);
+
+  // Recursion:
   if(angleI < numAngles-1) {
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
-      evalSML(angleI+1, smlI + i, c2);
+      
+      noS = noS && c2.isRealizable<-1,-1>(possibleCollisions, sccs[ip2I].size);
+      noM = noM && c2.isRealizable< 0, 0>(possibleCollisions, sccs[ip2I].size);
+      noL = noL && c2.isRealizable< 1, 1>(possibleCollisions, sccs[ip2I].size);
+
+      evalSML(angleI+1, smlI + i, c2, noS, noM, noL);
+    }
+    return;
+  }
+
+  // End of recursion:
+  assert(angleI == numAngles-1);
+
+  // Speed up for noSML:
+  if(noS) for(unsigned int i = 0; i < numAngles; ++i) S[smlI+i] = false;
+  if(noM) for(unsigned int i = 0; i < numAngles; ++i) M[smlI+i] = false;
+  if(noL) for(unsigned int i = 0; i < numAngles; ++i) L[smlI+i] = false;
+  bool sDone = noS;
+  bool mDone = noM;
+  bool lDone = noL;
+  if(sDone && mDone && lDone)
+    return;
+
+  // Speed up using TSB:
+  if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
+#ifdef _TRACE
+    std::cout << "Using TSB to check quickly." << std::endl;
+    std::cout << "Angle types:" << std::endl;
+    for(unsigned int i = 0; i < numAngles; ++i)
+      std::cout << " " << i << ": " << angleTypes[i] << std::endl;      
+#endif
+    const IConnectionPair icp(ip1,ip2);
+      
+    TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
+    if(!sDone && tsbInvestigator.isClear<-1,-1>(possibleCollisions)) {
+      for(unsigned short i = 0; i < steps; ++i) {
+	S[smlI+i] = true;
+      }      
+      sDone = true;
+    }
+    if(!mDone && tsbInvestigator.isClear<0,0>(possibleCollisions)) {
+      for(unsigned short i = 0; i < steps; ++i) {
+	M[smlI+i] = true;
+      }      
+      mDone = true;
+    }
+    if(!lDone && tsbInvestigator.isClear<1,1>(possibleCollisions)) {
+      for(unsigned short i = 0; i < steps; ++i) {
+	L[smlI+i] = true;
+      }      
+      lDone = true;
     }
   }
-  else {
-    assert(angleI == numAngles-1);
-    const IConnectionPoint &ip1 = points[2*angleI];
-    const IConnectionPoint &ip2 = points[2*angleI+1];
-    std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2.first.configurationSCCI], ip1.first);
+  if(sDone && mDone && lDone)
+    return;
 
-    // Speed up using TSB:
-    if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
-#ifdef _TRACE
-      std::cout << "Using TSB to check quickly." << std::endl;
-      std::cout << "Angle types:" << std::endl;
-      for(unsigned int i = 0; i < numAngles; ++i)
-	std::cout << " " << i << ": " << angleTypes[i] << std::endl;      
-#endif
-      const IConnectionPoint &ip1 = points[2*angleI];
-      const IConnectionPoint &ip2 = points[2*angleI+1];
-      const IConnectionPair icp(ip1,ip2);
-      
-      TurningSingleBrickInvestigator tsbInvestigator(c, ip2.first.configurationSCCI, icp);
-      if(tsbInvestigator.isClear<-1,-1>(possibleCollisions) &&
-	 tsbInvestigator.isClear<0,0>(possibleCollisions) &&
-	 tsbInvestigator.isClear<1,1>(possibleCollisions)) {
-	for(unsigned short i = 0; i < steps; ++i) {
-	  S[smlI+i] = M[smlI+i] = L[smlI+i] = true;	  
-	}
-	//std::cout << "BOOM!" << std::endl;
-	return;
-      }
-    }
-
-    for(unsigned short i = 0; i < steps; ++i) {
-      Configuration c2 = getConfiguration(c, angleI, i);
+  for(unsigned short i = 0; i < steps; ++i) {
+    Configuration c2 = getConfiguration(c, angleI, i);
+    if(!sDone)
       S[smlI+i] = c2.isRealizable<-1,-1>(possibleCollisions, sccs[numAngles].size);
+    if(!mDone)
       M[smlI+i] = c2.isRealizable< 0, 0>(possibleCollisions, sccs[numAngles].size);
+    if(!lDone)
       L[smlI+i] = c2.isRealizable< 1, 1>(possibleCollisions, sccs[numAngles].size);
-    }
   }
 }
 
@@ -412,7 +445,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
   // Evaluate SML:
   Configuration c(sccs[0]);
-  evalSML(0, 0, c);
+  evalSML(0, 0, c, false, false, false);
 
   //std::cout << " creating sufs" << std::endl;
   // Evaluate union-find:

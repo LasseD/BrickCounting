@@ -52,7 +52,7 @@ public:
 private:
   void reportProblematic(const Position &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const;
   void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
-  void evalSML(unsigned int angleI, uint64_t smlIndex, const Configuration &c);
+  void evalSML(unsigned int angleI, uint64_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
   void findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys);
   void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
