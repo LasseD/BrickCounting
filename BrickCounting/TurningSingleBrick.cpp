@@ -75,11 +75,11 @@ bool Fan::intersectsLineSegment(const LineSegment &l) const {
     return false;
   // Return true if one of the intersections is between minAngle and maxAngle:
   if(math::between(l.P1, i1, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i1), maxAngle)) {
-    std::cout << "Intersects line segment " << l << " at " << i1 << std::endl;
+    //std::cout << "Intersects line segment " << l << " at " << i1 << std::endl;
     return true;
   }
   if(math::between(l.P1, i2, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i2), maxAngle)) {
-    std::cout << "Intersects line segment " << l << " at " << i2 << std::endl;
+    //std::cout << "Intersects line segment " << l << " at " << i2 << std::endl;
     return true;
   }
   return false;

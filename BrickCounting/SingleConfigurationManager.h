@@ -23,6 +23,7 @@ private:
   unsigned int combinationSize;
   FatSCC combination[6];
   ConfigurationEncoder encoder;
+  std::ofstream &os;
   
   //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
   //std::set<FatSCC> foundSCCs; // For debugging only!
@@ -34,7 +35,7 @@ private:
   bool prevMustBeChosen[6];
 
 public:
-  SingleConfigurationManager(const std::vector<FatSCC> &combination);
+  SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os);
 
   void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize);
   void run();

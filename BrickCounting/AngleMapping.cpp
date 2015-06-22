@@ -5,7 +5,7 @@
 #include "TurningSingleBrick.h"
 #include <time.h>
 
-AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder) : numAngles(numScc-1), numBricks(0), encoder(encoder) {
+AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os) : numAngles(numScc-1), numBricks(0), encoder(encoder), os(os) {
   // Simple copying:
   for(int i = 0; i < numScc; ++i) {
     this->sccs[i] = sccs[i];
@@ -374,27 +374,27 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
   
   toLdr.push_back(cc);
   // Report
-  std::cout << " Configuration requires manual verification!" <<std::endl;
+  os << " Configuration requires manual verification!" <<std::endl;
 
   // Special case: If this configuration contains no L-islands, but does contain a loop, then it is most likely OK:
   if(mIslandTotal == 1 && lIslandTotal == 0 && cc.size() > numAngles) {
-    std::cout << "  Special case for manual verification: Single M-island in S-island. With a loop, but without an L-island." << std::endl;
+    os << "  Special case for manual verification: Single M-island in S-island. With a loop, but without an L-island." << std::endl;
   }
 
-  std::cout << "  File: ";
-  encoder.writeFileName(std::cout, cc);
-  std::cout << std::endl;
-  std::cout << "  Angles: " << std::endl;
+  os << "  File: ";
+  encoder.writeFileName(os, cc);
+  os << std::endl;
+  os << "  Angles: " << std::endl;
   for(unsigned int i = 0; i < numAngles; ++i) {
     double radian = Angle(p.p[i]-angleSteps[i], angleSteps[i]).toRadians();
-    std::cout << "   " << (i+1) << ": step " << p.p[i] << "/" << (2*angleSteps[i]+1) << ", fraction " << (p.p[i]-angleSteps[i]) << "/" << angleSteps[i] << ", radian " << radian << std::endl;
+    os << "   " << (i+1) << ": step " << p.p[i] << "/" << (2*angleSteps[i]+1) << ", fraction " << (p.p[i]-angleSteps[i]) << "/" << angleSteps[i] << ", radian " << radian << std::endl;
   }
   if(mIslandTotal > 0)
-    std::cout << "  This configuration represents M-island " << (mIslandI+1) << "/" << mIslandTotal << ". There are " << lIslandTotal << " L-islands in this M-island" << std::endl;
+    os << "  This configuration represents M-island " << (mIslandI+1) << "/" << mIslandTotal << ". There are " << lIslandTotal << " L-islands in this M-island" << std::endl;
   else
-    std::cout << "  S islands without M-islands inside!" << std::endl;        
-  std::cout << "  Configuration: " << c << std::endl;
-  std::cout << std::endl;
+    os << "  S islands without M-islands inside!" << std::endl;        
+  os << "  Configuration: " << c << std::endl;
+  os << std::endl;
 }
 
 void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, 

@@ -35,9 +35,11 @@ public:
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
   const ConfigurationEncoder &encoder;
   uint64_t rectilinearIndex;
+private:
+  std::ofstream &os;
 
 public:
-  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder);
+  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os);
   ~AngleMapping();
 
   /*

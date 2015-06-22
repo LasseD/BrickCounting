@@ -6,8 +6,7 @@
 #include <algorithm>
 #include <time.h>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination) : combinationSize((unsigned int)combination.size()), encoder(combination), attempts(0), models(0), problematic(0) // rectilinear(0), nonRectilinearConfigurations(0), 
-{
+SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : combinationSize((unsigned int)combination.size()), encoder(combination), attempts(0), models(0), problematic(0), os(os) {
 #ifdef _TRACE
   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
   for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
@@ -80,7 +79,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     investigatedConnectionPairListsEncoded.insert(encoded.first);
     ++attempts;
 
-    AngleMapping angleMapping(combination, combinationSize, l, encoder);
+    AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
     return;
   }

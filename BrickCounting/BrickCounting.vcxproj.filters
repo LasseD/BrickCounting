@@ -63,6 +63,9 @@
     <ClInclude Include="UnionFind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TurningSingleBrick.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -102,6 +105,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UnionFind.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurningSingleBrick.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

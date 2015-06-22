@@ -6,10 +6,11 @@
 #include <algorithm>
 #include <time.h>
 
-void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex) {
+void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os) {
   if(combination.size() == combinationType.size()) {
-    SingleConfigurationManager mgr(combination);
+    SingleConfigurationManager mgr(combination, os);
     mgr.run();
+
     attempts+=mgr.attempts;
     rectilinear+=mgr.foundRectilinearConfigurationsEncoded.size();
     nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurationsEncoded.size();
@@ -27,25 +28,37 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     if(prevSccSize == sccSize && v.back().index != i)
       assert(v.back().check(fatSCC));
     v.push_back(fatSCC);
-    runForCombination(v, combinationType, i);
+    runForCombination(v, combinationType, i, os);
   }  
 }
 
-void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType) {
+void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
   time_t startTime, endTime;
   time(&startTime);
 
+  std::ofstream os;
+  std::stringstream ss;
+
+  ss << "manual\\manual_size_" << combinedSize << "_sccsizes";
+
   std::cout << "ConfigurationManager::runForCombinationType(";
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
     std::cout << *it << " ";
+    ss << "_" << *it;
+  }
+  ss << ".txt";
+  os.open(ss.str().c_str(), std::ios::out);
   std::cout << ") started!" << std::endl;
 
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
     std::vector<FatSCC> v;
     v.push_back(sccs[firstSCCSize-1][i]);
-    runForCombination(v, combinationType, i);
+    runForCombination(v, combinationType, i, os);
   }
+
+  os.flush();
+  os.close();
 
   std::cout << "Current counts: " << std::endl;
   std::cout << " " << rectilinear << " rectilinear combinations." << std::endl;
@@ -60,16 +73,16 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   // TODO: Thread here!
 }
 
-void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize) {
+void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {
   if(remaining == 0) {
-    runForCombinationType(combinationType);
+    runForCombinationType(combinationType, combinedSize);
     return;
   }
     
   for(int i = MIN(prevSize,remaining); i > 0; --i) {
     std::vector<int> v(combinationType);
     v.push_back(i);
-    runForCombinationType(v, remaining-i, i);
+    runForCombinationType(v, remaining-i, i, combinedSize);
   }
 }
 
@@ -81,7 +94,7 @@ void ConfigurationManager::runForSize(int size) {
   for(int base = size-1; base > 0; --base) {
     std::vector<int> combination;
     combination.push_back(base);
-    runForCombinationType(combination, size-base, base);
+    runForCombinationType(combination, size-base, base, size);
   }
 
   time(&endTime);
@@ -111,10 +124,10 @@ void ConfigurationManager::test() {
   std::vector<int> v;
   //v.push_back(2);
   v.push_back(2);
-  //v.push_back(2);
+  v.push_back(1);
   v.push_back(1);
 
-  runForCombinationType(v);
+  runForCombinationType(v, 4);
   /*
   std::vector<FatSCC> v2;
   v2.push_back(sccs[1][0]);
