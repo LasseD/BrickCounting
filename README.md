@@ -37,7 +37,9 @@ The times are measured (in seconds) by finding models with 3 bricks with the pro
 | Don't consider connecting brick to be intersectable | - | 62 |
 | Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | 8 | 24 |
 | Split handling of the SML sets and detect early if a model is impossible | 9 | 12 |
-| Use TSB for SML-mapping when applicable | - | - |
+| Improve TSB handling by using SML-mapping for moving studs intersecting bricks | - | - |
+| Improve TSB handling by using SML-mapping for moving bricks intersecting studs | - | - |
+| Improve TSB handling by using SML-mapping for moving bricks intersecting bricks | - | - |
 | Modify the SML-result set to accomodate intervals from TSBs | - | - |
 | Handle any single brick SCCs separately - not just the last one | - | - |
 
