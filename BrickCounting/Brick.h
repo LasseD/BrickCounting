@@ -1,20 +1,13 @@
 #ifndef BRICK_H
 #define BRICK_H
 
-//#define _TRACE
-
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
 #include "LDRPrinter.h"
+#include "Math.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-//#include <tgmath.h>
 #include <stdint.h>
 #include <iostream>
-// Ensure cross platform compatibility of std::min:
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define EPSILON 1e-6
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
@@ -28,19 +21,6 @@
 #define STUD_DIAM (STUD_RADIUS+STUD_RADIUS)
 // 0.0625 is 0.5 mm.
 #define SNAP_DISTANCE 0.0625
-
-#define X first
-#define Y second
-#define P1 first
-#define P2 second
-
-typedef std::pair<double,double> Point;
-std::ostream& operator<<(std::ostream &os, const Point& p);
-
-typedef std::pair<Point,Point> LineSegment;
-std::ostream& operator<<(std::ostream &os, const LineSegment& l);
-
-double round(double number);
 
 /*
 A Brick at any location and angle.
@@ -66,13 +46,13 @@ public:
   void moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const;
   void movePointSoThisIsAxisAlignedAtOrigin(Point &p) const;
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   void getBoxPOIs(Point *pois) const {
     double sina = sin(angle);
     double cosa = cos(angle);
     // 4 corners:
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
     pois[0] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
     pois[1] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
     pois[2] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
@@ -87,30 +67,55 @@ public:
     pois[9] = Point(center.X-0.75*sina, center.Y-0.75*cosa);
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY, int STUD_ADD>
   void getBoxLineSegments(LineSegment *segments) const {
     double sina = sin(angle);
     double cosa = cos(angle);
     // 4 corners:
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
-    segments[0].P2 = segments[1].P1 = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
-    segments[1].P2 = segments[2].P1 = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
-    segments[2].P2 = segments[3].P1 = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
-    segments[3].P2 = segments[0].P1 = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double DX = dx + STUD_ADD*STUD_RADIUS;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double DY = dy + STUD_ADD*STUD_RADIUS;
+
+    segments[0].P1 = Point(center.X+(-DX*cosa-dy*sina), center.Y+(-DX*sina+dy*cosa));
+    segments[0].P2 = Point(center.X+( DX*cosa-dy*sina), center.Y+( DX*sina+dy*cosa));
+
+    segments[1].P1 = Point(center.X+( dx*cosa-DY*sina), center.Y+( dx*sina+DY*cosa));
+    segments[1].P2 = Point(center.X+( dx*cosa+DY*sina), center.Y+( dx*sina-DY*cosa));
+
+    segments[2].P1 = Point(center.X+( DX*cosa+dy*sina), center.Y+( DX*sina-dy*cosa));
+    segments[2].P2 = Point(center.X+(-DX*cosa+dy*sina), center.Y+(-DX*sina-dy*cosa));
+
+    segments[3].P1 = Point(center.X+(-dx*cosa+DY*sina), center.Y+(-dx*sina-DY*cosa));
+    segments[3].P2 = Point(center.X+(-dx*cosa-DY*sina), center.Y+(-dx*sina+DY*cosa));
+  }
+
+  /*
+    Investigates the equivalent problem where a circle (center p, radius) intersects the 
+    Minkowski sum of brick and a stud.
+   */
+  template <int ADD_XY>
+  void intersectsMovingStud(const Point &p, double radius, Point &i1, Point &i2) const {
+    // Intersects either on a line segment or a quarter-circle at one of the corners.
+    // First check line segments:
+    int numIntersections = 0;
+    LineSegment segments[4];
+    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.
+    
+    // TODO
   }
 
   Point getStudPosition(ConnectionPointType type) const;
   void getStudPositions(Point *positions) const;
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool boxIntersectsPOIsFrom(Brick &b) const {
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
     // Get POIs:
     Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
-    b.getBoxPOIs<ADD_X,ADD_Y>(pois);
+    b.getBoxPOIs<ADD_XY>(pois);
     // Check each POI:
     for(int i = 0; i < NUMBER_OF_POIS_FOR_BOX_INTERSECTION; ++i) {
       Point &poi = pois[i];
@@ -128,17 +133,17 @@ public:
   /*
     Assumes b is on same level.
   */
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool boxesIntersect(const Brick &b) const {
     Brick tmpB(b);
     Brick tmpThis(*this);
-    return boxIntersectsPOIsFrom<ADD_X,ADD_Y>(tmpB) || b.boxIntersectsPOIsFrom<ADD_X,ADD_Y>(tmpThis);
+    return boxIntersectsPOIsFrom<ADD_XY>(tmpB) || b.boxIntersectsPOIsFrom<ADD_XY>(tmpThis);
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool boxIntersectsInnerStud(Point &stud) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
 
     // X handle four inner:
     for(int i = 0; i < 4; ++i) {
@@ -160,10 +165,10 @@ public:
     return false;
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
     bool boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_X * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_Y * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
 
     Point stud(studOfB);
     if(stud.X < 0)
@@ -207,7 +212,7 @@ public:
     return false;
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
     Point studsOfB[NUMBER_OF_STUDS];
@@ -216,7 +221,7 @@ public:
     // X handle four inner:
     for(int i = 0; i < 4; ++i) {
       Point &stud = studsOfB[i];
-      if(boxIntersectsInnerStud<ADD_X,ADD_Y>(stud)) {
+      if(boxIntersectsInnerStud<ADD_XY>(stud)) {
 	connected = false;
 	return true;
       }
@@ -224,7 +229,7 @@ public:
     // Handle four outer specially as they might cause connection:
     for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
       Point stud = studsOfB[i];
-      if(boxIntersectsOuterStud<ADD_X,ADD_Y>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
+      if(boxIntersectsOuterStud<ADD_XY>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
 	return true;
     }
     return connected;
@@ -241,20 +246,20 @@ public:
   - If intersect: Check if only intersecting one corner stud.
   - If only one corner stud, check if corner connected.
   */
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
     connected = false;
     if(level > b.level+1 || b.level > level+1)
       return false;
     if(level == b.level) {
-      bool ret = boxesIntersect<ADD_X,ADD_Y>(b);
+      bool ret = boxesIntersect<ADD_XY>(b);
       return ret;
     }
     Brick tmpB(b);
     Brick tmpThis(*this);
     if(level < b.level)
-      return b.boxIntersectsStudsFrom<ADD_X,ADD_Y>(tmpThis, source, connected, foundConnectionThis, foundConnectionB, bSource);
-    return boxIntersectsStudsFrom<ADD_X,ADD_Y>(tmpB, bSource, connected, foundConnectionB, foundConnectionThis, source);
+      return b.boxIntersectsStudsFrom<ADD_XY>(tmpThis, source, connected, foundConnectionThis, foundConnectionB, bSource);
+    return boxIntersectsStudsFrom<ADD_XY>(tmpB, bSource, connected, foundConnectionB, foundConnectionThis, source);
   }
 
   bool operator < (const Brick &b) const;

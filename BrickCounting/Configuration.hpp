@@ -193,7 +193,7 @@ struct Configuration : public LDRPrinter {
     }
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool isRealizable(std::vector<IConnectionPair> &found) const {
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick &ib = bricks[i];
@@ -204,7 +204,7 @@ struct Configuration : public LDRPrinter {
         }
         bool connected;
         ConnectionPoint pi, pj;
-        if(ib.b.intersects<ADD_X,ADD_Y>(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
+        if(ib.b.intersects<ADD_XY>(jb.b, jb.rb, connected, pj, pi, ib.rb)) {
           if(!connected) {
             return false;
           }
@@ -218,7 +218,7 @@ struct Configuration : public LDRPrinter {
     return true;
   }
 
-  template <int ADD_X, int ADD_Y>
+  template <int ADD_XY>
   bool isRealizable(const std::vector<int> &possibleCollisions, int end) const {
     for(int i = 0; i < possibleCollisions.size(); ++i) {
       const IBrick &ib = bricks[possibleCollisions[i]];
@@ -227,7 +227,7 @@ struct Configuration : public LDRPrinter {
         assert(ib.bi.configurationSCCI != jb.bi.configurationSCCI);
         bool connected;
         ConnectionPoint pi, pj;
-        if(ib.b.intersects<ADD_X,ADD_Y>(jb.b, jb.rb, connected, pj, pi, ib.rb) && !connected) {
+        if(ib.b.intersects<ADD_XY>(jb.b, jb.rb, connected, pj, pi, ib.rb) && !connected) {
           return false;
         }
       }

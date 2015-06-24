@@ -3,21 +3,6 @@
 #include <iostream>
 #include <iomanip>
 #include <assert.h>
-#include <math.h>
-#include <cmath>
-
-double round(double number) {
-  return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
-}
-
-std::ostream& operator<<(std::ostream &os, const Point& p) {
-  os << p.X << "," << p.Y;
-  return os;
-}
-std::ostream& operator<<(std::ostream &os, const LineSegment& l) {
-  os << l.P1 << "->" << l.P2;
-  return os;
-}
 
 /*
 Constructor used for finding connection points:

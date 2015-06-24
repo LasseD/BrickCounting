@@ -268,9 +268,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
       
-      noS = noS && c2.isRealizable<-1,-1>(possibleCollisions, sccs[ip2I].size);
-      noM = noM && c2.isRealizable< 0, 0>(possibleCollisions, sccs[ip2I].size);
-      noL = noL && c2.isRealizable< 1, 1>(possibleCollisions, sccs[ip2I].size);
+      noS = noS && c2.isRealizable<-1>(possibleCollisions, sccs[ip2I].size);
+      noM = noM && c2.isRealizable< 0>(possibleCollisions, sccs[ip2I].size);
+      noL = noL && c2.isRealizable< 1>(possibleCollisions, sccs[ip2I].size);
 
       evalSML(angleI+1, smlI + i, c2, noS, noM, noL);
     }
@@ -301,19 +301,19 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     const IConnectionPair icp(ip1,ip2);
       
     TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
-    if(!sDone && tsbInvestigator.isClear<-1,-1>(possibleCollisions)) {
+    if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
       for(unsigned short i = 0; i < steps; ++i) {
 	S[smlI+i] = true;
       }      
       sDone = true;
     }
-    if(!mDone && tsbInvestigator.isClear<0,0>(possibleCollisions)) {
+    if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
       for(unsigned short i = 0; i < steps; ++i) {
 	M[smlI+i] = true;
       }      
       mDone = true;
     }
-    if(!lDone && tsbInvestigator.isClear<1,1>(possibleCollisions)) {
+    if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
       for(unsigned short i = 0; i < steps; ++i) {
 	L[smlI+i] = true;
       }      
@@ -326,11 +326,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   for(unsigned short i = 0; i < steps; ++i) {
     Configuration c2 = getConfiguration(c, angleI, i);
     if(!sDone)
-      S[smlI+i] = c2.isRealizable<-1,-1>(possibleCollisions, sccs[numAngles].size);
+      S[smlI+i] = c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
     if(!mDone)
-      M[smlI+i] = c2.isRealizable< 0, 0>(possibleCollisions, sccs[numAngles].size);
+      M[smlI+i] = c2.isRealizable< 0>(possibleCollisions, sccs[numAngles].size);
     if(!lDone)
-      L[smlI+i] = c2.isRealizable< 1, 1>(possibleCollisions, sccs[numAngles].size);
+      L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
   }
 }
 
@@ -345,7 +345,7 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
 
     Configuration c = getConfiguration(rep);
     std::vector<IConnectionPair> found;
-    c.isRealizable<-1,-1>(found);
+    c.isRealizable<-1>(found);
     Encoding encoding = encoder.encode(found);
     sIslands.insert(std::make_pair(encoding, SIsland(this, unionI, rep)));
     if(keys.find(encoding) == keys.end())
@@ -372,7 +372,7 @@ void AngleMapping::findExtremeConfigurations(unsigned int angleI, Position &p, b
 
   Configuration c = getConfiguration(p);
   std::vector<IConnectionPair> found;
-  if(!c.isRealizable<0,0>(found))
+  if(!c.isRealizable<0>(found))
     return; // Not possible to build.
   Encoding encoded = encoder.encode(found);
   if(rect.find(encoded) != rect.end())
@@ -391,7 +391,7 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
   //Initially try rectilinear:
   Configuration rectilinear = getConfiguration(p);
   std::vector<IConnectionPair> found; // Currently ignored.
-  if(rectilinear.isRealizable<0,0>(found)) { // Rectilinear:
+  if(rectilinear.isRealizable<0>(found)) { // Rectilinear:
     assert(found.size() >= numAngles);
     Encoding encoded = encoder.encode(found);
     if(rect.find(encoded) == rect.end()) {
