@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <set>
 
 #define MAX_DIMENSIONS 5
 #define MAX_UNIONS 100
@@ -17,7 +18,7 @@ struct Position {
   }
   void init() {
     for(int i = 0 ; i < MAX_DIMENSIONS; ++i)
-      p[i] = 0;    
+      p[i] = 0;
   }
 };
 
@@ -26,13 +27,16 @@ private:
   unsigned int numDimensions;
   unsigned short dimensionSizes[MAX_DIMENSIONS];
   std::vector<Position> unionRepresentatives; // Of found unions
-  uint32_t *unions; // references min in same union.
+  std::set<uint32_t> *unions; // references min in same union.
+  uint32_t *mins;
   uint32_t numUnions;
   uint32_t *v;
   uint64_t sizeV;
   
+  void join(uint32_t a, uint32_t b);
   void initialFillV(unsigned int positionI, Position &position, bool const * const M);
-  void joinUnions(unsigned int positionI, Position &position, bool const * const M);
+  void buildUnions(unsigned int positionI, Position &position, bool const * const M);
+  void createMins();
   void createReducedUnions();
 
 public:
