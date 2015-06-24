@@ -47,25 +47,6 @@ SimpleUnionFind::~SimpleUnionFind() {
   delete[] unions;
 }
 
-void SimpleUnionFind::createMins() {
-  bool *indexed = new bool[numUnions];
-  for(unsigned int i = 0; i < numUnions; ++i)
-    indexed[i] = false;
-
-  for(unsigned int i = 0; i < numUnions; ++i) {
-    if(indexed[i])
-      continue;
-    indexed[i] = true;
-    mins[i] = i;
-    for(std::set<uint32_t>::const_iterator it = unions[i].begin(); it != unions[i].end(); ++it) {
-      indexed[*it] = true;
-      mins[*it] = i;
-    }
-  }
-
-  delete[] indexed;
-}
-
 uint64_t SimpleUnionFind::indexOf(const Position &position) const {
   uint64_t index = position.p[0];
   for(unsigned int i = 1; i < numDimensions; ++i)
@@ -158,6 +139,26 @@ void SimpleUnionFind::join(uint32_t a, uint32_t b) {
   if(unions[a].find(b) == unions[a].end()) {
     unions[a].insert(b);
   }
+}
+
+void SimpleUnionFind::createMins() {
+  bool *indexed = new bool[numUnions];
+  for(unsigned int i = 0; i < numUnions; ++i)
+    indexed[i] = false;
+
+  for(unsigned int i = 0; i < numUnions; ++i) {
+    unsigned int min = i;
+    if(indexed[i])
+      min = mins[i];
+    indexed[i] = true;
+    mins[i] = min;
+    for(std::set<uint32_t>::const_iterator it = unions[i].begin(); it != unions[i].end(); ++it) {
+      indexed[*it] = true;
+      mins[*it] = min;
+    }
+  }
+
+  delete[] indexed;
 }
 
 void SimpleUnionFind::buildUnions(unsigned int positionI, Position &position, bool const * const M) {
