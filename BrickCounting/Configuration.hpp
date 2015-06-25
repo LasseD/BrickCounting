@@ -57,7 +57,7 @@ struct Angle {
       angleDiff -= 2*M_PI;
     assert(angleDiff >= -MAX_ANGLE_RADIANS);
     assert(angleDiff <= MAX_ANGLE_RADIANS);
-    n = (short)round(angleDiff/MAX_ANGLE_RADIANS*d);
+    n = (short)math::round(angleDiff/MAX_ANGLE_RADIANS*d);
   }
 
   double toRadians() const {

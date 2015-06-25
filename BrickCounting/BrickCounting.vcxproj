@@ -156,6 +156,7 @@
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="ConnectionPoint.h" />
     <ClInclude Include="LDRPrinter.h" />
+    <ClInclude Include="Math.h" />
     <ClInclude Include="RectilinearBrick.h" />
     <ClInclude Include="RectilinearConfiguration.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
@@ -176,6 +177,7 @@
     <ClCompile Include="ConnectionPoint.cpp" />
     <ClCompile Include="LDRPrinter.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Math.cpp" />
     <ClCompile Include="RectilinearBrick.cpp" />
     <ClCompile Include="SingleConfigurationManager.cpp" />
     <ClCompile Include="stdafx.cpp">

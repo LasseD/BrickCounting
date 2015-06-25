@@ -103,8 +103,8 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
 }
 
 RectilinearBrick Brick::toRectilinearBrick() const {
-  int x = (int)round(this->center.X);
-  int y = (int)round(this->center.Y);
+  int x = (int)math::round(this->center.X);
+  int y = (int)math::round(this->center.Y);
   double a = angle*2/M_PI;
   if(a < 0)
     a = -a;
