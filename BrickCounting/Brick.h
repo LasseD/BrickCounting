@@ -50,13 +50,15 @@ public:
   void getBoxPOIs(Point *pois) const {
     double sina = sin(angle);
     double cosa = cos(angle);
-    // 4 corners:
+
     const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
     const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
-    pois[0] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
-    pois[1] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
-    pois[2] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
-    pois[3] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+
+    // 4 corners:
+    pois[0] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+    pois[1] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+    pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+    pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
     // 4 sides:
     pois[4] = Point(center.X+dx*cosa,  center.Y+dx*sina);
     pois[5] = Point(center.X-dx*cosa, center.Y-dx*sina);
@@ -95,14 +97,61 @@ public:
     Minkowski sum of brick and a stud.
    */
   template <int ADD_XY>
-  void intersectsMovingStud(const Point &p, double radius, Point &i1, Point &i2) const {
+  int intersectsMovingStud(const Point &p, double radius, Point &i1, Point &i2) const {
     // Intersects either on a line segment or a quarter-circle at one of the corners.
-    // First check line segments:
     int numIntersections = 0;
+
+    // First check line segments:
     LineSegment segments[4];
-    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.
-    
-    // TODO
+    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
+    for(int i = 0; i < 4; ++i) {
+      // Move line segment so that math-primitive finds correct intersections:
+      segments[i].P1.X -= p.X;
+      segments[i].P2.X -= p.X;
+      segments[i].P1.Y -= p.Y;
+      segments[i].P2.Y -= p.Y;
+
+      // Find intersections:
+      int newIntersections;
+      Point ii1, ii2;
+      if((newIntersections = math::findCircleLineIntersections(radius, segments[i], ii1, ii2)) > 0) {
+        if(numIntersections > 0)
+          i2 = ii1;
+        else {
+          i1 = ii1;
+          i2 = ii2;
+        }
+        numIntersections += newIntersections;
+        if(numIntersections > 1)
+          return 2;
+      }
+    }
+
+    // Now check quarter circles:
+    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+    getBoxPOIs<ADD_XY>(pois);
+    for(int i = 0; i < 4; ++i) {
+      // Move point so that it matches moved line segments:
+      pois[i].X -= p.X;
+      pois[i].Y -= p.Y;
+
+      // Find intersections:
+      int newIntersections;
+      Point ii1, ii2;
+      LineSegment line(segments[i].P1, segments[(i+3)%4].P2);
+      if((newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2)) > 0) {
+        if(numIntersections > 0)
+          i2 = ii1;
+        else {
+          i1 = ii1;
+          i2 = ii2;
+        }
+        numIntersections += newIntersections;
+        if(numIntersections > 1)
+          return 2;
+      }
+    }
+    return numIntersections;
   }
 
   Point getStudPosition(ConnectionPointType type) const;

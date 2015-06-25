@@ -65,6 +65,13 @@ namespace math {
     double ret = atan2(p.Y,p.X);
     return ret < 0 ? ret + 2*M_PI : ret;
   }
+
+  int findCircleCircleIntersections(double radius, const Point &p, double pr, Point &i1, Point &i2) {
+    return 0; // TODO!
+  }
+  int findCircleCircleIntersectionsLeftOfLine(double radius, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2) {
+    return 0; // TODO!
+  }
 }
 
 std::ostream& operator<<(std::ostream &os, const Point& p) {

@@ -32,6 +32,9 @@ namespace math {
   bool angleBetween(double minAngle, double a, double maxAngle);
   bool between(const Point &a, const Point &b, const Point &c);
   double angleOfPoint(const Point &p);
+
+  int findCircleCircleIntersections(double radius, const Point &p, double pr, Point &i1, Point &i2);
+  int findCircleCircleIntersectionsLeftOfLine(double radius, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2);
 }
 
 
