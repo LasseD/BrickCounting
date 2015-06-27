@@ -301,22 +301,29 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     const IConnectionPair icp(ip1,ip2);
       
     TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
-    if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
+    IntervalList l;
+    if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
+      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
       for(unsigned short i = 0; i < steps; ++i) {
-	S[smlI+i] = true;
-      }      
+	Configuration c2 = getConfiguration(c, angleI, i);
+	assert(S[smlI+i] == c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size));
+      }
       sDone = true;
     }
-    if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
+    if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
+      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
       for(unsigned short i = 0; i < steps; ++i) {
-	M[smlI+i] = true;
-      }      
+	Configuration c2 = getConfiguration(c, angleI, i);
+	assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
+      }
       mDone = true;
     }
-    if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
+    if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
+      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
       for(unsigned short i = 0; i < steps; ++i) {
-	L[smlI+i] = true;
-      }      
+	Configuration c2 = getConfiguration(c, angleI, i);
+	assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
+      }
       lDone = true;
     }
   }

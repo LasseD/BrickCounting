@@ -34,6 +34,17 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
   return os;
 }
 
+double MovingStud::angleToOriginalInterval(double a) const {
+  if(maxAngle - minAngle > M_PI) {
+    double diff = minAngle + 2*M_PI-maxAngle;
+    if(a > minAngle)
+      a-=2*M_PI;  
+    return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (minAngle-a)/diff);
+  }
+  else {
+    return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
+  }
+}
 
 /*
   A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.
@@ -54,7 +65,6 @@ bool MovingStud::tractIntersectsLineSegment(const LineSegment &l) const {
 
 /*
   The moving stud intersects a stud, if it intersects the tract or one of the end circles.
-  TODO LATER: Connect if the distance to the center of the stud is less than click radius. 
  */
 bool MovingStud::intersectsStud(const Point &stud) const {  
   return 
@@ -68,7 +78,7 @@ std::ostream& operator<<(std::ostream &os, const MovingStud& f) {
   return os;
 }
 
-Point TurningSingleBrick::createBricks(const Configuration &configuration, const IConnectionPair &connectionPair) {
+Point TurningSingleBrick::createBricksReturnTranslation(const Configuration &configuration, const IConnectionPair &connectionPair) {
   int prevBrickI = connectionPair.P1.first.configurationSCCI;
   const Brick &prevOrigBrick = configuration.origBricks[prevBrickI];
   const ConnectionPoint &prevPoint = connectionPair.P1.second;

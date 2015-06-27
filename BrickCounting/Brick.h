@@ -92,66 +92,126 @@ public:
     segments[3].P2 = Point(center.X+(-dx*cosa-DY*sina), center.Y+(-dx*sina+DY*cosa));
   }
 
+  template <int ADD_XY>
+  void /*Brick::*/getStudIntersectionsWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<double> &angles) const {
+    Point studs[NUMBER_OF_STUDS];
+    getStudPositions(studs);
+
+    // Handle four outer specially as they might cause connection:
+    for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
+      Point &stud = studs[i];
+      double studDist = math::norm(stud);
+      if(studDist < radius - SNAP_DISTANCE || studDist > radius + SNAP_DISTANCE)
+	continue;
+      double studAngle = math::angleOfPoint(stud);
+      if(!math::angleBetween(minAngle, studAngle, maxAngle))
+	continue;
+      angles.push_back(studAngle);
+    }
+  }
+
   /*
-    Investigates the equivalent problem where a circle (center p, radius) intersects the 
-    Minkowski sum of brick and a stud.
+    Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
+    Intersects block on either a line segment or a quarter-circle at one of the corners.
    */
   template <int ADD_XY>
-  int intersectsMovingStud(const Point &p, double radius, Point &i1, Point &i2) const {
-    // Intersects either on a line segment or a quarter-circle at one of the corners.
-    int numIntersections = 0;
-
+  bool blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &i1, double &i2) const {
+    bool intersectsAlready = false;
     // First check line segments:
     LineSegment segments[4];
     getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
     for(int i = 0; i < 4; ++i) {
-      // Move line segment so that math-primitive finds correct intersections:
-      segments[i].P1.X -= p.X;
-      segments[i].P2.X -= p.X;
-      segments[i].P1.Y -= p.Y;
-      segments[i].P2.Y -= p.Y;
-
       // Find intersections:
-      int newIntersections;
       Point ii1, ii2;
-      if((newIntersections = math::findCircleLineIntersections(radius, segments[i], ii1, ii2)) > 0) {
-        if(numIntersections > 0)
-          i2 = ii1;
-        else {
-          i1 = ii1;
-          i2 = ii2;
-        }
-        numIntersections += newIntersections;
-        if(numIntersections > 1)
-          return 2;
+      int newIntersections = math::findCircleLineIntersections(radius, segments[i], ii1, ii2);      
+      double ai1 = newIntersections > 0 ? math::angleOfPoint(ii1) : 0;
+      double ai2 = newIntersections == 2 ? math::angleOfPoint(ii2) : 0;
+      
+      if(newIntersections == 2 && !math::angleBetween(minAngle, ai2, maxAngle))
+	--newIntersections;
+      if(newIntersections > 0 && !math::angleBetween(minAngle, ai1, maxAngle)) {
+	ii1 = ii2;
+	ai1 = ai2;
+	--newIntersections;
       }
+      if(newIntersections == 0)
+	continue;
+
+      if(intersectsAlready) {
+	assert(newIntersections == 1);
+	i2 = ai2;
+	return true;
+      }
+      if(newIntersections == 2) {
+	i1 = ai1;
+	i2 = ai2;
+	return true;
+      }
+      intersectsAlready = true;
+      i1 = ai1;
     }
 
     // Now check quarter circles:
     Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
     getBoxPOIs<ADD_XY>(pois);
     for(int i = 0; i < 4; ++i) {
-      // Move point so that it matches moved line segments:
-      pois[i].X -= p.X;
-      pois[i].Y -= p.Y;
-
       // Find intersections:
-      int newIntersections;
       Point ii1, ii2;
       LineSegment line(segments[i].P1, segments[(i+3)%4].P2);
-      if((newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2)) > 0) {
-        if(numIntersections > 0)
-          i2 = ii1;
-        else {
-          i1 = ii1;
-          i2 = ii2;
-        }
-        numIntersections += newIntersections;
-        if(numIntersections > 1)
-          return 2;
+      int newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2);
+      double ai1 = newIntersections > 0 ? math::angleOfPoint(ii1) : 0;
+      double ai2 = newIntersections == 2 ? math::angleOfPoint(ii2) : 0;
+      
+      if(newIntersections == 2 && !math::angleBetween(minAngle, ai2, maxAngle))
+	--newIntersections;
+      if(newIntersections > 0 && !math::angleBetween(minAngle, ai1, maxAngle)) {
+	ii1 = ii2;
+	ai1 = ai2;
+	--newIntersections;
+      }
+      if(newIntersections == 0)
+	continue;
+
+      if(intersectsAlready) {
+	assert(newIntersections == 1);
+	i2 = ai2;
+	return true;
+      }
+      if(newIntersections == 2) {
+	i1 = ai1;
+	i2 = ai2;
+	return true;
+      }
+      intersectsAlready = true;
+      i1 = ai1;
+    }
+
+    // Only one intersection: Find out which end of moving stud path is inside of brick:
+    Point pMin(cos(minAngle)*radius, sin(minAngle)*radius);
+    bool pMinInside = false;
+    for(int i = 0; i < 4; ++i) {
+      if(math::distSq(pMin, pois[i]) < STUD_RADIUS*STUD_RADIUS) {
+	pMinInside = true;
+	break;
       }
     }
-    return numIntersections;
+    if(!pMinInside) {
+      pMinInside = true;
+      for(int i = 0; i < 4; ++i) {
+	if(!math::rightTurn(segments[i].P1, segments[i].P2, pMin)) {
+	  pMinInside = false;
+	  break;
+	}
+      }
+    }
+    
+    if(pMinInside) {
+      i2 = minAngle;
+    }
+    else {
+      i2 = maxAngle;
+    }    
+    return true;
   }
 
   Point getStudPosition(ConnectionPointType type) const;
