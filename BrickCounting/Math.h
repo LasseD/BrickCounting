@@ -50,7 +50,7 @@ namespace math {
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
   int findCircleCircleIntersections(double r, const Point &p, double pr, Point &i1, Point &i2);
-  int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2);
+  int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2, bool &raise);
 }
 
 

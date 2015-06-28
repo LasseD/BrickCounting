@@ -161,7 +161,12 @@ public:
       // Find intersections:
       Point ii1, ii2;
       LineSegment line(segments[i].P1, segments[(i+3)%4].P2);
-      int newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2);
+      bool raise = false;
+      int newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2, raise);
+      if(raise) {
+	std::cout << "FAIL: radius=" << radius << ", minAngle=" << minAngle << ", maxAngle=" << maxAngle << ", this=" << *this << std::endl;
+	assert(false);
+      }
       double ai1 = newIntersections > 0 ? math::angleOfPoint(ii1) : 0;
       double ai2 = newIntersections == 2 ? math::angleOfPoint(ii2) : 0;
       

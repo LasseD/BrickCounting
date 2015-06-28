@@ -80,12 +80,12 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
 
     // Report status if combination starts with a single brick SCC:
-    if(combination[0].size == 1) {
-      std::cout << "Single brick string run";
+    //if(combination[0].size == 1) {
+    //std::cout << "Single brick string run";
       for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
 	std::cout << " " << *it;
       std::cout << std::endl;
-    }
+      //}
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);

@@ -344,25 +344,44 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     IntervalList l;
     if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
-      std::cout << "Investigating S-mapping" << std::endl;
+      std::cout << "Investigating S-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
-	assert(S[smlI+i] == c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size));
+	if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
+	  std::cerr << "Assertion error on S[" << i << "]=" << S[smlI+i] << " vs allowableAnglesForBricks. Configuration: " << c2 << std::endl;	 
+	  LDRPrinterHandler h;
+	  h.add(&c2);
+	  h.print("assertion_fail");
+
+	  for(unsigned short j = 0; j < steps; ++j) {
+	    std::cout << (S[smlI+i] ? "X" : "O");
+	  }
+	  std::cout << std::endl;
+	  for(unsigned short j = 0; j < steps; ++j) {
+	    Configuration c3 = getConfiguration(c, angleI, j);
+	    std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "O");
+	  }
+	  std::cout << std::endl;
+	  assert(false);
+	}
+	//assert(S[smlI+i] == c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size));
       }//*/
       sDone = true;
     }
+    l.clear();
     if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
-      std::cout << "Investigating M-mapping" << std::endl;
+      std::cout << "Investigating M-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
 	assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
       }//*/
       mDone = true;
     }
+    l.clear();
     if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
-      std::cout << "Investigating L-mapping" << std::endl;
+      std::cout << "Investigating L-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
 	assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));

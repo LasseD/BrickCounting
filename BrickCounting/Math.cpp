@@ -98,13 +98,18 @@ namespace math {
     return 2;
   }
   
-  int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2) {
+  int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2, bool &raise) {
     int ret = findCircleCircleIntersections(r, p, pr, i1, i2);
     if(ret == 0)
       return ret;
-    assert(!rightTurn(l.P1, l.P2, p));
-    bool i1OK = rightTurn(l.P1, l.P2, i1);
-    bool i2OK = rightTurn(l.P1, l.P2, i2);
+    if(!rightTurn(l.P1, l.P2, p)) {
+      std::cout << "!rightturn(" << l.P1 <<","<< l.P2 <<","<< p << ")" << std::endl;
+      raise = true;
+      return 0;
+    }
+    //assert(!rightTurn(l.P1, l.P2, p));
+    bool i1OK = !rightTurn(l.P1, l.P2, i1);
+    bool i2OK = !rightTurn(l.P1, l.P2, i2);
     if(i1OK && i2OK)
       return 2;
     if(!i1OK && !i2OK)
