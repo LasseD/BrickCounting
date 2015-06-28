@@ -281,9 +281,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   assert(angleI == numAngles-1);
 
   // Speed up for noSML:
-  if(noS) for(unsigned int i = 0; i < numAngles; ++i) S[smlI+i] = false;
-  if(noM) for(unsigned int i = 0; i < numAngles; ++i) M[smlI+i] = false;
-  if(noL) for(unsigned int i = 0; i < numAngles; ++i) L[smlI+i] = false;
+  if(noS) for(unsigned int i = 0; i < steps; ++i) S[smlI+i] = false;
+  if(noM) for(unsigned int i = 0; i < steps; ++i) M[smlI+i] = false;
+  if(noL) for(unsigned int i = 0; i < steps; ++i) L[smlI+i] = false;
   bool sDone = noS;
   bool mDone = noM;
   bool lDone = noL;
@@ -292,6 +292,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
 
   // Speed up using TSB:
   if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
+    assert(steps == 407);
 #ifdef _TRACE
     std::cout << "Using TSB to check quickly." << std::endl;
     std::cout << "Angle types:" << std::endl;
@@ -301,34 +302,82 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     const IConnectionPair icp(ip1,ip2);
       
     TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
+
+    // First check quick clear:
+    if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
+      for(unsigned int i = 0; i < steps; ++i) 
+	S[smlI+i] = true;
+      for(unsigned short i = 0; i < steps; ++i) {
+	Configuration c2 = getConfiguration(c, angleI, i);
+	if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
+	  std::cerr << "Assertion error on S[" << i << "]=" << S[smlI+i] << " configuration: " << c2 << std::endl;	 
+	  LDRPrinterHandler h;
+	  h.add(&c2);
+	  h.print("assertion_fail");
+	  assert(false);
+	}
+      }//*/
+      sDone = true;
+    }
+    if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
+      for(unsigned int i = 0; i < steps; ++i) 
+	M[smlI+i] = true;
+      for(unsigned short i = 0; i < steps; ++i) {
+	Configuration c2 = getConfiguration(c, angleI, i);
+	assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
+      }//*/
+      mDone = true;
+    }
+    if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
+      for(unsigned int i = 0; i < steps; ++i) 
+	L[smlI+i] = true;
+      for(unsigned short i = 0; i < steps; ++i) {
+	Configuration c2 = getConfiguration(c, angleI, i);
+	assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
+      }//*/
+      lDone = true;
+    }
+    if(sDone && mDone && lDone)
+      return;
+
+    // Check using TSB:
     IntervalList l;
     if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
+      std::cout << "Investigating S-mapping" << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
 	assert(S[smlI+i] == c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size));
-      }
+      }//*/
       sDone = true;
     }
     if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
+      std::cout << "Investigating M-mapping" << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
 	assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
-      }
+      }//*/
       mDone = true;
     }
     if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
+      std::cout << "Investigating L-mapping" << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
 	Configuration c2 = getConfiguration(c, angleI, i);
 	assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
-      }
+      }//*/
       lDone = true;
     }
+    if(sDone && mDone && lDone)
+      return;
   }
-  if(sDone && mDone && lDone)
-    return;
+  
+  /* // Uncomment for quicker processing time.
+  for(unsigned int i = 0; i < steps; ++i) S[smlI+i] = false;
+  for(unsigned int i = 0; i < steps; ++i) M[smlI+i] = false;
+  for(unsigned int i = 0; i < steps; ++i) L[smlI+i] = false;
+  return;//*/
 
   for(unsigned short i = 0; i < steps; ++i) {
     Configuration c2 = getConfiguration(c, angleI, i);

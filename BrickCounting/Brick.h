@@ -26,16 +26,19 @@
 A Brick at any location and angle.
 Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
  */
+class Brick; // Forward declaration so that << can be used in template methods.
+std::ostream& operator<<(std::ostream &os, const Brick& b);
+
 class Brick : public LDRPrinter {
 public:
   Point center;
-  double angle; // angle 0 = horizontal.
+  double angle; // angle 0 = vertical.
   int8_t level;
 
   Brick(const Brick& b) : center(b.center), angle(b.angle), level(b.level) {}
   Brick(const RectilinearBrick& b) : center(b.x, b.y), angle(b.horizontal() ? -M_PI/2 : 0), level(b.level()) {}
   Brick(const Brick& b, const RectilinearBrick& rb);
-  Brick() {}
+  Brick() : center(0,0), angle(0), level(0) {}
   Brick(double cx, double cy, double a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
   Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv);
 
@@ -60,13 +63,13 @@ public:
     pois[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
     pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
     // 4 sides:
-    pois[4] = Point(center.X+dx*cosa,  center.Y+dx*sina);
+    pois[4] = Point(center.X+dx*cosa, center.Y+dx*sina);
     pois[5] = Point(center.X-dx*cosa, center.Y-dx*sina);
-    pois[6] = Point(center.X+dy*sina,  center.Y+dy*cosa);
-    pois[7] = Point(center.X-dy*sina, center.Y-dy*cosa);
+    pois[6] = Point(center.X+dy*sina, center.Y-dy*cosa);
+    pois[7] = Point(center.X-dy*sina, center.Y+dy*cosa);
     // 2 inner:
-    pois[8] = Point(center.X+0.75*sina, center.Y+0.75*cosa);
-    pois[9] = Point(center.X-0.75*sina, center.Y-0.75*cosa);
+    pois[8] = Point(center.X+0.75*sina, center.Y-0.75*cosa);
+    pois[9] = Point(center.X-0.75*sina, center.Y+0.75*cosa);
   }
 
   template <int ADD_XY, int STUD_ADD>
@@ -233,7 +236,7 @@ public:
       if(poi.Y < 0)
         poi.Y = -poi.Y;
       if(poi.X + EPSILON < dx && poi.Y + EPSILON < dy) {
-        return true;      
+        return true;
       }
     }
     return false;
@@ -373,7 +376,5 @@ public:
 
   bool operator < (const Brick &b) const;
 };
-
-std::ostream& operator<<(std::ostream &os, const Brick& b);
 
 #endif // BRICK_H

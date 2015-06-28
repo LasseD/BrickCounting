@@ -91,11 +91,11 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
-  /*
+  
   // 7 POIs:
-  Point studs[6];
-  getBoxPOIs(studs);
-  for(int i = 0; i < 6; ++i) {
+  Point studs[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+  getBoxPOIs<0>(studs);
+  for(int i = 0; i < NUMBER_OF_POIS_FOR_BOX_INTERSECTION; ++i) {
   Point p = studs[i];
   os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
