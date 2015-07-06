@@ -351,7 +351,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 #endif
   std::vector<Connection> cs;
   for(std::set<IConnectionPair>::const_iterator it = list1.begin(); it != list1.end(); ++it)
-    cs.push_back(Connection(*it, Angle()));
+    cs.push_back(Connection(*it, StepAngle()));
   Configuration c1(fatSccs, cs);
 #ifdef _TRACE
   std::cout << "Configuration to check on: " << c1 << std::endl;
@@ -377,7 +377,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 
   cs.clear();
   for(std::set<IConnectionPair>::const_iterator it = list2.begin(); it != list2.end(); ++it)
-    cs.push_back(Connection(*it, Angle()));
+    cs.push_back(Connection(*it, StepAngle()));
   Configuration c2(fatSccs, cs);
 #ifdef _TRACE
   std::cout << " c2: " << c2 << std::endl;

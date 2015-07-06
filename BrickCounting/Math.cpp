@@ -33,6 +33,13 @@ namespace math {
   double dist(const Point &p1, const Point &p2) {
     return sqrt(distSq(p1,p2));
   }
+  double normalizeAngle(double a) {
+    while(a < -M_PI)
+        a += 2*M_PI;
+    while(a >= M_PI)
+        a -= 2*M_PI;
+    return a;
+  }
 
   // From http://mathworld.wolfram.com/Circle-LineIntersection.html
   int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2) {
@@ -59,19 +66,14 @@ namespace math {
     return (a <= b && b <= c) || (a >= b && b >= c);
   }
   bool angleBetween(double minAngle, double a, double maxAngle) {
-    if(maxAngle - minAngle > M_PI) {
-      return (0 <= a && a <= minAngle) || (maxAngle <= a && a <= 2*M_PI);
-    }
-    else {
-      return minAngle <= a && a <= maxAngle;
-    }
+    assert(minAngle <= maxAngle);
+    return minAngle <= a && a <= maxAngle;
   }
   bool between(const Point &a, const Point &b, const Point &c) {
     return between(a.X, b.X, c.X) && between(a.Y, b.Y, c.Y);
   }
   double angleOfPoint(const Point &p) {
-    double ret = atan2(p.Y,p.X);
-    return ret < 0 ? ret + 2*M_PI : ret;
+    return atan2(p.Y,p.X);
   }
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p) {
@@ -97,7 +99,7 @@ namespace math {
 
     return 2;
   }
-  
+
   int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2, bool &raise) {
     int ret = findCircleCircleIntersections(r, p, pr, i1, i2);
     if(ret == 0)
@@ -127,23 +129,23 @@ namespace math {
     while(itA != a.end() && itB != b.end()) {
       // B ends before A:
       if(itB->second < itA->first) {
-	++itB;
-	continue;
+        ++itB;
+        continue;
       }
       // A ends before B:
       if(itA->second < itB->first) {
-	++itA;
-	continue;
+        ++itA;
+        continue;
       }
       // Both A and B end after they both have started:
       const double min = MAX(itA->first, itB->first);
       if(itA->second < itB->second) {
-	ret.push_back(Interval(min,itA->second));      
-	++itA;
+        ret.push_back(Interval(min,itA->second));      
+        ++itA;
       }
       else {
-	ret.push_back(Interval(min,itB->second));      
-	++itB;
+        ret.push_back(Interval(min,itB->second));      
+        ++itB;
       }
     }
     return ret;    
@@ -156,34 +158,34 @@ namespace math {
     while(itA != a.end() && itB != b.end()) {
       // B ends before A:
       if(itB->second < itA->first) {
-	ret.push_back(*itB);
-	++itB;
-	continue;
+        ret.push_back(*itB);
+        ++itB;
+        continue;
       }
       // A ends before B:
       if(itA->second < itB->first) {
-	ret.push_back(*itA);
-	++itA;
-	continue;
+        ret.push_back(*itA);
+        ++itA;
+        continue;
       }
       const double min = MIN(itA->first, itB->first);
       double max;
       while(true) {
-	max = MAX(itA->second, itB->second);
-	if(itA->second < max) {
-	  ++itA;
-	  if(itA == a.end() || itA->first > max) {
-	    ++itB;
-	    break;
-	  }
-	}
-	else {
-	  ++itB;
-	  if(itB == b.end() || itB->first > max) {
-	    ++itA;
-	    break;
-	  }
-	}
+        max = MAX(itA->second, itB->second);
+        if(itA->second < max) {
+          ++itA;
+          if(itA == a.end() || itA->first > max) {
+            ++itB;
+            break;
+          }
+        }
+        else {
+          ++itB;
+          if(itB == b.end() || itB->first > max) {
+            ++itA;
+            break;
+          }
+        }
       }
       ret.push_back(Interval(min,max));      
     }
@@ -199,17 +201,6 @@ namespace math {
     return ret;
   }
 
-  IntervalList fullInterval(double min, double max) {
-    IntervalList ret;
-    if(max - min > M_PI) {
-      ret.push_back(Interval(0, min));
-      ret.push_back(Interval(max, 2*M_PI));    
-    }
-    else
-      ret.push_back(Interval(min,max));
-    return ret;
-  }
-
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray) {
     const double min = fullInterval.first;
     const double max = fullInterval.second;
@@ -217,14 +208,14 @@ namespace math {
     for(unsigned int i = 0; i < sizeArray; ++i) {
       double v = min + ((max-min)*i)/(sizeArray-1);
       if(it == l.end() || v < it->first) {
-	array[i] = false;
+        array[i] = false;
       }
       else if(v > it->second) {
-	array[i] = false;
-	++it;
+        array[i] = false;
+        ++it;
       }
       else
-	array[i] = true;
+        array[i] = true;
     }
   }
 }
@@ -240,9 +231,11 @@ std::ostream& operator<<(std::ostream &os, const LineSegment& l) {
 }
 
 std::ostream& operator<<(std::ostream &os, const IntervalList& l) {
+  os << "{";
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     os << "[" << *it << "]";
   }
+  os << "}";
   return os;
 }
 

@@ -20,6 +20,7 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
 
   if(rb.horizontal())
     angle -= M_PI/2;
+  angle = math::normalizeAngle(angle);
 }
 
 /*
@@ -49,6 +50,7 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   center.Y += origin.Y;
   if(b.horizontal())
     angle -= M_PI/2;
+  angle = math::normalizeAngle(angle);
 }
 
 void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {

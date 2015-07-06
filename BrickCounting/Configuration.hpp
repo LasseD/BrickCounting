@@ -26,72 +26,68 @@ inline std::ostream& operator<<(std::ostream &os, const IConnectionPair& c) {
   return os;
 }
 
-struct Angle {
+struct StepAngle {
   short n; // nominator
   unsigned short d; // denominator
 
-  Angle() {}
-  Angle(short n, unsigned short d) : n(n), d(d) {
+  StepAngle() {}
+  StepAngle(short n, unsigned short d) : n(n), d(d) {
     assert(d != 0);
     assert(-d <= n);
     assert(n <= d);
   }
-  Angle(const Angle &a) : n(a.n), d(a.d) {
+  StepAngle(const StepAngle &a) : n(a.n), d(a.d) {
     assert(d != 0);  
     assert(-d <= n);
     assert(n <= d);
   }
-  Angle(ConnectionPoint p1, Brick b1, ConnectionPoint p2, Brick b2, unsigned short d) : d(d) {
+  StepAngle(ConnectionPoint p1, Brick b1, ConnectionPoint p2, Brick b2, unsigned short d) : d(d) {
     if(!p1.above) {
       std::swap(p1,p2); // ensure px.above=true is first.
       std::swap(b1,b2);
     }
 
     // Compute the angle difference while taking the conection points into account:
-    double angleDiff = -b1.angle + M_PI/2*(p2.type-p1.type-2) + b2.angle;
+    double angleDiff = math::normalizeAngle(-b1.angle + M_PI/2*(p2.type-p1.type-2) + b2.angle);
 
     // Transform to n:
-    while(angleDiff < -M_PI)
-      angleDiff += 2*M_PI;
-    while(angleDiff > M_PI)
-      angleDiff -= 2*M_PI;
     assert(angleDiff >= -MAX_ANGLE_RADIANS);
     assert(angleDiff <= MAX_ANGLE_RADIANS);
-    n = (short)math::round(angleDiff/MAX_ANGLE_RADIANS*d);
+    n = (short)math::round((angleDiff/MAX_ANGLE_RADIANS)*d);
   }
 
   double toRadians() const {
     return n * MAX_ANGLE_RADIANS / d;
   }
 
-  bool operator<(const Angle &c) const {
+  bool operator<(const StepAngle &c) const {
     if(d != c.d)
       return d < c.d;
     return n < c.n;
   }
-  bool operator!=(const Angle &c) const {
+  bool operator!=(const StepAngle &c) const {
     return n != c.n || d != c.d;
   }
-  bool operator==(const Angle &c) const {
+  bool operator==(const StepAngle &c) const {
     return n == c.n && d == c.d;
   }
 };
-inline std::ostream& operator<<(std::ostream &os, const Angle& c) {
+inline std::ostream& operator<<(std::ostream &os, const StepAngle& c) {
   os << c.n << "/" << c.d;
   return os;
 }
 
 struct Connection {
-  Angle angle;
+  StepAngle angle;
   IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
   Connection(){}
-  Connection(const IConnectionPair &c, const Angle &angle) : angle(angle), p1(c.first), p2(c.second) {
+  Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
       std::swap(p1, p2); // ensures connections are always
     }
   }
   Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
-  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const Angle &angle) : angle(angle), p1(p1), p2(p2) {
+  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
       std::swap(this->p1, this->p2); // ensures connections are always with p1->above = true.
     }  
@@ -177,10 +173,10 @@ struct IBrick {
 };
 
 struct Configuration : public LDRPrinter {
-//private:
+  //private:
   Brick origBricks[6];
 
-//public:
+  //public:
   int bricksSize;
   IBrick bricks[6];
 
@@ -228,7 +224,7 @@ struct Configuration : public LDRPrinter {
         bool connected;
         ConnectionPoint pi, pj;
         if(ib.b.intersects<ADD_XY>(jb.b, jb.rb, connected, pj, pi, ib.rb) && !connected) {
-	  //std::cout << "Intersect: " << ib.b << " & " << jb.b << std::endl;
+          //std::cout << "Intersect: " << ib.b << " & " << jb.b << std::endl;
           return false;
         }
       }
@@ -246,11 +242,11 @@ struct Configuration : public LDRPrinter {
       const int8_t levelI = b.level;
       RectilinearBrick sccBrick;
       for(int j = 0; j < scc.size; sccBrick = scc.otherBricks[j], ++j) {
-	const uint8_t levelJ = sccBrick.level();
-	if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
-	  ret.push_back(i);
-	  break;
-	}
+        const uint8_t levelJ = sccBrick.level();
+        if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
+          ret.push_back(i);
+          break;
+        }
       }
     }
     return ret;

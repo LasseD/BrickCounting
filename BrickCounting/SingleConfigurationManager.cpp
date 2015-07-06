@@ -80,12 +80,12 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
 
     // Report status if combination starts with a single brick SCC:
-    //if(combination[0].size == 1) {
-    //std::cout << "Single brick string run";
+    if(combination[0].size == 1) {
+      std::cout << "Single brick string run";
       for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
-	std::cout << " " << *it;
+        std::cout << " " << *it;
       std::cout << std::endl;
-      //}
+    }
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
@@ -165,7 +165,7 @@ void SingleConfigurationManager::run() {
   std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " models found: " << models << std::endl;
 #endif
-//#ifdef _INFO
+  //#ifdef _INFO
   if(seconds <= 1)
     return;
   std::cout << " Single configuration (sizes";
@@ -175,7 +175,7 @@ void SingleConfigurationManager::run() {
   for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << " " << combination[i].index;
   std::cout << ") handled in " << seconds << " seconds." << std::endl;
-//#endif
+  //#endif
 }
 
 void SingleConfigurationManager::printLDRFile(bool selectNrc) const {

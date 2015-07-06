@@ -1,8 +1,8 @@
 #include "TurningSingleBrick.h"
 
 /*
- A fan intersects a line segment if the segment intersects the circle between minAngle and maxAngle
- */
+A fan intersects a line segment if the segment intersects the circle between minAngle and maxAngle
+*/
 bool Fan::intersectsLineSegment(const LineSegment &l) const {
   Point i1, i2;
   int intersections = math::findCircleLineIntersections(radius-EPSILON, l, i1, i2);
@@ -21,9 +21,9 @@ bool Fan::intersectsLineSegment(const LineSegment &l) const {
 }
 
 /*
-  A fan intersects a stud if the distance to the center of the stud is less than radius + stud radius
-  AND if the center of the stud lies between minAngle and maxAngle
- */
+A fan intersects a stud if the distance to the center of the stud is less than radius + stud radius
+AND if the center of the stud lies between minAngle and maxAngle
+*/
 bool Fan::intersectsStud(const Point &stud) const {
   return math::normSq(stud) < (radius + STUD_RADIUS)*(radius + STUD_RADIUS) && 
     math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
@@ -47,25 +47,25 @@ double MovingStud::angleToOriginalInterval(double a) const {
 }
 
 /*
-  A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.
- */
+A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.
+*/
 bool MovingStud::tractIntersectsLineSegment(const LineSegment &l) const {
   const double normP1 = math::norm(l.P1);
   const double normP2 = math::norm(l.P2);
   const double innerWallRadius = radius - STUD_RADIUS;
   const double outerWallRadius = radius + STUD_RADIUS;
   bool betweenWalls = (innerWallRadius <= normP1 && normP1 <= outerWallRadius) &&
-                      (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
+    (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
   bool inside = betweenWalls && (math::angleBetween(minAngle, math::angleOfPoint(l.P1), maxAngle) || 
-				 math::angleBetween(minAngle, math::angleOfPoint(l.P2), maxAngle));
+    math::angleBetween(minAngle, math::angleOfPoint(l.P2), maxAngle));
   return inside || 
     Fan(innerWallRadius, minAngle, maxAngle).intersectsLineSegment(l) ||
     Fan(outerWallRadius, minAngle, maxAngle).intersectsLineSegment(l);
 }
 
 /*
-  The moving stud intersects a stud, if it intersects the tract or one of the end circles.
- */
+The moving stud intersects a stud, if it intersects the tract or one of the end circles.
+*/
 bool MovingStud::intersectsStud(const Point &stud) const {  
   return 
     math::normSq(stud) > (radius - STUD_DIAM)*(radius - STUD_DIAM) && 
@@ -88,7 +88,7 @@ Point TurningSingleBrick::createBricksReturnTranslation(const Configuration &con
 
   double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
   int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
-  
+
   RectilinearBrick rb;
   blocks[0] = Brick(rb, currPoint, Point(0,0), angle-MAX_ANGLE_RADIANS, level);
   blocks[1] = Brick(rb, currPoint, Point(0,0), angle+MAX_ANGLE_RADIANS, level);    

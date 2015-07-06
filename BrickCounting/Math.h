@@ -41,10 +41,13 @@ namespace math {
   bool angleBetween(double minAngle, double a, double maxAngle);
   bool between(const Point &a, const Point &b, const Point &c);
   double angleOfPoint(const Point &p);
+  /*
+    Normalize an angle to the interval [-PI;PI[ in radians.
+   */
+  double normalizeAngle(double a);
 
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
-  IntervalList fullInterval(double min, double max);
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
