@@ -47,13 +47,21 @@ namespace math {
   double normalizeAngle(double a);
 
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
+  IntervalList intervalAnd(double a1, double a2, double b1, double b2);
+  IntervalList intervalInverse(const IntervalList &l, const Interval fullInterval);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
+  IntervalList collapseIntervals(const IntervalList &l);
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
-  int findCircleCircleIntersections(double r, const Point &p, double pr, Point &i1, Point &i2);
-  int findCircleCircleIntersectionsLeftOfLine(double r, const Point &p, double pr, const LineSegment &l, Point &i1, Point &i2, bool &raise);
+  int findCircleCircleIntersections(double r, const Point &p, double pr, Point &i1, Point &i2); // Actual primitive
+  IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
+
+  /*
+    The half plane is divided by the line 
+   */
+  bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax);
 }
 
 

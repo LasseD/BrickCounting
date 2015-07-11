@@ -15,30 +15,30 @@ Plan:
 */
 
 /*
-Fan: A "pizza slice" of a circle.
+Fan: A "pizza slice" of a circle. Centered at 0,0.
 Angles: There is always a continuous interval between min and max, and min < max.
 Angle: 0 is horizontal ->
 */
 struct Fan {
   double radius, minAngle, maxAngle;
 
-  Fan() : radius(0), minAngle(0), maxAngle(0) {}
-  Fan(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
-  Fan(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
-    assert(minAngle < maxAngle);
+  /*Fan::*/Fan() : radius(0), minAngle(0), maxAngle(0) {}
+  /*Fan::*/Fan(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
+  /*Fan::*/Fan(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
     assert(minAngle >= -M_PI);
     assert(minAngle < M_PI);
     assert(maxAngle >= -M_PI);
     assert(maxAngle < M_PI);
-    //if(minAngle > maxAngle)
-    //  std::swap(minAngle,maxAngle);
   }
+
+  bool /*Fan::*/intersectsLineSegment(const LineSegment &l) const;    
+  bool /*Fan::*/intersectsStud(const Point &stud) const;
 
   /*
   A fan intersects a block if one of the sides (line segments) of the block intersects the curve.
   */
   template <int ADD_XY>
-  bool intersectsBlock(const Brick &block) const  {
+  bool /*Fan::*/intersectsBlock(const Brick &block) const  {
     LineSegment segments[4];
     block.getBoxLineSegments<ADD_XY,0>(segments);
     for(int i = 0; i < 4; ++i) {
@@ -48,9 +48,6 @@ struct Fan {
     }
     return false;
   }
-
-  bool intersectsStud(const Point &stud) const;
-  bool intersectsLineSegment(const LineSegment &l) const;    
 };
 
 std::ostream& operator<<(std::ostream &os, const Fan& f);
@@ -61,22 +58,23 @@ The shape of a moving stud consists of a tract and two circles at the ends (end 
 struct MovingStud {
   double radius, minAngle, maxAngle;
 
-  MovingStud() : radius(0), minAngle(0), maxAngle(0) {}
-  MovingStud(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
-  MovingStud(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
-    while(minAngle < 0)
-      minAngle += M_PI*2;
-    while(maxAngle < 0)
-      maxAngle += M_PI*2;
-    if(minAngle > maxAngle)
-      std::swap(minAngle,maxAngle);
+  /*MovingStud::*/MovingStud() : radius(0), minAngle(0), maxAngle(0) {}
+  /*MovingStud::*/MovingStud(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
+  /*MovingStud::*/MovingStud(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
+    assert(minAngle >= -M_PI);
+    assert(minAngle < M_PI);
+    assert(maxAngle >= -M_PI);
+    assert(maxAngle < M_PI);
   }
 
 private:
-  bool tractIntersectsLineSegment(const LineSegment &l) const;    
-  bool pathOfTractIntersectsLineSegment(const LineSegment &l, Point i1) const;    
+  bool /*MovingStud::*/tractIntersectsLineSegment(const LineSegment &l) const;
+  Point /*MovingStud::*/minPoint() const;
+  Point /*MovingStud::*/maxPoint() const;
 public:
-  double angleToOriginalInterval(double a) const;
+  double /*MovingStud::*/angleToOriginalInterval(double a) const;
+  IntervalList /*MovingStud::*/intervalsToOriginalInterval(const IntervalList &l) const;
+  bool /*MovingStud::*/intersectsStud(const Point &stud) const;
 
   /*
   The moving stud intersects a block if it intersects one of the sides (line segments), or if an end circle intersects the brick.
@@ -91,32 +89,31 @@ public:
         return true;
     }
     // Check end circles:
-    Point endPoint1(cos(minAngle)*radius, sin(minAngle)*radius);
+    Point endPoint1 = minPoint();
     block.movePointSoThisIsAxisAlignedAtOrigin(endPoint1);
-    Point endPoint2(cos(maxAngle)*radius, sin(maxAngle)*radius);
+    if(block.boxIntersectsInnerStud<ADD_XY>(endPoint1))
+      return true;
+    Point endPoint2 = maxPoint();
     block.movePointSoThisIsAxisAlignedAtOrigin(endPoint2);
-    return block.boxIntersectsInnerStud<ADD_XY>(endPoint1) || block.boxIntersectsInnerStud<ADD_XY>(endPoint2);
+    return block.boxIntersectsInnerStud<ADD_XY>(endPoint2);
   }
 
   template <int ADD_XY>
-  IntervalList /*MovingStud::*/allowableAnglesForBlock(const Brick &block) const {
-    IntervalList ret;
-    double ai1, ai2;
-    bool intersects = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle, ai1, ai2);
-    std::cout << "  Brick intersects MS " << radius << ", " << minAngle << ", " << maxAngle << ": " << ai1 << ", " << ai2 << std::endl;
-
-    if(!intersects) {
-      ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
-      return ret; // No restrictions.
-    }
+  IntervalList /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick) const {
+    // Compute intersections without interval information:
+    IntervalList intersectionsWithMovingStud = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
+    std::cout << "  Brick intersects MS " << radius << ", " << minAngle << ", " << maxAngle << ": " << intersectionsWithMovingStud << std::endl;
 
     // Find intersect between min/max and intersection points:
-    double toOriginalA1 = angleToOriginalInterval(ai1);
-    double toOriginalA2 = angleToOriginalInterval(ai1);
-    if(toOriginalA1 < toOriginalA2)
-      ret.push_back(Interval(toOriginalA1, toOriginalA2));
-    else 
-      ret.push_back(Interval(toOriginalA2, toOriginalA1));
+    // Inverse intersectionsWithMovingStud:
+    intersectionsWithMovingStud = math::intervalInverse(intersectionsWithMovingStud, Interval(-M_PI, M_PI));
+    std::cout << "   Inversed: " << intersectionsWithMovingStud << std::endl;
+    // Transform intersectionsWithMovingStud to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
+    intersectionsWithMovingStud = intervalsToOriginalInterval(intersectionsWithMovingStud);
+    std::cout << "   Transformed: " << intersectionsWithMovingStud << std::endl;
+
+    if(!allowClick)
+      return intersectionsWithMovingStud;
 
     // Add intervals for studs:
     std::vector<double> studAngles;
@@ -126,14 +123,12 @@ public:
       studAnglesTransformed.push_back(angleToOriginalInterval(*it));
     std::sort(studAnglesTransformed.begin(), studAnglesTransformed.end());
     IntervalList studIntervals;
-    double angleRadius = atan(SNAP_DISTANCE/radius);
+    double angleOfSnapRadius = atan(SNAP_DISTANCE/radius);
     for(std::vector<double>::const_iterator it = studAnglesTransformed.begin(); it != studAnglesTransformed.end(); ++it)
-      studIntervals.push_back(Interval(*it-angleRadius, *it+angleRadius));
+      studIntervals.push_back(Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius));
 
-    return math::intervalOr(ret, studIntervals);
+    return math::intervalOr(intersectionsWithMovingStud, studIntervals);
   }
-
-  bool intersectsStud(const Point &stud) const;
 };
 
 std::ostream& operator<<(std::ostream &os, const MovingStud& ms);
@@ -154,8 +149,8 @@ struct TurningSingleBrick {
     Point pois2[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
     blocks[1].getBoxPOIs<ADD_XY>(pois2);
     for(int i = 0; i < 4; ++i) {
-      double minAngle = atan2(pois1[i].Y, pois1[i].X);
-      double maxAngle = atan2(pois2[i].Y, pois2[i].X);
+      double minAngle = math::angleOfPoint(pois1[i]);
+      double maxAngle = math::angleOfPoint(pois2[i]);
       double radius = math::norm(pois1[i]);
       assert(math::abs(math::norm(pois2[i]) - radius) < EPSILON);
       fans[i] = Fan(radius, minAngle, maxAngle);
@@ -170,13 +165,13 @@ struct TurningSingleBrick {
     int8_t level = blocks[0].level;
     if(brick.level == level) {
       // Same level:
-      // TODO! USE LOGIC FROM OTHER NEIGHBOUR LEVEL
+      // TODO! FIXME! USE LOGIC FROM OTHER NEIGHBOUR LEVEL
       return false;
     }
     else if(level + 1 == brick.level) {
       // Turning below:
       for(int i = 0; i < 8; ++i) {
-        IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick);
+        IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
         std::cout << " aafb(" << brick << "): " << ret << " & " << listForStud << " = " <<  math::intervalAnd(ret, listForStud) << std::endl;
         ret = math::intervalAnd(ret, listForStud);
       }
@@ -185,7 +180,7 @@ struct TurningSingleBrick {
     }
     else if(level - 1 == brick.level) {
       // Turning above:
-      // TODO! USE 2 * BRICK POIS VS FANS
+      // TODO! FIXME! USE 2 * BRICK POIS VS FANS
       return false;
     }
     l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
@@ -253,9 +248,9 @@ struct TurningSingleBrickInvestigator {
   Configuration configuration;
   IConnectionPair connectionPair;
 
-  TurningSingleBrickInvestigator() {}
-  TurningSingleBrickInvestigator(const TurningSingleBrickInvestigator &b) : configuration(b.configuration), connectionPair(b.connectionPair) {}
-  TurningSingleBrickInvestigator(const Configuration &configuration, int configurationSCCI, const IConnectionPair &connectionPair) : configuration(configuration), connectionPair(connectionPair) {
+  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator() {}
+  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const TurningSingleBrickInvestigator &b) : configuration(b.configuration), connectionPair(b.connectionPair) {}
+  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const Configuration &configuration, int configurationSCCI, const IConnectionPair &connectionPair) : configuration(configuration), connectionPair(connectionPair) {
     if(configurationSCCI == connectionPair.P1.first.configurationSCCI) {
       std::swap(this->connectionPair.P1,this->connectionPair.P2);
     }

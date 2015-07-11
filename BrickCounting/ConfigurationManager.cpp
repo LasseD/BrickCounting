@@ -70,7 +70,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   double seconds = difftime(endTime,startTime);
   std::cout << " " << seconds << " seconds." << std::endl;
 
-  // TODO: Thread here!
+  // TODO! FIXME! Thread here!
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {

@@ -6,6 +6,7 @@
 #include "LDRPrinter.h"
 #include "Math.h"
 
+#include <assert.h>
 #include <stdint.h>
 #include <iostream>
 
@@ -25,7 +26,7 @@
 /*
 A Brick at any location and angle.
 Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
- */
+*/
 class Brick; // Forward declaration so that << can be used in template methods.
 std::ostream& operator<<(std::ostream &os, const Brick& b);
 
@@ -105,121 +106,69 @@ public:
       Point &stud = studs[i];
       double studDist = math::norm(stud);
       if(studDist < radius - SNAP_DISTANCE || studDist > radius + SNAP_DISTANCE)
-	continue;
+        continue;
       double studAngle = math::angleOfPoint(stud);
       if(!math::angleBetween(minAngle, studAngle, maxAngle))
-	continue;
+        continue;
       angles.push_back(studAngle);
     }
   }
 
-  /*
-    Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
-    Intersects block on either a line segment or a quarter-circle at one of the corners.
-   */
   template <int ADD_XY>
-  bool blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &i1, double &i2) const {
-    bool intersectsAlready = false;
-    // First check line segments:
-    LineSegment segments[4];
-    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
+  IntervalList rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
+    IntervalList ret;
+
+    bool retInitiated = false;
+    // Intersection with the circle must be on the right side of all four line segments:
     for(int i = 0; i < 4; ++i) {
       // Find intersections:
-      Point ii1, ii2;
-      int newIntersections = math::findCircleLineIntersections(radius, segments[i], ii1, ii2);      
-      double ai1 = newIntersections > 0 ? math::angleOfPoint(ii1) : 0;
-      double ai2 = newIntersections == 2 ? math::angleOfPoint(ii2) : 0;
-      
-      if(newIntersections == 2 && !math::angleBetween(minAngle, ai2, maxAngle))
-	--newIntersections;
-      if(newIntersections > 0 && !math::angleBetween(minAngle, ai1, maxAngle)) {
-	ii1 = ii2;
-	ai1 = ai2;
-	--newIntersections;
+      double intersectionMin, intersectionMax;
+      LineSegment segment(points[i], points[(i+1)%4]);
+      bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersectionMin, intersectionMax);
+      if(!intersects)
+        continue;
+      if(!retInitiated) {
+        ret = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
       }
-      if(newIntersections == 0)
-	continue;
-
-      if(intersectsAlready) {
-	assert(newIntersections == 1);
-	i2 = ai2;
-	return true;
+      else {
+        IntervalList toMerge = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
+        ret = math::intervalAnd(ret, toMerge);
       }
-      if(newIntersections == 2) {
-	i1 = ai1;
-	i2 = ai2;
-	return true;
-      }
-      intersectsAlready = true;
-      i1 = ai1;
     }
+    return ret;
+  }
 
-    // Now check quarter circles:
+  /*
+  Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
+  Intersects block on either a line segment or a quarter-circle at one of the corners. This problem can be split into two intersections against rectangles and four against circles.
+  Returns intervals of intersections between minAngle and maxAngle.
+  */
+  template <int ADD_XY>
+  IntervalList blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
+    // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
+    LineSegment segments[4];
+    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
+    Point p1[4] = {segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2};
+    IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
+
+    Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
+    IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
+    ret = math::intervalOr(ret, intersectionsWithRect2);
+
+    // Now check quarter circles: 
+    //  Subtract the intersection intervals that intersect the corner circles on the left of the corner dividers:
     Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
     getBoxPOIs<ADD_XY>(pois);
     for(int i = 0; i < 4; ++i) {
       // Find intersections:
-      Point ii1, ii2;
-      LineSegment line(segments[i].P1, segments[(i+3)%4].P2);
-      bool raise = false;
-      int newIntersections = math::findCircleCircleIntersectionsLeftOfLine(radius, pois[i], STUD_RADIUS, line, ii1, ii2, raise);
-      if(raise) {
-	std::cout << "FAIL: radius=" << radius << ", minAngle=" << minAngle << ", maxAngle=" << maxAngle << ", this=" << *this << std::endl;
-	assert(false);
+      IntervalList intervalFromCircle = math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS);
+      for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
+        IntervalList intervalFromCircleInCorrectInterval = math::intervalAnd(minAngle, maxAngle, it->first, it->second);
+        ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
       }
-      double ai1 = newIntersections > 0 ? math::angleOfPoint(ii1) : 0;
-      double ai2 = newIntersections == 2 ? math::angleOfPoint(ii2) : 0;
-      
-      if(newIntersections == 2 && !math::angleBetween(minAngle, ai2, maxAngle))
-	--newIntersections;
-      if(newIntersections > 0 && !math::angleBetween(minAngle, ai1, maxAngle)) {
-	ii1 = ii2;
-	ai1 = ai2;
-	--newIntersections;
-      }
-      if(newIntersections == 0)
-	continue;
-
-      if(intersectsAlready) {
-	assert(newIntersections == 1);
-	i2 = ai2;
-	return true;
-      }
-      if(newIntersections == 2) {
-	i1 = ai1;
-	i2 = ai2;
-	return true;
-      }
-      intersectsAlready = true;
-      i1 = ai1;
     }
 
-    // Only one intersection: Find out which end of moving stud path is inside of brick:
-    Point pMin(cos(minAngle)*radius, sin(minAngle)*radius);
-    bool pMinInside = false;
-    for(int i = 0; i < 4; ++i) {
-      if(math::distSq(pMin, pois[i]) < STUD_RADIUS*STUD_RADIUS) {
-	pMinInside = true;
-	break;
-      }
-    }
-    if(!pMinInside) {
-      pMinInside = true;
-      for(int i = 0; i < 4; ++i) {
-	if(!math::rightTurn(segments[i].P1, segments[i].P2, pMin)) {
-	  pMinInside = false;
-	  break;
-	}
-      }
-    }
-    
-    if(pMinInside) {
-      i2 = minAngle;
-    }
-    else {
-      i2 = maxAngle;
-    }    
-    return true;
+    return ret;
   }
 
   Point getStudPosition(ConnectionPointType type) const;
@@ -248,7 +197,7 @@ public:
   }
 
   /*
-    Assumes b is on same level.
+  Assumes b is on same level.
   */
   template <int ADD_XY>
   bool boxesIntersect(const Brick &b) const {
@@ -270,20 +219,20 @@ public:
         stud.Y = -stud.Y;
 
       if(stud.X < cornerX+STUD_RADIUS && 
-         stud.Y < cornerY+STUD_RADIUS) {
-        // Might intersect - check corner case:
-        if(stud.X < cornerX ||
-           stud.Y < cornerY ||
-           STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-          return true;
-        }
+        stud.Y < cornerY+STUD_RADIUS) {
+          // Might intersect - check corner case:
+          if(stud.X < cornerX ||
+            stud.Y < cornerY ||
+            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+              return true;
+          }
       }
     }
     return false;
   }
 
   template <int ADD_XY>
-    bool boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
+  bool boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
     const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
     const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
 
@@ -292,39 +241,39 @@ public:
       stud.X = -stud.X;
     if(stud.Y < 0)
       stud.Y = -stud.Y;
-    
+
     if(stud.X < cornerX+STUD_RADIUS && 
-       stud.Y < cornerY+STUD_RADIUS) {
-      // X check if it hits stud:
-      const double studX = HALF_STUD_DISTANCE;
-      const double studY = STUD_AND_A_HALF_DISTANCE;   
-      if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
-	// We are already connected:
-	if(connected) {
-	  connected = false;
-	  return true;
-	}
-	// Compute corner:
-	connected = true;
-	if(studOfB.X < 0 && studOfB.Y < 0)
-	  foundConnectionThis = ConnectionPoint(SW, source, false, -1);
-	else if(studOfB.X < 0 && studOfB.Y > 0)
-	  foundConnectionThis = ConnectionPoint(NW, source, false, -1);
-	else if(studOfB.X > 0 && studOfB.Y < 0)
-	  foundConnectionThis = ConnectionPoint(SE, source, false, -1);
-	else // if(stud.X > 0 && stud.Y > 0)
-	  foundConnectionThis = ConnectionPoint(NE, source, false, -1);
-	foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
-	return false;
-      }
-      
-      // Might intersect - check corner case:
-      if(stud.X < cornerX ||
-	 stud.Y < cornerY ||
-	 STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-	connected = false;
-	return true;
-      }
+      stud.Y < cornerY+STUD_RADIUS) {
+        // X check if it hits stud:
+        const double studX = HALF_STUD_DISTANCE;
+        const double studY = STUD_AND_A_HALF_DISTANCE;   
+        if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
+          // We are already connected:
+          if(connected) {
+            connected = false;
+            return true;
+          }
+          // Compute corner:
+          connected = true;
+          if(studOfB.X < 0 && studOfB.Y < 0)
+            foundConnectionThis = ConnectionPoint(SW, source, false, -1);
+          else if(studOfB.X < 0 && studOfB.Y > 0)
+            foundConnectionThis = ConnectionPoint(NW, source, false, -1);
+          else if(studOfB.X > 0 && studOfB.Y < 0)
+            foundConnectionThis = ConnectionPoint(SE, source, false, -1);
+          else // if(stud.X > 0 && stud.Y > 0)
+            foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+          foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
+          return false;
+        }
+
+        // Might intersect - check corner case:
+        if(stud.X < cornerX ||
+          stud.Y < cornerY ||
+          STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+            connected = false;
+            return true;
+        }
     }
     return false;
   }
@@ -339,22 +288,22 @@ public:
     for(int i = 0; i < 4; ++i) {
       Point &stud = studsOfB[i];
       if(boxIntersectsInnerStud<ADD_XY>(stud)) {
-	connected = false;
-	return true;
+        connected = false;
+        return true;
       }
     }
     // Handle four outer specially as they might cause connection:
     for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
       Point stud = studsOfB[i];
       if(boxIntersectsOuterStud<ADD_XY>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
-	return true;
+        return true;
     }
     return connected;
   }
 
   /*
-    Return true if this brick intersects the other. 
-    If the two bricks are corner connected, then connected is set to true and the found connection is set.
+  Return true if this brick intersects the other. 
+  If the two bricks are corner connected, then connected is set to true and the found connection is set.
   1: If not even close level-wise: return false.
   2: If on same level: Check that boxes do not collide.
   - If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22

@@ -26,7 +26,7 @@ AND if the center of the stud lies between minAngle and maxAngle
 */
 bool Fan::intersectsStud(const Point &stud) const {
   return math::normSq(stud) < (radius + STUD_RADIUS)*(radius + STUD_RADIUS) && 
-    math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
+         math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
 }
 
 std::ostream& operator<<(std::ostream &os, const Fan& f) {
@@ -35,16 +35,38 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
 }
 
 double MovingStud::angleToOriginalInterval(double a) const {
-  if(maxAngle - minAngle > M_PI) {
+  if(maxAngle < minAngle) {
+    assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
     double diff = minAngle + 2*M_PI-maxAngle;
-    if(a > minAngle)
-      a-=2*M_PI;  
-    return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (minAngle-a)/diff);
+    if(a <= maxAngle) {
+      return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (maxAngle-a)/diff);
+    }
+    else {
+      return MAX_ANGLE_RADIANS - (2*MAX_ANGLE_RADIANS * (a-minAngle)/diff);
+    }
   }
   else {
+    assert(minAngle <= a && a <= maxAngle);
     return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
   }
 }
+
+IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) const {
+  IntervalList ret;
+
+  for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+    double a = angleToOriginalInterval(it->first);
+    double b = angleToOriginalInterval(it->first);
+    assert(a <= b);
+    ret.push_back(Interval(a,b));
+  }
+    
+  std::sort(ret.begin(), ret.end());
+  ret = math::collapseIntervals(ret);
+
+  return ret;
+}
+
 
 /*
 A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.
@@ -54,23 +76,37 @@ bool MovingStud::tractIntersectsLineSegment(const LineSegment &l) const {
   const double normP2 = math::norm(l.P2);
   const double innerWallRadius = radius - STUD_RADIUS;
   const double outerWallRadius = radius + STUD_RADIUS;
-  bool betweenWalls = (innerWallRadius <= normP1 && normP1 <= outerWallRadius) &&
-    (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
-  bool inside = betweenWalls && (math::angleBetween(minAngle, math::angleOfPoint(l.P1), maxAngle) || 
-    math::angleBetween(minAngle, math::angleOfPoint(l.P2), maxAngle));
-  return inside || 
+  bool endPointsBetweenWalls = (innerWallRadius <= normP1 && normP1 <= outerWallRadius) &&
+                               (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
+  bool endPointsInside = endPointsBetweenWalls && (math::angleBetween(minAngle, math::angleOfPoint(l.P1), maxAngle) || 
+                                                   math::angleBetween(minAngle, math::angleOfPoint(l.P2), maxAngle));
+  return endPointsInside || 
     Fan(innerWallRadius, minAngle, maxAngle).intersectsLineSegment(l) ||
     Fan(outerWallRadius, minAngle, maxAngle).intersectsLineSegment(l);
+}
+
+Point MovingStud::minPoint() const {
+  return Point(radius*cos(minAngle), radius*sin(minAngle));
+}
+
+Point MovingStud::maxPoint() const {
+  return Point(radius*cos(maxAngle), radius*sin(maxAngle));
 }
 
 /*
 The moving stud intersects a stud, if it intersects the tract or one of the end circles.
 */
 bool MovingStud::intersectsStud(const Point &stud) const {  
-  return 
-    math::normSq(stud) > (radius - STUD_DIAM)*(radius - STUD_DIAM) && 
-    math::normSq(stud) < (radius + STUD_DIAM)*(radius + STUD_DIAM) && 
-    math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
+  bool intersectsTract = math::normSq(stud) > (radius - STUD_DIAM)*(radius - STUD_DIAM) && 
+                         math::normSq(stud) < (radius + STUD_DIAM)*(radius + STUD_DIAM) && 
+                         math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
+  if(intersectsTract)
+    return true;
+  Point minP = minPoint();
+  if(math::distSq(minP, stud) < STUD_DIAM*STUD_DIAM)
+    return true;
+  Point maxP = maxPoint();
+  return math::distSq(maxP, stud) < STUD_DIAM*STUD_DIAM;
 }
 
 std::ostream& operator<<(std::ostream &os, const MovingStud& f) {

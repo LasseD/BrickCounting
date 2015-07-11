@@ -115,7 +115,7 @@ void SimpleUnionFind::initialFillV(unsigned int positionI, Position &position, b
     if(val == 0)
       continue;
     --position.p[i];
-    uint64_t neighbourPositionIndex = indexOf(position); // TODO: Speed upby pre-computing indexOf.
+    uint64_t neighbourPositionIndex = indexOf(position); // TODO! FIXME! Speed upby pre-computing indexOf.
     if(M[neighbourPositionIndex] && v[neighbourPositionIndex] < unionI) {
       unionI = v[neighbourPositionIndex];
       ++position.p[i];
@@ -189,7 +189,7 @@ void SimpleUnionFind::buildUnions(unsigned int positionI, Position &position, bo
 
       position.p[i] = (unsigned short)newPosition;
 
-      uint64_t neighbourPositionIndex = indexOf(position); // TODO: Speed upby pre-computing indexOf.
+      uint64_t neighbourPositionIndex = indexOf(position); // TODO! FIXME! Speed upby pre-computing indexOf.
       if(M[neighbourPositionIndex] && v[neighbourPositionIndex] != unionI) {
 	join(v[neighbourPositionIndex], unionI);
       }
