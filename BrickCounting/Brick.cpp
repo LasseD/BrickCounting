@@ -93,7 +93,7 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
-  
+  /*
   // 7 POIs:
   Point studs[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
   getBoxPOIs<0>(studs);
@@ -163,6 +163,37 @@ void Brick::getStudPositions(Point *studs) const {
   studs[5] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
   studs[6] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
   studs[7] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+}
+
+bool Brick::outerStudIntersectsStudAtOrigin() const {
+  Point studs[NUMBER_OF_STUDS];
+  getStudPositions(studs);
+
+  // Handle four outer specially as they might cause connection:
+  for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
+    Point &stud = studs[i];
+    double studDist = math::norm(stud);
+    if(studDist < SNAP_DISTANCE)
+      return true;
+  }
+  return false;
+}
+
+void Brick::getStudIntersectionsWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<double> &angles) const {
+  Point studs[NUMBER_OF_STUDS];
+  getStudPositions(studs);
+
+  // Handle four outer specially as they might cause connection:
+  for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
+    Point &stud = studs[i];
+    double studDist = math::norm(stud);
+    if(studDist < radius - SNAP_DISTANCE || studDist > radius + SNAP_DISTANCE)
+      continue;
+    double studAngle = math::angleOfPoint(stud);
+    if(!math::angleBetween(minAngle, studAngle, maxAngle))
+      continue;
+    angles.push_back(studAngle);
+  }
 }
 
 bool Brick::operator < (const Brick &b) const {

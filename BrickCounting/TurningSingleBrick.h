@@ -102,7 +102,7 @@ public:
   IntervalList /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick) const {
     // Compute intersections without interval information:
     IntervalList intersectionsWithMovingStud = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
-    std::cout << "  Brick intersects MS " << radius << ", " << minAngle << ", " << maxAngle << ": " << intersectionsWithMovingStud << std::endl;
+    std::cout << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << ":" << std::endl << "   " << intersectionsWithMovingStud << std::endl;
 
     // Find intersect between min/max and intersection points:
     // Inverse intersectionsWithMovingStud:
@@ -114,19 +114,32 @@ public:
 
     if(!allowClick)
       return intersectionsWithMovingStud;
+    if(radius < EPSILON) {
+      // If the MS has radius=0, then it can turn anywhere in case of click:
+      if(block.outerStudIntersectsStudAtOrigin()) {
+        IntervalList fullInterval;
+        fullInterval.push_back(Interval(-M_PI, M_PI));
+        return fullInterval;
+      }
+    }
 
     // Add intervals for studs:
     std::vector<double> studAngles;
-    block.getStudIntersectionsWithMovingStud<ADD_XY>(radius, minAngle, maxAngle, studAngles);
+    block.getStudIntersectionsWithMovingStud(radius, minAngle, maxAngle, studAngles);
     std::vector<double> studAnglesTransformed;
-    for(std::vector<double>::const_iterator it = studAngles.begin(); it != studAngles.end(); ++it)
+    for(std::vector<double>::const_iterator it = studAngles.begin(); it != studAngles.end(); ++it) {
+      std::cout << " Adding stud at angle " << *it << ", in original interval: " << angleToOriginalInterval(*it) << std::endl;
       studAnglesTransformed.push_back(angleToOriginalInterval(*it));
+    }
     std::sort(studAnglesTransformed.begin(), studAnglesTransformed.end());
     IntervalList studIntervals;
     double angleOfSnapRadius = atan(SNAP_DISTANCE/radius);
-    for(std::vector<double>::const_iterator it = studAnglesTransformed.begin(); it != studAnglesTransformed.end(); ++it)
+    for(std::vector<double>::const_iterator it = studAnglesTransformed.begin(); it != studAnglesTransformed.end(); ++it) {
+      std::cout << " Adding stud interval " << Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius) << std::endl;
       studIntervals.push_back(Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius));
+    }
 
+    std::cout << "AAFB RET " << intersectionsWithMovingStud << " | " << studIntervals << " = " << math::intervalOr(intersectionsWithMovingStud, studIntervals) << std::endl;
     return math::intervalOr(intersectionsWithMovingStud, studIntervals);
   }
 };
@@ -172,8 +185,10 @@ struct TurningSingleBrick {
       // Turning below:
       for(int i = 0; i < 8; ++i) {
         IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
-        std::cout << " aafb(" << brick << "): " << ret << " & " << listForStud << " = " <<  math::intervalAnd(ret, listForStud) << std::endl;
+        std::cout << " aafb& " << brick << " vs " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << std::endl;
         ret = math::intervalAnd(ret, listForStud);
+        if(ret.empty())
+          break;
       }
       l = ret;
       return true;
@@ -258,6 +273,7 @@ struct TurningSingleBrickInvestigator {
 
   template <int ADD_XY>
   bool /*TurningSingleBrickInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
+    std::cout << "----------------- INITIATING ALLOWABLE ANGLES ----------------------" << std::endl;
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
     Point translate = tsb.createBricksReturnTranslation(configuration, connectionPair);

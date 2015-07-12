@@ -96,26 +96,15 @@ public:
     segments[3].P2 = Point(center.X+(-dx*cosa-DY*sina), center.Y+(-dx*sina+DY*cosa));
   }
 
-  template <int ADD_XY>
-  void /*Brick::*/getStudIntersectionsWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<double> &angles) const {
-    Point studs[NUMBER_OF_STUDS];
-    getStudPositions(studs);
+  bool /*Brick::*/outerStudIntersectsStudAtOrigin() const;
+  void /*Brick::*/getStudIntersectionsWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<double> &angles) const;
 
-    // Handle four outer specially as they might cause connection:
-    for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
-      Point &stud = studs[i];
-      double studDist = math::norm(stud);
-      if(studDist < radius - SNAP_DISTANCE || studDist > radius + SNAP_DISTANCE)
-        continue;
-      double studAngle = math::angleOfPoint(stud);
-      if(!math::angleBetween(minAngle, studAngle, maxAngle))
-        continue;
-      angles.push_back(studAngle);
-    }
-  }
-
+  /*
+    Returns the intersection between a rectangle defined by four points and a circle cutout (between minAngle and maxAngle).
+   */
   template <int ADD_XY>
   IntervalList rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
+    std::cout << "    rect VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
     IntervalList ret;
 
     bool retInitiated = false;
@@ -127,6 +116,8 @@ public:
       bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersectionMin, intersectionMax);
       if(!intersects)
         continue;
+      std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
+      std::cout << "    CUT: " << math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
       if(!retInitiated) {
         ret = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
       }
@@ -138,6 +129,52 @@ public:
     return ret;
   }
 
+  template <int ADD_XY>
+  bool boxIntersectsInnerStud(Point &stud) const {
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+
+    // X handle four inner:
+    for(int i = 0; i < 4; ++i) {
+      if(stud.X < 0)
+        stud.X = -stud.X;
+      if(stud.Y < 0)
+        stud.Y = -stud.Y;
+
+      if(stud.X < cornerX+STUD_RADIUS && 
+        stud.Y < cornerY+STUD_RADIUS) {
+          // Might intersect - check corner case:
+          if(stud.X < cornerX ||
+            stud.Y < cornerY ||
+            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+              return true;
+          }
+      }
+    }
+    return false;
+  }
+
+  /*
+    Helper method for blockIntersectionWithMovingStud when radius is 0.
+    If stud doesn't intersect, then return empty interval.
+    Otherwise, return full interval.
+   */
+  template <int ADD_XY>
+  IntervalList blockIntersectionWithRotatingStud(double minAngle, double maxAngle) const {
+    IntervalList ret;
+    Point p(0,0);
+    if(boxIntersectsInnerStud<ADD_XY>(p)) {
+      if(minAngle < maxAngle) {
+        ret.push_back(Interval(minAngle,maxAngle));
+      }
+      else {
+        ret.push_back(Interval(-M_PI,maxAngle));
+        ret.push_back(Interval(minAngle,M_PI));
+      }        
+    }
+    return ret;
+  }
+
   /*
   Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
   Intersects block on either a line segment or a quarter-circle at one of the corners. This problem can be split into two intersections against rectangles and four against circles.
@@ -145,15 +182,29 @@ public:
   */
   template <int ADD_XY>
   IntervalList blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
+    std::cout << "BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+#ifdef _DEBUG
+    LineSegment sx[4];
+    getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+    std::cout << " BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+#endif
+
+    assert(radius < EPSILON || radius > STUD_RADIUS);
+    if(radius < EPSILON) {
+      std::cout << "R=0, SO FIND QUICK!" << std::endl;
+      return blockIntersectionWithRotatingStud<ADD_XY>(minAngle, maxAngle);
+    }
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
     LineSegment segments[4];
     getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
     Point p1[4] = {segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2};
     IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
+    std::cout << "   WIDE Box intersect: " << ret << std::endl;
 
     Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
     IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
     ret = math::intervalOr(ret, intersectionsWithRect2);
+    std::cout << "   TALL Box intersect: " << intersectionsWithRect2 << " => " << ret << std::endl;
 
     // Now check quarter circles: 
     //  Subtract the intersection intervals that intersect the corner circles on the left of the corner dividers:
@@ -165,6 +216,7 @@ public:
       for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
         IntervalList intervalFromCircleInCorrectInterval = math::intervalAnd(minAngle, maxAngle, it->first, it->second);
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
+        std::cout << "   circle intersect: " << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
       }
     }
 
@@ -204,31 +256,6 @@ public:
     Brick tmpB(b);
     Brick tmpThis(*this);
     return boxIntersectsPOIsFrom<ADD_XY>(tmpB) || b.boxIntersectsPOIsFrom<ADD_XY>(tmpThis);
-  }
-
-  template <int ADD_XY>
-  bool boxIntersectsInnerStud(Point &stud) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
-
-    // X handle four inner:
-    for(int i = 0; i < 4; ++i) {
-      if(stud.X < 0)
-        stud.X = -stud.X;
-      if(stud.Y < 0)
-        stud.Y = -stud.Y;
-
-      if(stud.X < cornerX+STUD_RADIUS && 
-        stud.Y < cornerY+STUD_RADIUS) {
-          // Might intersect - check corner case:
-          if(stud.X < cornerX ||
-            stud.Y < cornerY ||
-            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-              return true;
-          }
-      }
-    }
-    return false;
   }
 
   template <int ADD_XY>

@@ -55,9 +55,9 @@ namespace math {
     const double rootDiscriminant = sqrt(discriminant);
 
     i1.X = (D*dy + signum(dy)*dx*rootDiscriminant)/drSq;
-    i1.Y = (D*dx + abs(dy)*rootDiscriminant)/drSq;
+    i1.Y = (-D*dx + abs(dy)*rootDiscriminant)/drSq;
     i2.X = (D*dy - signum(dy)*dx*rootDiscriminant)/drSq;
-    i2.Y = (D*dx - abs(dy)*rootDiscriminant)/drSq;
+    i2.Y = (-D*dx - abs(dy)*rootDiscriminant)/drSq;
     return discriminant > 0 ? 2 : 1;
   }
 
@@ -73,6 +73,7 @@ namespace math {
     int newIntersections = math::findCircleLineIntersections(radius, line, i1, i2);      
     if(newIntersections != 2)
       return false; // Ignore no intersection and intersection in a point.
+    std::cout << "INTERSECTIONS: " << i1<< ", " << i2 << std::endl;
 
     intersectionMin = math::angleOfPoint(i1);
     intersectionMax = math::angleOfPoint(i2);
@@ -81,10 +82,13 @@ namespace math {
 
     // Find mid-point and determine interval inside of half plane:
     double midAngle = (intersectionMin + intersectionMax)/2;
-    if(math::rightTurn(line.P1, line.P2, Point(radius*cos(midAngle), radius*sin(midAngle)))) {
+    Point midPoint(radius*cos(midAngle), radius*sin(midAngle));
+    if(math::rightTurn(line.P1, line.P2, midPoint)) {
+      std::cout << "RIGHT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // OK: Mid-point of interval (on side without jump) is inside the half plane.
     }
     else {
+      std::cout << "LEFT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // Swap the intersections to indicate that the side with the jump is inside the half plane.
       std::swap(intersectionMin, intersectionMax);
     }

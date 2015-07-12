@@ -56,7 +56,7 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
 
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double a = angleToOriginalInterval(it->first);
-    double b = angleToOriginalInterval(it->first);
+    double b = angleToOriginalInterval(it->second);
     assert(a <= b);
     ret.push_back(Interval(a,b));
   }
