@@ -36,16 +36,19 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
 
 double MovingStud::angleToOriginalInterval(double a) const {
   if(maxAngle < minAngle) {
+    //std::cout << " min:" << minAngle << ", a:" << a << ", max:" << maxAngle << std::endl;
     assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
-    double diff = minAngle + 2*M_PI-maxAngle;
     if(a <= maxAngle) {
-      return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (maxAngle-a)/diff);
+      std::cout << a << " <= MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
+      return -MAX_ANGLE_RADIANS + MAX_ANGLE_RADIANS * (maxAngle-a)/(maxAngle-M_PI);
     }
     else {
-      return MAX_ANGLE_RADIANS - (2*MAX_ANGLE_RADIANS * (a-minAngle)/diff);
+      std::cout << a << " > MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
+      return MAX_ANGLE_RADIANS - MAX_ANGLE_RADIANS * (a-minAngle)/(M_PI-minAngle);
     }
   }
   else {
+    //std::cout << " min:" << minAngle << ", a:" << a << ", max:" << maxAngle << std::endl;
     assert(minAngle <= a && a <= maxAngle);
     return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
   }
@@ -57,6 +60,7 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double a = angleToOriginalInterval(it->first);
     double b = angleToOriginalInterval(it->second);
+    std::cout << " transforming " << *it << " to " << a << ", " << b << std::endl;
     assert(a <= b);
     ret.push_back(Interval(a,b));
   }

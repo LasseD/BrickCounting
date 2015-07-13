@@ -106,7 +106,7 @@ public:
 
     // Find intersect between min/max and intersection points:
     // Inverse intersectionsWithMovingStud:
-    intersectionsWithMovingStud = math::intervalInverse(intersectionsWithMovingStud, Interval(-M_PI, M_PI));
+    intersectionsWithMovingStud = math::intervalInverseRadians(intersectionsWithMovingStud, minAngle, maxAngle);
     std::cout << "   Inversed: " << intersectionsWithMovingStud << std::endl;
     // Transform intersectionsWithMovingStud to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
     intersectionsWithMovingStud = intervalsToOriginalInterval(intersectionsWithMovingStud);

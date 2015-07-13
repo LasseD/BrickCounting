@@ -104,7 +104,7 @@ public:
    */
   template <int ADD_XY>
   IntervalList rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
-    std::cout << "    rect VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+    //std::cout << "  RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
     IntervalList ret;
 
     bool retInitiated = false;
@@ -116,16 +116,18 @@ public:
       bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersectionMin, intersectionMax);
       if(!intersects)
         continue;
-      std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
-      std::cout << "    CUT: " << math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
+      //std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
+      //std::cout << "    CUT: " << math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
       if(!retInitiated) {
         ret = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
+        retInitiated = true;
       }
       else {
         IntervalList toMerge = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
         ret = math::intervalAnd(ret, toMerge);
       }
     }
+    //std::cout << "  RECT VS Circle => " << ret << std::endl;
     return ret;
   }
 
@@ -216,7 +218,7 @@ public:
       for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
         IntervalList intervalFromCircleInCorrectInterval = math::intervalAnd(minAngle, maxAngle, it->first, it->second);
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
-        std::cout << "   circle intersect: " << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+        std::cout << "   circle " << i << "(" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
       }
     }
 

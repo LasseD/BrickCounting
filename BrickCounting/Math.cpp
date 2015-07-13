@@ -73,7 +73,7 @@ namespace math {
     int newIntersections = math::findCircleLineIntersections(radius, line, i1, i2);      
     if(newIntersections != 2)
       return false; // Ignore no intersection and intersection in a point.
-    std::cout << "INTERSECTIONS: " << i1<< ", " << i2 << std::endl;
+//    std::cout << "INTERSECTIONS: " << i1<< ", " << i2 << std::endl;
 
     intersectionMin = math::angleOfPoint(i1);
     intersectionMax = math::angleOfPoint(i2);
@@ -84,11 +84,11 @@ namespace math {
     double midAngle = (intersectionMin + intersectionMax)/2;
     Point midPoint(radius*cos(midAngle), radius*sin(midAngle));
     if(math::rightTurn(line.P1, line.P2, midPoint)) {
-      std::cout << "RIGHT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
+      //std::cout << "RIGHT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // OK: Mid-point of interval (on side without jump) is inside the half plane.
     }
     else {
-      std::cout << "LEFT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
+      //std::cout << "LEFT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // Swap the intersections to indicate that the side with the jump is inside the half plane.
       std::swap(intersectionMin, intersectionMax);
     }
@@ -124,21 +124,22 @@ namespace math {
   }
 
   // http://stackoverflow.com/questions/3349125/circle-circle-intersection-points
-  int findCircleCircleIntersections(double r, const Point &p, double pr, Point &i1, Point &i2) {
-    double distCentres = norm(p);
+  int findCircleCircleIntersections(const double r, const Point &p, double pr, Point &i1, Point &i2) {
+    const double distCentresSq = normSq(p);
+    const double distCentres = sqrt(distCentresSq);
     if(distCentres > r + pr)
       return 0; // No solution.
-    double x1 = p.X;
-    double y1 = p.Y;
-    double a = (r*r-pr*pr+distCentres*distCentres)/2*distCentres;
-    double h = sqrt(r*r-a*a);
-    double x2 = a*x1/distCentres;
-    double y2 = a*y1/distCentres;
+    const double x1 = p.X;
+    const double y1 = p.Y;
+    const double a = (r*r-pr*pr+distCentresSq)/(2*distCentres);
+    const double h = sqrt(r*r-a*a);
+    const double x2 = a*x1/distCentres;
+    const double y2 = a*y1/distCentres;
 
     i1.X = x2 + h*y1/distCentres;
-    i1.Y = y2 + h*x1/distCentres;
+    i1.Y = y2 - h*x1/distCentres;
     i2.X = x2 - h*y1/distCentres;
-    i2.Y = y2 - h*x1/distCentres;
+    i2.Y = y2 + h*x1/distCentres;
 
     return 2;
   }
@@ -148,11 +149,13 @@ namespace math {
    */
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
     assert(r > pr);
-    IntervalList ret;
     Point i1, i2;
     int newIntersections = findCircleCircleIntersections(r, p, pr, i1, i2);
+    IntervalList ret;
     if(newIntersections < 2)
       return ret;
+    std::cout << " CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
+    std::cout << " CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
     double ai1 = math::angleOfPoint(i1);
@@ -287,20 +290,59 @@ namespace math {
     return ret;
   }
 
-  IntervalList intervalInverse(const IntervalList &l, const Interval fullInterval) {
+  IntervalList intervalInverseRadians(const IntervalList &l, double min, double max) {
     IntervalList ret;
     if(l.empty()) {
-      ret.push_back(fullInterval);
+      if(min < max)
+        ret.push_back(Interval(min, max));
+      else {
+        ret.push_back(Interval(-M_PI, max));
+        ret.push_back(Interval(min, M_PI));
+      }
       return ret;
     }
-    double last = l[0].first;
-    for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
-      if(last != it->first)
+
+    IntervalList::const_iterator it = l.begin();
+    if(min < max) {
+      if(it->first > min)
+        ret.push_back(Interval(min, it->first));
+      double last = it->second;
+      ++it;
+      for(; it != l.end(); ++it) {
         ret.push_back(Interval(last, it->first));
-      last = it->second;
+        last = it->second;
+      }
+      if(last != max)
+        ret.push_back(Interval(last, max));
     }
-    if(last != fullInterval.second)
-      ret.push_back(Interval(last, fullInterval.second));
+    else {
+      // First section:
+      if(it->first > -M_PI)
+        ret.push_back(Interval(-M_PI, it->first));
+      double last = it->second;
+      ++it;
+      for(; it != l.end() && it->first < max; ++it) {
+        ret.push_back(Interval(last, it->first));
+        last = it->second;
+      }
+      if(last != max)
+        ret.push_back(Interval(last, max));
+      // Second section:
+      if(it == l.end()) {
+        ret.push_back(Interval(min, M_PI));
+        return ret;
+      }
+      if(it->first > min)
+        ret.push_back(Interval(min, it->first));
+      last = it->second;
+      ++it;
+      for(; it != l.end(); ++it) {
+        ret.push_back(Interval(last, it->first));
+        last = it->second;
+      }
+      if(last != M_PI)
+        ret.push_back(Interval(last, M_PI));
+    }
     return ret;
   }
 

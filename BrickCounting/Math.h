@@ -48,14 +48,14 @@ namespace math {
 
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
   IntervalList intervalAnd(double a1, double a2, double b1, double b2);
-  IntervalList intervalInverse(const IntervalList &l, const Interval fullInterval);
+  IntervalList intervalInverseRadians(const IntervalList &l, double min, double max);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
   IntervalList collapseIntervals(const IntervalList &l);
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
-  int findCircleCircleIntersections(double r, const Point &p, double pr, Point &i1, Point &i2); // Actual primitive
+  int findCircleCircleIntersections(const double r, const Point &p, double pr, Point &i1, Point &i2); // Actual primitive
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
 
   /*
