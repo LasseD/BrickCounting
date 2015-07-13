@@ -355,13 +355,13 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
 
           std::cerr << "Content of S:" << std::endl;	 
           for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (S[smlI+i] ? "X" : "O");
+            std::cout << (S[smlI+j] ? "X" : "-");
           }
           std::cout << std::endl;
           std::cerr << "Using isRealizable on all angles:" << std::endl;	 
           for(unsigned short j = 0; j < steps; ++j) {
             Configuration c3 = getConfiguration(c, angleI, j);
-            std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "O");
+            std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "-");
           }
           std::cout << std::endl;
           assert(false);

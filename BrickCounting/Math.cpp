@@ -6,6 +6,9 @@
 // Simple geometry functions
 ///////////////////////////////////////////////////////
 namespace math {
+  bool eqEpsilon(double a, double b) {
+    return a < b ? (a >= b-EPSILON && a <= b+EPSILON) : (b >= a-EPSILON && b <= a+EPSILON);
+  }
   double round(double number) {
     return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
   }
@@ -124,15 +127,18 @@ namespace math {
   }
 
   // http://stackoverflow.com/questions/3349125/circle-circle-intersection-points
-  int findCircleCircleIntersections(const double r, const Point &p, double pr, Point &i1, Point &i2) {
+  int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2) {
     const double distCentresSq = normSq(p);
     const double distCentres = sqrt(distCentresSq);
+    assert(distCentresSq > EPSILON);
+    assert(distCentres > EPSILON);
     if(distCentres > r + pr)
       return 0; // No solution.
+
     const double x1 = p.X;
     const double y1 = p.Y;
     const double a = (r*r-pr*pr+distCentresSq)/(2*distCentres);
-    const double h = sqrt(r*r-a*a);
+    const double h = sqrt(abs(r*r-a*a));
     const double x2 = a*x1/distCentres;
     const double y2 = a*y1/distCentres;
 
@@ -154,8 +160,8 @@ namespace math {
     IntervalList ret;
     if(newIntersections < 2)
       return ret;
-    std::cout << " CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
-    std::cout << " CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
+    //std::cout << "    CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
+    //std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
     double ai1 = math::angleOfPoint(i1);
@@ -356,7 +362,7 @@ namespace math {
     Interval prev = *it;
     ++it;
     for(; it != l.end(); ++it) {
-      if(prev.second != it->first) {
+      if(!eqEpsilon(prev.second, it->first)) {
         ret.push_back(prev);
         prev = *it;
       }
@@ -373,16 +379,16 @@ namespace math {
     const double max = fullInterval.second;
     IntervalList::const_iterator it = l.begin();
     for(unsigned int i = 0; i < sizeArray; ++i) {
-      double v = min + ((max-min)*i)/(sizeArray-1);
+      double v = min + ((max-min)*i)/((double)sizeArray-1);
       if(it == l.end() || v < it->first) {
-        array[i] = false;
+        array[sizeArray-1-i] = false;
       }
       else if(v > it->second) {
-        array[i] = false;
+        array[sizeArray-1-i] = false;
         ++it;
       }
       else
-        array[i] = true;
+        array[sizeArray-1-i] = true;
     }
   }
 }

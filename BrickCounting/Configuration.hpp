@@ -59,6 +59,9 @@ struct StepAngle {
   double toRadians() const {
     return n * MAX_ANGLE_RADIANS / d;
   }
+  double negate() {
+    return n = -n;
+  }
 
   bool operator<(const StepAngle &c) const {
     if(d != c.d)
@@ -83,13 +86,15 @@ struct Connection {
   Connection(){}
   Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      std::swap(p1, p2); // ensures connections are always
+      //this->angle.negate();
+      std::swap(p1, p2);
     }
   }
   Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
   Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      std::swap(this->p1, this->p2); // ensures connections are always with p1->above = true.
+      //this->angle.negate();
+      std::swap(this->p1, this->p2);
     }  
   } 
   double angleToRadians() const {

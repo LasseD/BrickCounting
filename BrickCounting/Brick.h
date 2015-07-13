@@ -137,20 +137,21 @@ public:
     const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
 
     // X handle four inner:
-    for(int i = 0; i < 4; ++i) {
-      if(stud.X < 0)
-        stud.X = -stud.X;
-      if(stud.Y < 0)
-        stud.Y = -stud.Y;
+    if(stud.X < 0)
+      stud.X = -stud.X;
+    if(stud.Y < 0)
+      stud.Y = -stud.Y;
 
-      if(stud.X < cornerX+STUD_RADIUS && 
-        stud.Y < cornerY+STUD_RADIUS) {
-          // Might intersect - check corner case:
-          if(stud.X < cornerX ||
-            stud.Y < cornerY ||
-            STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-              return true;
-          }
+    if(stud.X < cornerX+STUD_RADIUS && stud.Y < cornerY+STUD_RADIUS) {
+      // Might intersect - check corner case:
+      if(stud.X < cornerX) {
+        return true;
+      }
+      if(stud.Y < cornerY) {
+        return true;
+      }
+      if(STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+        return true;
       }
     }
     return false;
@@ -162,10 +163,12 @@ public:
     Otherwise, return full interval.
    */
   template <int ADD_XY>
-  IntervalList blockIntersectionWithRotatingStud(double minAngle, double maxAngle) const {
+  IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle) const {
     IntervalList ret;
     Point p(0,0);
+    movePointSoThisIsAxisAlignedAtOrigin(p);
     if(boxIntersectsInnerStud<ADD_XY>(p)) {
+      std::cout << "  QUICK FIND INTERSECTS<" << ADD_XY << ">! " << center << " VS " << p << std::endl;
       if(minAngle < maxAngle) {
         ret.push_back(Interval(minAngle,maxAngle));
       }
@@ -184,16 +187,16 @@ public:
   */
   template <int ADD_XY>
   IntervalList blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
-    std::cout << "BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+    std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
 #ifdef _DEBUG
     LineSegment sx[4];
     getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
-    std::cout << " BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+    std::cout << "   BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
 #endif
 
     assert(radius < EPSILON || radius > STUD_RADIUS);
     if(radius < EPSILON) {
-      std::cout << "R=0, SO FIND QUICK!" << std::endl;
+      std::cout << "  R=0, SO FIND QUICK!" << std::endl;
       return blockIntersectionWithRotatingStud<ADD_XY>(minAngle, maxAngle);
     }
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
@@ -271,38 +274,37 @@ public:
     if(stud.Y < 0)
       stud.Y = -stud.Y;
 
-    if(stud.X < cornerX+STUD_RADIUS && 
-      stud.Y < cornerY+STUD_RADIUS) {
-        // X check if it hits stud:
-        const double studX = HALF_STUD_DISTANCE;
-        const double studY = STUD_AND_A_HALF_DISTANCE;   
-        if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
-          // We are already connected:
-          if(connected) {
-            connected = false;
-            return true;
-          }
-          // Compute corner:
-          connected = true;
-          if(studOfB.X < 0 && studOfB.Y < 0)
-            foundConnectionThis = ConnectionPoint(SW, source, false, -1);
-          else if(studOfB.X < 0 && studOfB.Y > 0)
-            foundConnectionThis = ConnectionPoint(NW, source, false, -1);
-          else if(studOfB.X > 0 && studOfB.Y < 0)
-            foundConnectionThis = ConnectionPoint(SE, source, false, -1);
-          else // if(stud.X > 0 && stud.Y > 0)
-            foundConnectionThis = ConnectionPoint(NE, source, false, -1);
-          foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
-          return false;
+    if(stud.X < cornerX+STUD_RADIUS && stud.Y < cornerY+STUD_RADIUS) {
+      // X check if it hits stud:
+      const double studX = HALF_STUD_DISTANCE;
+      const double studY = STUD_AND_A_HALF_DISTANCE;   
+      if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
+        // We are already connected:
+        if(connected) {
+          connected = false;
+          return true;
         }
+        // Compute corner:
+        connected = true;
+        if(studOfB.X < 0 && studOfB.Y < 0)
+          foundConnectionThis = ConnectionPoint(SW, source, false, -1);
+        else if(studOfB.X < 0 && studOfB.Y > 0)
+          foundConnectionThis = ConnectionPoint(NW, source, false, -1);
+        else if(studOfB.X > 0 && studOfB.Y < 0)
+          foundConnectionThis = ConnectionPoint(SE, source, false, -1);
+        else // if(stud.X > 0 && stud.Y > 0)
+          foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+        foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
+        return false;
+      }
 
-        // Might intersect - check corner case:
-        if(stud.X < cornerX ||
-          stud.Y < cornerY ||
-          STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-            connected = false;
-            return true;
-        }
+      // Might intersect - check corner case:
+      if(stud.X < cornerX ||
+        stud.Y < cornerY ||
+        STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
+          connected = false;
+          return true;
+      }
     }
     return false;
   }

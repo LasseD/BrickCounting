@@ -36,15 +36,15 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
 
 double MovingStud::angleToOriginalInterval(double a) const {
   if(maxAngle < minAngle) {
-    //std::cout << " min:" << minAngle << ", a:" << a << ", max:" << maxAngle << std::endl;
+    // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
     assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
     if(a <= maxAngle) {
-      std::cout << a << " <= MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
-      return -MAX_ANGLE_RADIANS + MAX_ANGLE_RADIANS * (maxAngle-a)/(maxAngle-M_PI);
+      //std::cout << "    " << a << " <= MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
+      return MAX_ANGLE_RADIANS - MAX_ANGLE_RADIANS * (maxAngle-a)/(maxAngle+M_PI);
     }
     else {
-      std::cout << a << " > MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
-      return MAX_ANGLE_RADIANS - MAX_ANGLE_RADIANS * (a-minAngle)/(M_PI-minAngle);
+      //std::cout << "    " << a << " > MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
+      return -MAX_ANGLE_RADIANS + MAX_ANGLE_RADIANS * (a-minAngle)/(M_PI-minAngle);
     }
   }
   else {
@@ -60,7 +60,7 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double a = angleToOriginalInterval(it->first);
     double b = angleToOriginalInterval(it->second);
-    std::cout << " transforming " << *it << " to " << a << ", " << b << std::endl;
+    //std::cout << "   Transforming " << *it << " to " << a << ", " << b << std::endl;
     assert(a <= b);
     ret.push_back(Interval(a,b));
   }
@@ -70,7 +70,6 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
 
   return ret;
 }
-
 
 /*
 A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.

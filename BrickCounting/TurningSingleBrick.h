@@ -100,17 +100,18 @@ public:
 
   template <int ADD_XY>
   IntervalList /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick) const {
+    std::cout << " " << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << " STARTED " << std::endl;
     // Compute intersections without interval information:
     IntervalList intersectionsWithMovingStud = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
-    std::cout << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << ":" << std::endl << "   " << intersectionsWithMovingStud << std::endl;
+    std::cout << " " << block << " VS MS BLOCK INTERSECTION FOUND: " << intersectionsWithMovingStud << std::endl;
 
     // Find intersect between min/max and intersection points:
     // Inverse intersectionsWithMovingStud:
     intersectionsWithMovingStud = math::intervalInverseRadians(intersectionsWithMovingStud, minAngle, maxAngle);
-    std::cout << "   Inversed: " << intersectionsWithMovingStud << std::endl;
+    std::cout << "  Inversed: " << intersectionsWithMovingStud << std::endl;
     // Transform intersectionsWithMovingStud to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
     intersectionsWithMovingStud = intervalsToOriginalInterval(intersectionsWithMovingStud);
-    std::cout << "   Transformed: " << intersectionsWithMovingStud << std::endl;
+    std::cout << "  Transformed: " << intersectionsWithMovingStud << std::endl;
 
     if(!allowClick)
       return intersectionsWithMovingStud;
@@ -128,18 +129,18 @@ public:
     block.getStudIntersectionsWithMovingStud(radius, minAngle, maxAngle, studAngles);
     std::vector<double> studAnglesTransformed;
     for(std::vector<double>::const_iterator it = studAngles.begin(); it != studAngles.end(); ++it) {
-      std::cout << " Adding stud at angle " << *it << ", in original interval: " << angleToOriginalInterval(*it) << std::endl;
+      std::cout << "  Adding stud at angle " << *it << ", in original interval: " << angleToOriginalInterval(*it) << std::endl;
       studAnglesTransformed.push_back(angleToOriginalInterval(*it));
     }
     std::sort(studAnglesTransformed.begin(), studAnglesTransformed.end());
     IntervalList studIntervals;
     double angleOfSnapRadius = atan(SNAP_DISTANCE/radius);
     for(std::vector<double>::const_iterator it = studAnglesTransformed.begin(); it != studAnglesTransformed.end(); ++it) {
-      std::cout << " Adding stud interval " << Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius) << std::endl;
+      std::cout << "  Adding stud interval " << Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius) << std::endl;
       studIntervals.push_back(Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius));
     }
 
-    std::cout << "AAFB RET " << intersectionsWithMovingStud << " | " << studIntervals << " = " << math::intervalOr(intersectionsWithMovingStud, studIntervals) << std::endl;
+    std::cout << " AAFB RET " << intersectionsWithMovingStud << " | " << studIntervals << " = " << math::intervalOr(intersectionsWithMovingStud, studIntervals) << std::endl;
     return math::intervalOr(intersectionsWithMovingStud, studIntervals);
   }
 };
@@ -172,6 +173,7 @@ struct TurningSingleBrick {
 
   template <int ADD_XY>
   bool /*TurningSingleBrick::*/allowableAnglesForBrick(const Brick &brick, IntervalList &l) const {
+    std::cout << "AAFB (allowableAnglesForBrick) " << brick << " STARTING!" << std::endl;
     IntervalList ret;
     ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
 
@@ -185,7 +187,7 @@ struct TurningSingleBrick {
       // Turning below:
       for(int i = 0; i < 8; ++i) {
         IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
-        std::cout << " aafb& " << brick << " vs " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << std::endl;
+        std::cout << "AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << std::endl;
         ret = math::intervalAnd(ret, listForStud);
         if(ret.empty())
           break;
@@ -240,7 +242,9 @@ struct TurningSingleBrick {
         Point &stud = studsOfB[j];
 
         for(int i = 0; i < 2; ++i) {
-          if(blocks[i].boxIntersectsInnerStud<ADD_XY>(stud)) {
+          Point pTranslated(stud);
+          blocks[i].movePointSoThisIsAxisAlignedAtOrigin(pTranslated);
+          if(blocks[i].boxIntersectsInnerStud<ADD_XY>(pTranslated)) {
             //std::cout << ":( above, block " << i << ": " << blocks[i] << " <> " << brick << std::endl;
             //assert(false);
             return true;
@@ -248,7 +252,7 @@ struct TurningSingleBrick {
         }
         for(int i = 0; i < 4; ++i) {
           if(fans[i].intersectsStud(stud)) {
-            //std::cout << ":( Above, fan " << i << ": " << fans[i] << " intersects " << brick << std::endl;
+            //std::cout << "Above, fan " << i << ": " << fans[i] << " intersects " << brick << std::endl;
             //assert(false);
             return true;
           }
@@ -269,6 +273,7 @@ struct TurningSingleBrickInvestigator {
     if(configurationSCCI == connectionPair.P1.first.configurationSCCI) {
       std::swap(this->connectionPair.P1,this->connectionPair.P2);
     }
+    assert(this->connectionPair.P1.first.configurationSCCI <= this->connectionPair.P2.first.configurationSCCI);
   }
 
   template <int ADD_XY>
@@ -291,13 +296,14 @@ struct TurningSingleBrickInvestigator {
 
       IntervalList joiner;
       if(!tsb.allowableAnglesForBrick<ADD_XY>(b, joiner)) {
-        std::cout << "NOOO!" << std::endl;
+        std::cout << "----------------- STOPPING ALLOWABLE ANGLES ----------------------" << std::endl;
         return false;
       }
       std::cout << "Joining allowable angles for " << b << ": " << ret << " & " << joiner << " = " << math::intervalAnd(ret,joiner) << std::endl;
       ret = math::intervalAnd(ret,joiner);
     }
     l = ret;
+    std::cout << "----------------- ENDING ALLOWABLE ANGLES ----------------------" << std::endl;
     return true;
   }
 

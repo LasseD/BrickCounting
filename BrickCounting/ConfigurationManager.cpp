@@ -138,8 +138,8 @@ void ConfigurationManager::test() {
 
   std::ofstream os;
   os.open("abe.txt", std::ios::out);
-  //runForCombination(v2, v, -1, os);//*/
-  
+  runForCombination(v2, v, -1, os);//*/
+  /*
   SingleConfigurationManager sm(v2, os);
   std::vector<IConnectionPoint> pools;
 
@@ -156,5 +156,5 @@ void ConfigurationManager::test() {
   pairs.push_back(IConnectionPair(icp1,icp2));
   pairs.push_back(IConnectionPair(icp3,icp4));
 
-  sm.run(pairs, pools, pools, NULL, 0);
+  sm.run(pairs, pools, pools, NULL, 0);//*/
 }

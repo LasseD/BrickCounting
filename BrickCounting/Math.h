@@ -29,6 +29,7 @@ typedef std::pair<Point,Point> LineSegment;
 std::ostream& operator<<(std::ostream &os, const LineSegment& l);
 
 namespace math {
+  bool eqEpsilon(double a, double b);
   double round(double number);
   int signum(double d);
   double abs(double d);
@@ -55,7 +56,7 @@ namespace math {
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
-  int findCircleCircleIntersections(const double r, const Point &p, double pr, Point &i1, Point &i2); // Actual primitive
+  int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2); // Actual primitive
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
 
   /*
