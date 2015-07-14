@@ -78,7 +78,12 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double a = angleToOriginalInterval(it->first);
     double b = angleToOriginalInterval(it->second);
-    assert(a <= b);
+#ifdef _DEBUG
+    if(a > b) {
+      std::cout << "ERROR: " << a << " > " << b << " IN MovingStud::intervalsToOriginalInterval!" << std::endl;
+      assert(false);
+    }
+#endif
     ret.push_back(Interval(a,b));
   }
     
@@ -134,21 +139,21 @@ std::ostream& operator<<(std::ostream &os, const MovingStud& f) {
   return os;
 }
 
-Point TurningSingleBrick::createBricksReturnTranslation(const Configuration &configuration, const IConnectionPair &connectionPair) {
+void TurningSingleBrick::createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair) {
   int prevBrickI = connectionPair.P1.first.configurationSCCI;
   const Brick &prevOrigBrick = configuration.origBricks[prevBrickI];
   const ConnectionPoint &prevPoint = connectionPair.P1.second;
   const ConnectionPoint &currPoint = connectionPair.P2.second;
   Brick prevBrick(prevOrigBrick, connectionPair.P1.second.brick);
-  Point prevStud = prevBrick.getStudPosition(prevPoint.type);
+  studTranslation = prevBrick.getStudPosition(prevPoint.type);
 
   double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
   int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
   RectilinearBrick rb;
   blocks[0] = Brick(rb, currPoint, Point(0,0), angle-MAX_ANGLE_RADIANS, level);
-  blocks[1] = Brick(rb, currPoint, Point(0,0), angle+MAX_ANGLE_RADIANS, level);    
-  return prevStud;
+  blocks[1] = Brick(rb, currPoint, Point(0,0), angle+MAX_ANGLE_RADIANS, level);
+  blockAbove = Brick(rb, currPoint, Point(0,0), angle, level);
 }
 
 void TurningSingleBrick::createMovingStuds() {

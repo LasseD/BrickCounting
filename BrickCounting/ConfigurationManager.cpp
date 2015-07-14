@@ -29,7 +29,7 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
       assert(v.back().check(fatSCC));
     v.push_back(fatSCC);
     runForCombination(v, combinationType, i, os);
-  }  
+  }
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
@@ -122,18 +122,15 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  //v.push_back(2);
-  v.push_back(2);
+  v.push_back(3);
   v.push_back(1);
-  v.push_back(1);
+  //v.push_back(1);
 
   //runForCombinationType(v, 3);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][1]);
+  v2.push_back(sccs[2][7]);
   v2.push_back(sccs[0][0]);
-  v2.push_back(sccs[0][0]);
-  //v2.push_back(sccs[0][0]);
   //v2.push_back(sccs[0][0]);
 
   std::ofstream os;
@@ -143,15 +140,14 @@ void ConfigurationManager::test() {
   SingleConfigurationManager sm(v2, os);
   std::vector<IConnectionPoint> pools;
 
-  //  ICP[BI[scc=1,1,0],BNW]<>ICP[BI[scc=0,0,1],ANW] ICP[BI[scc=0,0,1],BNE]<>ICP[BI[scc=0,0,2],ANW]:
   std::vector<IConnectionPair> pairs;
   RectilinearBrick b0;
   RectilinearBrick &b1 = sccs[1][1].otherBricks[0];
 
-  IConnectionPoint icp1(BrickIdentifier(1,1,0),ConnectionPoint(NE,b1,false,1));
-  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,true ,0));
-  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,false,0));
-  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NW,b0,true ,0));
+  IConnectionPoint icp1(BrickIdentifier(2,0,0),ConnectionPoint(SE,b0,true ,0));
+  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NE,b0,false,0));
+  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(SE,b0,true ,0));
+  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,false,0));
 
   pairs.push_back(IConnectionPair(icp1,icp2));
   pairs.push_back(IConnectionPair(icp3,icp4));

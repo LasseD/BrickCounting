@@ -37,12 +37,12 @@ struct ConnectionPoint {
 std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p);
 
 struct BrickIdentifier {
-  unsigned long sccI; // In SCC list imported from file.
-  int sccBrickI; // In SCC.
+  unsigned long sccInFile; // In SCC list imported from file.
+  int brickIndexInScc; // In SCC.
   int configurationSCCI;
   BrickIdentifier();
   BrickIdentifier(const BrickIdentifier &bi);
-  BrickIdentifier(unsigned long sccI, int sccBrickI, int configurationSCCI);
+  BrickIdentifier(unsigned long sccInFile, int brickIndexInScc, int configurationSCCI);
 
   bool operator<(const BrickIdentifier &bi) const;
   bool operator!=(const BrickIdentifier &bi) const;

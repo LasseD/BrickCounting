@@ -42,6 +42,12 @@ private:
 
 public:
   AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os);
+  AngleMapping& operator=(const AngleMapping &tmp) {
+    assert(false); // Assignment operator should not be used.
+    std::vector<IConnectionPair> cs;
+    AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os);
+    return *ret;
+  }
   ~AngleMapping();
 
   /*

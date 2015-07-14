@@ -25,6 +25,12 @@ class ConfigurationEncoder {
 
 public:
   ConfigurationEncoder(const std::vector<FatSCC> &combination);
+  ConfigurationEncoder& operator=(const ConfigurationEncoder &) {
+    assert(false); // Assignment operator should not be used.
+    std::vector<FatSCC> c;
+    ConfigurationEncoder *cn = new ConfigurationEncoder(c);
+    return *cn;
+  }
 
   /*
   Setup:

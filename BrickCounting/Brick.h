@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <iostream>
 
-//#define _TRACE 1
+#define _TRACE 1
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
@@ -126,7 +126,6 @@ public:
       }
 #ifdef _TRACE
       std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
-      std::cout << "    CUT: " << math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
 #endif
       if(!retInitiated) {
         ret = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);

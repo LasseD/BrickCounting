@@ -144,28 +144,28 @@ std::ostream& operator<<(std::ostream &os, const ConnectionPoint& p) {
 
 BrickIdentifier::BrickIdentifier() {}
 
-BrickIdentifier::BrickIdentifier(const BrickIdentifier &bi) : sccI(bi.sccI), sccBrickI(bi.sccBrickI), configurationSCCI(bi.configurationSCCI) {}
+BrickIdentifier::BrickIdentifier(const BrickIdentifier &bi) : sccInFile(bi.sccInFile), brickIndexInScc(bi.brickIndexInScc), configurationSCCI(bi.configurationSCCI) {}
 
-BrickIdentifier::BrickIdentifier(unsigned long sccI, int sccBrickI, int configurationSCCI) : sccI(sccI), sccBrickI(sccBrickI), configurationSCCI(configurationSCCI) {}
+BrickIdentifier::BrickIdentifier(unsigned long sccInFile, int brickIndexInScc, int configurationSCCI) : sccInFile(sccInFile), brickIndexInScc(brickIndexInScc), configurationSCCI(configurationSCCI) {}
 
 bool BrickIdentifier::operator<(const BrickIdentifier &bi) const {
-  if(sccI != bi.sccI)      
-    return sccI < bi.sccI;
-  if(sccBrickI != bi.sccBrickI)      
-    return sccBrickI < bi.sccBrickI;
+  if(sccInFile != bi.sccInFile)      
+    return sccInFile < bi.sccInFile;
+  if(brickIndexInScc != bi.brickIndexInScc)      
+    return brickIndexInScc < bi.brickIndexInScc;
   return configurationSCCI < bi.configurationSCCI;
 }
 
 bool BrickIdentifier::operator!=(const BrickIdentifier &bi) const {
-  return sccI != bi.sccI || sccBrickI != bi.sccBrickI || configurationSCCI != bi.configurationSCCI;
+  return sccInFile != bi.sccInFile || brickIndexInScc != bi.brickIndexInScc || configurationSCCI != bi.configurationSCCI;
 }
 
 bool BrickIdentifier::operator==(const BrickIdentifier &bi) const {
-  return sccI == bi.sccI && sccBrickI == bi.sccBrickI && configurationSCCI == bi.configurationSCCI;
+  return sccInFile == bi.sccInFile && brickIndexInScc == bi.brickIndexInScc && configurationSCCI == bi.configurationSCCI;
 }
 
 std::ostream& operator<<(std::ostream &os, const BrickIdentifier& bi) {
-  os << "BI[scc=" << bi.sccI << "," << bi.sccBrickI << "," << bi.configurationSCCI << "]";
+  os << "BI[scc=" << bi.sccInFile << "," << bi.brickIndexInScc << "," << bi.configurationSCCI << "]";
   return os;
 }
 

@@ -152,11 +152,13 @@ std::ostream& operator<<(std::ostream &os, const MovingStud& ms);
 
 struct TurningSingleBrick {
   Brick blocks[2];
+  Brick blockAbove;
   Fan fans[4];
-  MovingStud movingStuds[8];
+  MovingStud movingStuds[NUMBER_OF_STUDS];
+  Point studTranslation;
   //MovingStud movingAntiStuds[4];
 
-  Point createBricksReturnTranslation(const Configuration &configuration, const IConnectionPair &connectionPair);
+  void createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair);
   void createMovingStuds();
 
   template <int ADD_XY>
@@ -175,6 +177,31 @@ struct TurningSingleBrick {
   }
 
   template <int ADD_XY>
+  void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAbove(const Brick &brick, IntervalList &l) const {
+    IntervalList ret;
+    ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+
+    Point studsOfBrick[NUMBER_OF_STUDS];
+    brick.getStudPositions(studsOfBrick);
+    // Create new moving studs for the brick and check those:
+    for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
+      // Create moving stud:
+      double midAngle = math::angleOfPoint(studsOfBrick[i]);
+      double minAngle = midAngle - MAX_ANGLE_RADIANS;
+      if(minAngle < -M_PI)
+        minAngle += 2*M_PI;
+      double maxAngle = midAngle + MAX_ANGLE_RADIANS;
+      if(maxAngle > M_PI)
+        maxAngle -= 2*M_PI;
+      MovingStud ms(math::norm(studsOfBrick[i]), minAngle, maxAngle);
+
+      IntervalList listForStud = ms.allowableAnglesForBlock<ADD_XY>(blockAbove, i >= 4); // The last 4 studs are outer and thus allowing clicking.
+      ret = math::intervalAnd(ret, listForStud);
+    }
+    l = ret;
+  }
+
+  template <int ADD_XY>
   bool /*TurningSingleBrick::*/allowableAnglesForBrick(const Brick &brick, IntervalList &l) const {
 #ifdef _TRACE
     std::cout << "AAFB (allowableAnglesForBrick) " << brick << " STARTING!" << std::endl;
@@ -185,12 +212,12 @@ struct TurningSingleBrick {
     int8_t level = blocks[0].level;
     if(brick.level == level) {
       // Same level:
-      // TODO! FIXME! USE LOGIC FROM OTHER NEIGHBOUR LEVEL
+      // TODO! FIXME! USE 2 * BRICK POIS VS FANS
       return false;
     }
     else if(level + 1 == brick.level) {
       // Turning below:
-      for(int i = 0; i < 8; ++i) {
+      for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
         IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
 #ifdef _TRACE
         std::cout << "AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << std::endl;
@@ -206,8 +233,8 @@ struct TurningSingleBrick {
     }
     else if(level - 1 == brick.level) {
       // Turning above:
-      // TODO! FIXME! USE 2 * BRICK POIS VS FANS
-      return false;
+      allowableAnglesForBrickTurningAbove<ADD_XY>(brick, l);
+      return true;
     }
     l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
     return true;
@@ -237,7 +264,7 @@ struct TurningSingleBrick {
     }
     else if(level + 1 == brick.level) {
       // Turning below:
-      for(int i = 0; i < 8; ++i) {
+      for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
         if(movingStuds[i].intersectsBlock<ADD_XY>(brick)) {
 #ifdef _TRACE
           std::cout << ":( below, moving stud " << i << ": " << movingStuds[i] << " intersects " << brick << std::endl;
@@ -297,7 +324,7 @@ struct TurningSingleBrickInvestigator {
 #endif
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
-    Point translate = tsb.createBricksReturnTranslation(configuration, connectionPair);
+    tsb.createBricksAndStudTranslation(configuration, connectionPair);
     tsb.createFans<ADD_XY>();
     tsb.createMovingStuds();
 
@@ -307,8 +334,8 @@ struct TurningSingleBrickInvestigator {
     // Check all possible collision bricks:
     for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
       Brick b = configuration.bricks[*it].b;
-      b.center.X -= translate.X;
-      b.center.Y -= translate.Y;
+      b.center.X -= tsb.studTranslation.X;
+      b.center.Y -= tsb.studTranslation.Y;
 
       IntervalList joiner;
       if(!tsb.allowableAnglesForBrick<ADD_XY>(b, joiner)) {
@@ -334,22 +361,17 @@ struct TurningSingleBrickInvestigator {
   */
   template <int ADD_XY>
   bool /*TurningSingleBrickInvestigator::*/isClear(const std::vector<int> &possibleCollisions) const {
-#ifdef _TRACE
-    std::cout << " Configuration: " << configuration << std::endl;
-    std::cout << " Connection: " << connectionPair << std::endl;
-#endif
-
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
-    Point translate = tsb.createBricksReturnTranslation(configuration, connectionPair);
+    tsb.createBricksAndStudTranslation(configuration, connectionPair);
     tsb.createFans<ADD_XY>();
     tsb.createMovingStuds();
 
     // Check all possible collision bricks:
     for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
       Brick b = configuration.bricks[*it].b;
-      b.center.X -= translate.X;
-      b.center.Y -= translate.Y;
+      b.center.X -= tsb.studTranslation.X;
+      b.center.Y -= tsb.studTranslation.Y;
 
       if(tsb.intersectsBrick<ADD_XY>(b)) {
         return false;

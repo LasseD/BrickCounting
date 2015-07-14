@@ -209,8 +209,8 @@ struct Configuration : public LDRPrinter {
           if(!connected) {
             return false;
           }
-          pi.brickI = ib.bi.sccBrickI;
-          pj.brickI = jb.bi.sccBrickI;
+          pi.brickI = ib.bi.brickIndexInScc;
+          pj.brickI = jb.bi.brickIndexInScc;
           IConnectionPair c(IConnectionPoint(ib.bi, pi), IConnectionPoint(jb.bi, pj));
           found.push_back(c);
         }
@@ -240,7 +240,7 @@ struct Configuration : public LDRPrinter {
     std::vector<int> ret;
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick ib = bricks[i];
-      if(exclude.configurationSCCI == ib.bi.configurationSCCI && exclude.sccBrickI == ib.bi.sccBrickI)
+      if(exclude.configurationSCCI == ib.bi.configurationSCCI && exclude.brickIndexInScc == ib.bi.brickIndexInScc)
         continue;
       const Brick b = ib.b;
       const int8_t levelI = b.level;

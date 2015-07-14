@@ -240,12 +240,12 @@ namespace math {
     IntervalList::const_iterator itA = a.begin();
     IntervalList::const_iterator itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
-      // B ends before A:
+      // B ends before A starts:
       if(itB->second < itA->first) {
         ++itB;
         continue;
       }
-      // A ends before B:
+      // A ends before B starts:
       if(itA->second < itB->first) {
         ++itA;
         continue;
@@ -269,13 +269,13 @@ namespace math {
     IntervalList::const_iterator itA = a.begin();
     IntervalList::const_iterator itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
-      // B ends before A:
+      // B ends before A starts:
       if(itB->second < itA->first) {
         ret.push_back(*itB);
         ++itB;
         continue;
       }
-      // A ends before B:
+      // A ends before B starts:
       if(itA->second < itB->first) {
         ret.push_back(*itA);
         ++itA;
@@ -335,31 +335,37 @@ namespace math {
     }
     else {
       // First section:
-      if(it->first > -M_PI)
-        ret.push_back(Interval(-M_PI, it->first));
-      double last = it->second;
-      ++it;
-      for(; it != l.end() && it->first < max; ++it) {
-        ret.push_back(Interval(last, it->first));
-        last = it->second;
+      if(it->first >= min) // Nothing in first section:
+        ret.push_back(Interval(-M_PI, max));
+      else {
+        if(it->first > -M_PI)
+          ret.push_back(Interval(-M_PI, it->first));
+        double last = it->second;
+        ++it;
+        for(; it != l.end() && it->first < max; ++it) {
+          ret.push_back(Interval(last, it->first));
+          last = it->second;
+        }
+        if(last != max)
+          ret.push_back(Interval(last, max));
       }
-      if(last != max)
-        ret.push_back(Interval(last, max));
+
       // Second section:
-      if(it == l.end()) {
+      if(it == l.end()) { // Nothing in second section:
         ret.push_back(Interval(min, M_PI));
-        return ret;
       }
-      if(it->first > min)
-        ret.push_back(Interval(min, it->first));
-      last = it->second;
-      ++it;
-      for(; it != l.end(); ++it) {
-        ret.push_back(Interval(last, it->first));
-        last = it->second;
+      else {
+        if(it->first > min)
+          ret.push_back(Interval(min, it->first));
+        double last = it->second;
+        ++it;
+        for(; it != l.end(); ++it) {
+          ret.push_back(Interval(last, it->first));
+          last = it->second;
+        }
+        if(last != M_PI)
+          ret.push_back(Interval(last, M_PI));
       }
-      if(last != M_PI)
-        ret.push_back(Interval(last, M_PI));
     }
     return ret;
   }

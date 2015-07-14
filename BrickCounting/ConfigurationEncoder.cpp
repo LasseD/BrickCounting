@@ -62,11 +62,11 @@ void ConfigurationEncoder::rotateSCC(int i, std::vector<ConnectionPoint> *connec
 #endif
     if(rotateFirstComponent) {
       c.first.second = rcp;
-      c.first.first.sccBrickI = rcpi;
+      c.first.first.brickIndexInScc = rcpi;
     }
     else {
       c.second.second = rcp;
-      c.second.first.sccBrickI = rcpi;
+      c.second.first.brickIndexInScc = rcpi;
     }
 #ifdef _TRACE
     std::cout << "->" << c << std::endl;
@@ -158,7 +158,7 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
           rotateSCC(fatSccI2, connectionPoints, connectionMaps);
           // Update already extracted connection data:
           p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
-          ip2.first.sccBrickI = fatSccs[fatSccI2].getBrickIndex(p2.brick);
+          ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
         }
 #ifdef _TRACE
         std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
@@ -203,8 +203,8 @@ uint64_t ConfigurationEncoder::encodeList(const std::vector<IConnectionPair> &to
     const BrickIdentifier &i1 =ip1.first;
     const BrickIdentifier &i2 =ip2.first;
     // Permute indices!
-    int aboveI = 6*perm[i1.configurationSCCI] + i1.sccBrickI;
-    int belowI = 6*perm[i2.configurationSCCI] + i2.sccBrickI;
+    int aboveI = 6*perm[i1.configurationSCCI] + i1.brickIndexInScc;
+    int belowI = 6*perm[i2.configurationSCCI] + i2.brickIndexInScc;
     const ConnectionPoint &cpAbove = ip1.second;
     const ConnectionPoint &cpBelow = ip2.second;
     // Perform encoding:
@@ -329,11 +329,11 @@ void ConfigurationEncoder::decode(uint64_t encoded, IConnectionPairList &list) c
 
     // Reconstruct IConnectionPair:
     const BrickIdentifier &ib1 = compressedToIdentifier[cp1Index];
-    RectilinearBrick rb1 = fatSccs[ib1.configurationSCCI][ib1.sccBrickI];
-    ConnectionPoint cp1(cp1Type, rb1, true, ib1.sccBrickI);
+    RectilinearBrick rb1 = fatSccs[ib1.configurationSCCI][ib1.brickIndexInScc];
+    ConnectionPoint cp1(cp1Type, rb1, true, ib1.brickIndexInScc);
     const BrickIdentifier &ib2 = compressedToIdentifier[cp2Index];
-    RectilinearBrick rb2 = fatSccs[ib2.configurationSCCI][ib2.sccBrickI];
-    ConnectionPoint cp2(cp2Type, rb2, false, ib2.sccBrickI);
+    RectilinearBrick rb2 = fatSccs[ib2.configurationSCCI][ib2.brickIndexInScc];
+    ConnectionPoint cp2(cp2Type, rb2, false, ib2.brickIndexInScc);
 
     IConnectionPair c(IConnectionPoint(ib1,cp1),IConnectionPoint(ib2,cp2));
     list.insert(c);

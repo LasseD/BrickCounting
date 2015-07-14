@@ -37,6 +37,12 @@ private:
 
 public:
   SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os);
+  SingleConfigurationManager& operator=(const SingleConfigurationManager &tmp) {
+    assert(false); // Assignment operator should not be used.
+    std::vector<FatSCC> c;
+    SingleConfigurationManager *ret = new SingleConfigurationManager(c, tmp.os);
+    return *ret;
+  }
 
   void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize);
   void run();

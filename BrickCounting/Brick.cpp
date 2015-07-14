@@ -85,8 +85,8 @@ void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;//*/
   //*/
   /*
-  // 8 studs:
-  Point studs[8];
+  // Studs:
+  Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
   for(int i = 0; i < 8; ++i) {
   Point p = studs[i];

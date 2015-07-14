@@ -137,8 +137,11 @@ void SingleConfigurationManager::run() {
   time_t startTime, endTime;
   time(&startTime);
 
-#ifdef _TRACE
-  std::cout << "INIT SingleConfigurationManager::run()" << std::endl;
+#ifdef _DEBUG
+  std::cout << "INIT SingleConfigurationManager::run(";
+  for(unsigned int i = 0; i < combinationSize; ++i)
+    std::cout << combination[i] << " ";
+  std::cout << ")" << std::endl;
 #endif
 
   // Try all combinations!

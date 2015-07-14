@@ -41,9 +41,6 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
       angleSteps[i] = STEPS_3;
       break;
     }
-#ifdef _ANGLE
-    std::cout << "Angle type for angle " << i << ": " << angleTypes[i] << " => steps=" << angleSteps[i] << std::endl;
-#endif
   }
 
   if(numAngles > 3) {
@@ -93,22 +90,6 @@ void AngleMapping::setupAngleTypes() {
     fatSccSizes[i] = sccs[i].size;
   }
 
-#ifdef _ANGLE
-  std::cout << "Angle mappings of size " << numAngles << std::endl;
-  std::cout << " Connection counts: " << std::endl;
-  for(unsigned int i = 0; i < numAngles+1; ++i) {
-    std::cout << "  " << i << "->" << fatSccConnectionCounts[i] << std::endl;
-  }
-  std::cout << " Last connected to: " << std::endl;
-  for(unsigned int i = 0; i < numAngles+1; ++i) {
-    std::cout << "  " << i << "->" << lastConnectedTo[i] << std::endl;
-  }
-  std::cout << " Initial sizes (no merging): " << std::endl;
-  for(unsigned int i = 0; i < numAngles+1; ++i) {
-    std::cout << "  " << i << "->" << fatSccSizes[i] << std::endl;
-  }
-#endif
-
   // Angle types computed based on size of components on side of turn point:
   for(unsigned int i = 0; i < numAngles; ++i)
     angleTypes[i] = 3;
@@ -130,22 +111,6 @@ void AngleMapping::setupAngleTypes() {
     }
   }
 
-#ifdef _ANGLE
-  std::cout << "After first round of minimizing " << std::endl;
-  std::cout << " angleTypes (initially all 3): " << std::endl;
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    std::cout << "  " << i << "->" << angleTypes[i] << std::endl;
-  }
-  std::cout << " Current sizes: " << std::endl;
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    std::cout << "  " << i << "->" << fatSccSizes[i] << std::endl;
-  }
-  std::cout << " Number of connections: " << std::endl;
-  for(unsigned int i = 0; i < numAngles+1; ++i) {
-    std::cout << "  " << i << "->" << fatSccConnectionCounts[i] << std::endl;
-  }
-#endif
-
   // Perform initial minimizing again:
   for(unsigned int i = 0; i < numAngles*2; ++i) {
     int angleI = i/2;
@@ -153,14 +118,6 @@ void AngleMapping::setupAngleTypes() {
     if(fatSccConnectionCounts[sccI] == 1)
       angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
   }
-
-#ifdef _ANGLE
-  std::cout << "After second round" << std::endl;
-  std::cout << " angleTypes: " << std::endl;
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    std::cout << "  " << i << "->" << angleTypes[i] << std::endl;
-  }
-#endif
 
   // Finally. Set angle types of locked connections to type 0:
   // First set the ones locked directly on the SCC:
@@ -170,9 +127,6 @@ void AngleMapping::setupAngleTypes() {
     const ConnectionPoint &p = points[i].second;
     if(sccs[sccI].angleLocked(p)) {
       angleTypes[angleI] = 0;
-#ifdef _TRACE
-      std::cout << "Locked angle on " << sccs[sccI] << " vs " << p << std::endl;
-#endif
     }
   }
   // Secondly, lock all touching connections:
@@ -187,15 +141,9 @@ void AngleMapping::setupAngleTypes() {
       if(sccI != sccJ)
         continue;
       const ConnectionPoint &pj = points[j].second;
-#ifdef _TRACE
-      std::cout << "Investigating " << pi << " & " << pj << std::endl;
-#endif
       if(pi.angleLocks(pj)) {
         angleTypes[angleI] = 0;
         angleTypes[angleJ] = 0;	
-#ifdef _TRACE
-        std::cout << "Locked angles " << pi << " & " << pj << std::endl;
-#endif
       }
     }
   }
@@ -290,12 +238,6 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   // Speed up using TSB:
   if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
     assert(steps == 407);
-#ifdef _TRACE
-    std::cout << "Using TSB to check quickly." << std::endl;
-    std::cout << "Angle types:" << std::endl;
-    for(unsigned int i = 0; i < numAngles; ++i)
-      std::cout << " " << i << ": " << angleTypes[i] << std::endl;      
-#endif
     const IConnectionPair icp(ip1,ip2);
 
     TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
@@ -304,7 +246,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         S[smlI+i] = true;
-      for(unsigned short i = 0; i < steps; ++i) {
+      /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
           std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " configuration: " << c2 << std::endl;	 
@@ -319,7 +261,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         M[smlI+i] = true;
-      for(unsigned short i = 0; i < steps; ++i) {
+      /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
       }//*/
@@ -328,7 +270,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         L[smlI+i] = true;
-      for(unsigned short i = 0; i < steps; ++i) {
+      /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
       }//*/
@@ -343,7 +285,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     IntervalList l;
     if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
-      std::cout << "Investigating S-mapping vs " << l << std::endl;
+      //std::cout << "Investigating S-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
@@ -371,7 +313,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     l.clear();
     if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
-      std::cout << "Investigating M-mapping vs " << l << std::endl;
+      //std::cout << "Investigating M-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
@@ -381,7 +323,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     l.clear();
     if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
-      std::cout << "Investigating L-mapping vs " << l << std::endl;
+      //std::cout << "Investigating L-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
@@ -402,8 +344,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       M[smlI+i] = c2.isRealizable< 0>(possibleCollisions, sccs[numAngles].size);
     if(!lDone)
       L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
-    ++boosts[3]; // no boost :(
   }
+  ++boosts[3]; // no boost :(
 }
 
 void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
