@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include <iostream>
 
+//#define _TRACE 1
+
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
 // 4mm in units:
@@ -174,20 +176,13 @@ public:
    */
   template <int ADD_XY>
   IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle) const {
-    IntervalList ret;
     Point p(0,0);
     movePointSoThisIsAxisAlignedAtOrigin(p);
     if(boxIntersectsInnerStud<ADD_XY>(p)) {
-      std::cout << "  QUICK FIND INTERSECTS<" << ADD_XY << ">! " << center << " VS " << p << std::endl;
-      if(minAngle < maxAngle) {
-        ret.push_back(Interval(minAngle,maxAngle));
-      }
-      else {
-        ret.push_back(Interval(-M_PI,maxAngle));
-        ret.push_back(Interval(minAngle,M_PI));
-      }        
+      return math::toIntervalsRadians(minAngle, maxAngle);
     }
-    return ret;
+    IntervalList empty;
+    return empty;
   }
 
   /*

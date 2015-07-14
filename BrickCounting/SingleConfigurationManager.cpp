@@ -7,6 +7,9 @@
 #include <time.h>
 
 SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), problematic(0) {
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    angleMappingBoosts[i] = 0;
+  }
 #ifdef _TRACE
   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
   for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
@@ -89,6 +92,9 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
 
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
+    for(int i = 0; i < BOOST_STAGES; ++i) {
+      angleMappingBoosts[i] += angleMapping.boosts[i];
+    }
     return;
   }
 
@@ -164,6 +170,13 @@ void SingleConfigurationManager::run() {
   std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " models found: " << models << std::endl;
+#endif
+#ifdef _DEBUG
+  // Print boost in debug!
+  std::cout << "Boosts performed in AngleMappings:" << std::endl;
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    std::cout << " BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
+  }
 #endif
   //#ifdef _INFO
   if(seconds <= 1)

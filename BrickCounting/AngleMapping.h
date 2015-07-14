@@ -11,6 +11,7 @@
 #define STEPS_1 203
 #define STEPS_2 370
 #define STEPS_3 538
+#define BOOST_STAGES 4
 
 typedef unsigned long long counter;
 
@@ -35,6 +36,7 @@ public:
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
   const ConfigurationEncoder &encoder;
   uint64_t rectilinearIndex;
+  counter boosts[BOOST_STAGES];
 private:
   std::ofstream &os;
 

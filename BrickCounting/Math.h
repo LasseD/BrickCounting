@@ -54,6 +54,7 @@ namespace math {
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
   IntervalList collapseIntervals(const IntervalList &l);
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
+  IntervalList toIntervalsRadians(double min, double max);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 

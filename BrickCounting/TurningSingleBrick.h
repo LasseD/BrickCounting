@@ -113,12 +113,11 @@ public:
 
     if(!allowClick)
       return ret;
+
     if(radius < EPSILON) {
       // If the MS has radius=0, then it can turn anywhere in case of click:
       if(block.outerStudIntersectsStudAtOrigin()) {
-        IntervalList fullInterval;
-        fullInterval.push_back(Interval(-M_PI, M_PI));
-        return fullInterval;
+        return math::toIntervalsRadians(minAngle, maxAngle);
       }
     }
 

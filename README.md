@@ -25,7 +25,13 @@
 
 ## Current optimization progress
 
-The times are measured (in seconds) by finding models with 3 bricks with the program running in debug mode. "i7" is a Lenovo Thinkpad T440p from 2014 while "i5" is a Sony Vaio VPCEB4X1E from 2011 running in low performance power saving mode. 
+The times are measured (in seconds) by finding models with the program running in debug mode. "i7" is a Lenovo Thinkpad T440p from 2014 while "i5" is a Sony Vaio VPCEB4X1E from 2011 running in low performance power saving mode. 
+
+Different tests are used to give insight into the performance improvements of the various optimizations.
+
+### Test with 3 bricks
+
+The following improvements are for finding all models with 3 bricks. Notice that no models are found.
 
 | Optimization           | i7    | i5  |
 |:-----------------------|------:|----:|
@@ -37,12 +43,19 @@ The times are measured (in seconds) by finding models with 3 bricks with the pro
 | Don't consider connecting brick to be intersectable | - | 62 |
 | Split handling of the SML sets and detect early if a model is impossible | - | 50 |
 | Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | 6 | 11 |
-| Improve TSB handling by using SML-mapping for moving studs intersecting bricks | - | - |
+
+### Test with 4 bricks
+
+The following improvements are for finding models with 4 bricks for a given configuration. This configuration consists of an SCC with two bricks connected by 6 studs, and two SCCs with a single brick each.
+
+| Optimization           | i7    | i5  |
+|:-----------------------|------:|----:|
+| The best performance achieved in the test above | 49 | - |
+| Improve TSB handling by using SML-mapping for moving studs intersecting bricks | 49 | - |
 | Improve TSB handling by using SML-mapping for moving bricks intersecting studs | - | - |
 | Improve TSB handling by using SML-mapping for moving bricks intersecting bricks | - | - |
 | Modify the SML-result set to accomodate intervals from TSBs | - | - |
 | Handle any single brick SCCs separately - not just the last one | - | - |
-
 
 ## Geometry:
 

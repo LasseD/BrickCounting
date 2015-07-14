@@ -290,16 +290,10 @@ struct Configuration : public LDRPrinter {
     double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angleToRadians();
     int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
 
-#ifdef _TRACE
-    std::cout << "Configuration::add(" << scc << "," << c << ")" << std::endl;
-#endif
     RectilinearBrick rb;
     origBricks[currBrickI] = Brick(rb, currPoint, prevStud, angle, level);
     for(int i = 0; i < scc.size; rb=scc.otherBricks[i++]) {
       Brick brick(rb, currPoint, prevStud, angle, level);
-#ifdef _TRACE
-      std::cout << " ADD brick " << brick << std::endl;
-#endif
 
       IBrick ib(rb, brick, BrickIdentifier(scc.index, i, currBrickI));
       bricks[bricksSize++] = ib;
@@ -308,9 +302,6 @@ struct Configuration : public LDRPrinter {
 
   Configuration(FatSCC const * const sccs, const std::vector<Connection> &cs) : bricksSize(0) {
     initSCC(sccs[0]);
-#ifdef _TRACE
-    std::cout << "Constructing conf. base: " << sccs[0] << std::endl;
-#endif
     std::set<Connection> remainingConnections;
     for(std::vector<Connection>::const_iterator it = cs.begin(); it != cs.end(); ++it) {
       remainingConnections.insert(*it);

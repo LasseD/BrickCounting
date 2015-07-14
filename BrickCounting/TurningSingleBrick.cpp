@@ -157,9 +157,13 @@ void TurningSingleBrick::createMovingStuds() {
   Point pois2[NUMBER_OF_STUDS];
   blocks[1].getStudPositions(pois2);
   for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
+    double radius = math::norm(pois1[i]);
+    if(radius < EPSILON) {
+      movingStuds[i] = MovingStud(0, -M_PI, M_PI);
+      continue;
+    }
     double minAngle = math::angleOfPoint(pois1[i]);
     double maxAngle = math::angleOfPoint(pois2[i]);
-    double radius = math::norm(pois1[i]);
     assert(math::abs(math::norm(pois2[i]) - radius) < EPSILON);
     movingStuds[i] = MovingStud(radius, minAngle, maxAngle);
   }

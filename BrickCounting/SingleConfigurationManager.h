@@ -24,6 +24,7 @@ private:
   FatSCC combination[6];
   ConfigurationEncoder encoder;
   std::ofstream &os;
+  counter angleMappingBoosts[BOOST_STAGES];
   
   //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
   //std::set<FatSCC> foundSCCs; // For debugging only!

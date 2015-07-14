@@ -94,6 +94,6 @@ int main(int, char**) {
   //mgr.runForSize(5);
   //mgr.runForSize(6);
 
-  system("pause");
+  //system("pause");
   return 0;
 }

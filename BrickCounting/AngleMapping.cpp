@@ -6,6 +6,9 @@
 #include <time.h>
 
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os) : numAngles(numScc-1), numBricks(0), encoder(encoder), os(os) {
+  // Boosts:
+  for(int i = 0; i < BOOST_STAGES; ++i)
+    boosts[i] = 0;
   // Simple copying:
   for(int i = 0; i < numScc; ++i) {
     this->sccs[i] = sccs[i];
@@ -279,8 +282,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   bool sDone = noS;
   bool mDone = noM;
   bool lDone = noL;
-  if(sDone && mDone && lDone)
+  if(sDone && mDone && lDone) {
+    ++boosts[0];
     return;
+  }
 
   // Speed up using TSB:
   if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
@@ -329,8 +334,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       }//*/
       lDone = true;
     }
-    if(sDone && mDone && lDone)
+    if(sDone && mDone && lDone) {
+      ++boosts[1];
       return;
+    }
 
     // Check using TSB:
     IntervalList l;
@@ -356,9 +363,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
             std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "-");
           }
           std::cout << std::endl;
-          assert(false);
+          assert(false); int* kill = NULL; kill[0] = 0;
         }
-        //assert(S[smlI+i] == c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size));
       }//*/
       sDone = true;
     }
@@ -382,15 +388,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       }//*/
       lDone = true;
     }
-    if(sDone && mDone && lDone)
+    if(sDone && mDone && lDone) {
+      ++boosts[2];
       return;
+    }
   }
-
-  /* // Uncomment for quicker processing time.
-  for(unsigned int i = 0; i < steps; ++i) S[smlI+i] = false;
-  for(unsigned int i = 0; i < steps; ++i) M[smlI+i] = false;
-  for(unsigned int i = 0; i < steps; ++i) L[smlI+i] = false;
-  return;//*/
 
   for(unsigned short i = 0; i < steps; ++i) {
     Configuration c2 = getConfiguration(c, angleI, i);
@@ -400,6 +402,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       M[smlI+i] = c2.isRealizable< 0>(possibleCollisions, sccs[numAngles].size);
     if(!lDone)
       L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
+    ++boosts[3]; // no boost :(
   }
 }
 

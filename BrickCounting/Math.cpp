@@ -317,13 +317,7 @@ namespace math {
   IntervalList intervalInverseRadians(const IntervalList &l, double min, double max) {
     IntervalList ret;
     if(l.empty()) {
-      if(min < max)
-        ret.push_back(Interval(min, max));
-      else {
-        ret.push_back(Interval(-M_PI, max));
-        ret.push_back(Interval(min, M_PI));
-      }
-      return ret;
+      return toIntervalsRadians(min, max);
     }
 
     IntervalList::const_iterator it = l.begin();
@@ -408,6 +402,18 @@ namespace math {
       else
         array[sizeArray-1-i] = true;
     }
+  }
+
+  IntervalList toIntervalsRadians(double min, double max) {
+    IntervalList ret;
+    if(min < max) {
+      ret.push_back(Interval(min, max));
+    }
+    else {
+      ret.push_back(Interval(-M_PI, max));
+      ret.push_back(Interval(min, M_PI));
+    }
+    return ret;
   }
 }
 
