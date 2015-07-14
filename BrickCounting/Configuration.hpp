@@ -229,7 +229,6 @@ struct Configuration : public LDRPrinter {
         bool connected;
         ConnectionPoint pi, pj;
         if(ib.b.intersects<ADD_XY>(jb.b, jb.rb, connected, pj, pi, ib.rb) && !connected) {
-          //std::cout << "Intersect: " << ib.b << " & " << jb.b << std::endl;
           return false;
         }
       }

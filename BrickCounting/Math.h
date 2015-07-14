@@ -47,8 +47,9 @@ namespace math {
    */
   double normalizeAngle(double a);
 
+  bool intervalEquals(const IntervalList &a, const IntervalList &b);
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
-  IntervalList intervalAnd(double a1, double a2, double b1, double b2);
+  IntervalList intervalAndRadians(double a1, double a2, double b1, double b2);
   IntervalList intervalInverseRadians(const IntervalList &l, double min, double max);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
   IntervalList collapseIntervals(const IntervalList &l);
@@ -64,6 +65,5 @@ namespace math {
    */
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax);
 }
-
 
 #endif // MATH_H

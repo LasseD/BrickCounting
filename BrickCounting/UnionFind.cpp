@@ -178,7 +178,6 @@ void SimpleUnionFind::buildUnions(unsigned int positionI, Position &position, bo
 
   // Compute min in region:
   uint32_t unionI = v[positionIndex];
-  //std::cout << "Initial union for position index " << positionIndex << ": " << unionI << std::endl;
   assert(unionI < numUnions);
   for(unsigned int i = 0; i < numDimensions; ++i) {
     int oldPosition = position.p[i];

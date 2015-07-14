@@ -170,7 +170,7 @@ FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long
     ret = l5.deserialize(is, size);
     break;
   default:
-    std::cerr << "ERROR: StronglyConnectedConfigurationManager::loadFromFile() called on " << i << std::endl;
+    std::cout << "ERROR: StronglyConnectedConfigurationManager::loadFromFile() called on " << i << std::endl;
     return NULL;
   }
   is.close();

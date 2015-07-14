@@ -74,9 +74,14 @@ namespace math {
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax) {
     Point i1, i2;
     int newIntersections = math::findCircleLineIntersections(radius, line, i1, i2);      
-    if(newIntersections != 2)
+    if(newIntersections != 2) {
+      if(math::rightTurn(line.P1, line.P2, Point(0,0))) { // Inside half plane
+        intersectionMin = -M_PI;
+        intersectionMax = M_PI;
+        return true;
+      }
       return false; // Ignore no intersection and intersection in a point.
-//    std::cout << "INTERSECTIONS: " << i1<< ", " << i2 << std::endl;
+    }
 
     intersectionMin = math::angleOfPoint(i1);
     intersectionMax = math::angleOfPoint(i2);
@@ -87,11 +92,9 @@ namespace math {
     double midAngle = (intersectionMin + intersectionMax)/2;
     Point midPoint(radius*cos(midAngle), radius*sin(midAngle));
     if(math::rightTurn(line.P1, line.P2, midPoint)) {
-      //std::cout << "RIGHT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // OK: Mid-point of interval (on side without jump) is inside the half plane.
     }
     else {
-      //std::cout << "LEFT TURN " << line << "->" << midPoint << " FOR ANGLE " << midAngle << std::endl;
       // Swap the intersections to indicate that the side with the jump is inside the half plane.
       std::swap(intersectionMin, intersectionMax);
     }
@@ -104,12 +107,12 @@ namespace math {
     return (a <= b && b <= c) || (a >= b && b >= c);
   }
   bool angleBetween(double minAngle, double a, double maxAngle) {
-    assert(a >= -M_PI);
-    assert(a < M_PI);
-    assert(minAngle >= -M_PI);
-    assert(minAngle < M_PI);
-    assert(maxAngle >= -M_PI);
-    assert(maxAngle < M_PI);
+    assert(a >= -M_PI - EPSILON);
+    assert(a <= M_PI + EPSILON);
+    assert(minAngle >= -M_PI - EPSILON);
+    assert(minAngle < M_PI + EPSILON);
+    assert(maxAngle >= -M_PI - EPSILON);
+    assert(maxAngle < M_PI + EPSILON);
     if(minAngle > maxAngle) {
       return (-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI);
     }
@@ -132,7 +135,7 @@ namespace math {
     const double distCentres = sqrt(distCentresSq);
     assert(distCentresSq > EPSILON);
     assert(distCentres > EPSILON);
-    if(distCentres > r + pr)
+    if(distCentres > r + pr || distCentres+pr <= r || distCentres+r <= pr)
       return 0; // No solution.
 
     const double x1 = p.X;
@@ -160,8 +163,10 @@ namespace math {
     IntervalList ret;
     if(newIntersections < 2)
       return ret;
-    //std::cout << "    CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
-    //std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
+#ifdef _TRACE
+    std::cout << "    CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
+    std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
+#endif
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
     double ai1 = math::angleOfPoint(i1);
@@ -182,7 +187,7 @@ namespace math {
   /*
     Handles splitting of a and b if they jump.
    */
-  IntervalList intervalAnd(double a1, double a2, double b1, double b2) {
+  IntervalList intervalAndRadians(double a1, double a2, double b1, double b2) {
     bool aJumps = a1 > a2;
     bool bJumps = b1 > b2;
     IntervalList ret;
@@ -195,19 +200,19 @@ namespace math {
       }
       else {
         // a consists of [a1;M_PI] and [-M_PI;a2]:
+        if(b1 < a2)
+          ret.push_back(Interval(b1, a2));
         if(b2 > a1)
           ret.push_back(Interval(a1, b2));
-        if(b1 < a2)
-          ret.push_back(Interval(a2, b1));
       }
     }
     else {
       if(bJumps) {
         // b consists of [b1;M_PI] and [-M_PI;b2]:
+        if(a1 < b2)
+          ret.push_back(Interval(a1, b2));
         if(a2 > b1)
           ret.push_back(Interval(b1, a2));
-        if(a1 < b2)
-          ret.push_back(Interval(b2, a1));
       }
       else { // Normal case: No jumping anywhere:
         if(a2 > b1 && a1 < b2)
@@ -215,6 +220,19 @@ namespace math {
       }
     }
     return ret;
+  }
+
+  bool intervalEquals(const IntervalList &a, const IntervalList &b) {
+    if(a.size() != b.size()) {
+      return false;
+    }
+    IntervalList::const_iterator itA = a.begin();
+    IntervalList::const_iterator itB = b.begin();
+    for(;itA != a.end(); ++itA, ++itB) {
+      if(*itA != *itB)
+        return false;
+    }
+    return true;
   }
 
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b) {

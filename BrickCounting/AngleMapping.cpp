@@ -58,11 +58,9 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
 #endif
 
   // S, M & L:
-  //std::cout << "SML size " << sizeMappings;
   S = new bool[sizeMappings];
   M = new bool[sizeMappings];
   L = new bool[sizeMappings];
-  //std::cout << " OK" << std::endl;
 }
 
 AngleMapping::~AngleMapping() {
@@ -169,7 +167,9 @@ void AngleMapping::setupAngleTypes() {
     const ConnectionPoint &p = points[i].second;
     if(sccs[sccI].angleLocked(p)) {
       angleTypes[angleI] = 0;
-      //std::cout << "Locked angle on " << sccs[sccI] << " vs " << p << std::endl;
+#ifdef _TRACE
+      std::cout << "Locked angle on " << sccs[sccI] << " vs " << p << std::endl;
+#endif
     }
   }
   // Secondly, lock all touching connections:
@@ -184,27 +184,19 @@ void AngleMapping::setupAngleTypes() {
       if(sccI != sccJ)
         continue;
       const ConnectionPoint &pj = points[j].second;
-      //std::cout << "Investigating " << pi << " & " << pj << std::endl;
+#ifdef _TRACE
+      std::cout << "Investigating " << pi << " & " << pj << std::endl;
+#endif
       if(pi.angleLocks(pj)) {
         angleTypes[angleI] = 0;
         angleTypes[angleJ] = 0;	
-        //std::cout << "Locked angles " << pi << " & " << pj << std::endl;
+#ifdef _TRACE
+        std::cout << "Locked angles " << pi << " & " << pj << std::endl;
+#endif
       }
     }
   }
 }
-
-/*
-Deprecated: Too slow.
-uint64_t AngleMapping::smlIndex(const Position &p) const {
-uint64_t ret = p.p[0];
-
-for(unsigned int i = 1; i < numAngles; ++i) {
-const int push = 2*angleSteps[i] + 1;
-ret = (ret * push) + p.p[i];
-}
-return ret;
-}*/
 
 Configuration AngleMapping::getConfiguration(const Position &p) const {
   Configuration c(sccs[0]);
@@ -310,7 +302,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
-          std::cerr << "Assertion error on S[" << i << "]=" << S[smlI+i] << " configuration: " << c2 << std::endl;	 
+          std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " configuration: " << c2 << std::endl;	 
           LDRPrinterHandler h;
           h.add(&c2);
           h.print("assertion_fail");
@@ -348,17 +340,17 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
-          std::cerr << "Assertion error on S[" << i << "]=" << S[smlI+i] << " vs allowableAnglesForBricks. Configuration: " << c2 << std::endl;	 
+          std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " vs allowableAnglesForBricks. Configuration: " << c2 << std::endl;	 
           LDRPrinterHandler h;
           h.add(&c2);
           h.print("assertion_fail");
 
-          std::cerr << "Content of S:" << std::endl;	 
+          std::cout << "Content of S:" << std::endl;	 
           for(unsigned short j = 0; j < steps; ++j) {
             std::cout << (S[smlI+j] ? "X" : "-");
           }
           std::cout << std::endl;
-          std::cerr << "Using isRealizable on all angles:" << std::endl;	 
+          std::cout << "Using isRealizable on all angles:" << std::endl;	 
           for(unsigned short j = 0; j < steps; ++j) {
             Configuration c3 = getConfiguration(c, angleI, j);
             std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "-");
@@ -522,7 +514,6 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   Configuration c(sccs[0]);
   evalSML(0, 0, c, false, false, false);
 
-  //std::cout << " creating sufs" << std::endl;
   // Evaluate union-find:
   unsigned short sizes[5];
   for(unsigned int i = 0; i < numAngles; ++i) {
@@ -532,7 +523,6 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   ufM = new SimpleUnionFind(numAngles, sizes, M);
   ufL = new SimpleUnionFind(numAngles, sizes, L);
 
-  //std::cout << " finding islands" << std::endl;
   // Find islands:
   std::multimap<Encoding, SIsland> sIslands;
   std::set<Encoding> sIslandKeys;

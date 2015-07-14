@@ -151,7 +151,7 @@ void ConfigurationManager::test() {
   IConnectionPoint icp1(BrickIdentifier(1,1,0),ConnectionPoint(NW,b1,false,1));
   IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,true ,0));
   IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NE,b0,false,0));
-  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NW,b0,true ,0));
+  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,true ,0));
 
   pairs.push_back(IConnectionPair(icp1,icp2));
   pairs.push_back(IConnectionPair(icp3,icp4));

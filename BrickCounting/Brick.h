@@ -104,7 +104,9 @@ public:
    */
   template <int ADD_XY>
   IntervalList rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
-    //std::cout << "  RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+#ifdef _TRACE
+    std::cout << "  RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+#endif
     IntervalList ret;
 
     bool retInitiated = false;
@@ -112,22 +114,30 @@ public:
     for(int i = 0; i < 4; ++i) {
       // Find intersections:
       double intersectionMin, intersectionMax;
-      LineSegment segment(points[i], points[(i+1)%4]);
+      const Point &p1 = points[i];
+      const Point &p2 = points[(i+1)%4];
+      LineSegment segment(p1, p2);
       bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersectionMin, intersectionMax);
-      if(!intersects)
-        continue;
-      //std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
-      //std::cout << "    CUT: " << math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
+      if(!intersects) {
+        IntervalList empty;
+        return empty;
+      }
+#ifdef _TRACE
+      std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
+      std::cout << "    CUT: " << math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax) << std::endl;
+#endif
       if(!retInitiated) {
-        ret = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
+        ret = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);
         retInitiated = true;
       }
       else {
-        IntervalList toMerge = math::intervalAnd(minAngle, maxAngle, intersectionMin, intersectionMax);
+        IntervalList toMerge = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);
         ret = math::intervalAnd(ret, toMerge);
       }
     }
-    //std::cout << "  RECT VS Circle => " << ret << std::endl;
+#ifdef _TRACE
+    std::cout << "  RECT VS Circle => " << ret << std::endl;
+#endif
     return ret;
   }
 
@@ -187,8 +197,8 @@ public:
   */
   template <int ADD_XY>
   IntervalList blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
+#ifdef _TRACE
     std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
-#ifdef _DEBUG
     LineSegment sx[4];
     getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
     std::cout << "   BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
@@ -196,7 +206,9 @@ public:
 
     assert(radius < EPSILON || radius > STUD_RADIUS);
     if(radius < EPSILON) {
+#ifdef _TRACE
       std::cout << "  R=0, SO FIND QUICK!" << std::endl;
+#endif
       return blockIntersectionWithRotatingStud<ADD_XY>(minAngle, maxAngle);
     }
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
@@ -204,12 +216,16 @@ public:
     getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
     Point p1[4] = {segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2};
     IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
+#ifdef _TRACE
     std::cout << "   WIDE Box intersect: " << ret << std::endl;
+#endif
 
     Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
     IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
     ret = math::intervalOr(ret, intersectionsWithRect2);
+#ifdef _TRACE
     std::cout << "   TALL Box intersect: " << intersectionsWithRect2 << " => " << ret << std::endl;
+#endif
 
     // Now check quarter circles: 
     //  Subtract the intersection intervals that intersect the corner circles on the left of the corner dividers:
@@ -219,9 +235,11 @@ public:
       // Find intersections:
       IntervalList intervalFromCircle = math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS);
       for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
-        IntervalList intervalFromCircleInCorrectInterval = math::intervalAnd(minAngle, maxAngle, it->first, it->second);
+        IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(minAngle, maxAngle, it->first, it->second);
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
+#ifdef _TRACE
         std::cout << "   circle " << i << "(" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+#endif
       }
     }
 

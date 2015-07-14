@@ -25,11 +25,11 @@ public:
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] < origin ||
         otherBricks[i].x < -15 || otherBricks[i].x > 15 || otherBricks[i].y < -15 || otherBricks[i].y > 15) {
-          std::cerr << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
+          std::cout << "Verification failed for " << *this << ": Following brick is illegal: " << otherBricks[i] << std::endl;
           return false;
       }
       if(origin.intersects(otherBricks[i])) {
-        std::cerr << "Verification failed for " << *this << ": Origin intersected!" << std::endl;
+        std::cout << "Verification failed for " << *this << ": Origin intersected!" << std::endl;
         return false;
       }
     }

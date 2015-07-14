@@ -93,5 +93,7 @@ int main(int, char**) {
   //mgr.runForSize(4);
   //mgr.runForSize(5);
   //mgr.runForSize(6);
+
+  system("pause");
   return 0;
 }

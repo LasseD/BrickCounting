@@ -1,5 +1,23 @@
 #include "TurningSingleBrick.h"
 
+Fan::Fan() : radius(0), minAngle(0), maxAngle(0) {}
+Fan::Fan(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
+Fan::Fan(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
+  assert(minAngle >= -M_PI - EPSILON);
+  assert(minAngle < M_PI + EPSILON);
+  assert(maxAngle >= -M_PI - EPSILON);
+  assert(maxAngle < M_PI + EPSILON);
+}
+
+MovingStud::MovingStud() : radius(0), minAngle(0), maxAngle(0) {}
+MovingStud::MovingStud(const MovingStud &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
+MovingStud::MovingStud(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
+  assert(minAngle >= -M_PI - EPSILON);
+  assert(minAngle < M_PI + EPSILON);
+  assert(maxAngle >= -M_PI - EPSILON);
+  assert(maxAngle < M_PI + EPSILON);
+}
+
 /*
 A fan intersects a line segment if the segment intersects the circle between minAngle and maxAngle
 */
@@ -10,11 +28,9 @@ bool Fan::intersectsLineSegment(const LineSegment &l) const {
     return false;
   // Return true if one of the intersections is between minAngle and maxAngle:
   if(math::between(l.P1, i1, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i1), maxAngle)) {
-    //std::cout << "Intersects line segment " << l << " at " << i1 << std::endl;
     return true;
   }
   if(math::between(l.P1, i2, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i2), maxAngle)) {
-    //std::cout << "Intersects line segment " << l << " at " << i2 << std::endl;
     return true;
   }
   return false;
@@ -39,17 +55,19 @@ double MovingStud::angleToOriginalInterval(double a) const {
     // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
     assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
     if(a <= maxAngle) {
-      //std::cout << "    " << a << " <= MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
       return MAX_ANGLE_RADIANS - MAX_ANGLE_RADIANS * (maxAngle-a)/(maxAngle+M_PI);
     }
     else {
-      //std::cout << "    " << a << " > MAX ANGLE " << maxAngle << ", minAngle:" << minAngle << std::endl;
       return -MAX_ANGLE_RADIANS + MAX_ANGLE_RADIANS * (a-minAngle)/(M_PI-minAngle);
     }
   }
   else {
-    //std::cout << " min:" << minAngle << ", a:" << a << ", max:" << maxAngle << std::endl;
-    assert(minAngle <= a && a <= maxAngle);
+#ifdef _DEBUG
+    if(!(minAngle <= a && a <= maxAngle)) {
+      std::cout << "ERROR ON ANGLES minAngle <= a && a <= maxAngle. min=" << minAngle << ", a=" << a << ", max=" << maxAngle << std::endl;
+      assert(false);
+    }
+#endif
     return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
   }
 }
@@ -60,7 +78,6 @@ IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) cons
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double a = angleToOriginalInterval(it->first);
     double b = angleToOriginalInterval(it->second);
-    //std::cout << "   Transforming " << *it << " to " << a << ", " << b << std::endl;
     assert(a <= b);
     ret.push_back(Interval(a,b));
   }
