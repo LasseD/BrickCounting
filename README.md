@@ -4,16 +4,26 @@
 
 ## Motivation
 
-[Previous results](http://www.math.ku.dk/~eilers/lego.html) count combinations where 2x4 LEGO bricks are connected at right angles. We seek to find the number of ways six bricks can be connected when not restricting the angles.
+[Previous results](http://www.math.ku.dk/~eilers/lego.html) count combinations where 2x4 LEGO bricks are connected at straight and right angles.
+
+![Bricks connected at right angles](http://c-mt.dk/counting/images/rectilinearintrosmall.png "There are 915.103.765 ways to combine 6 bricks at straight and right angles")
+
+We seek to find the number of ways six bricks can be connected when not restricting the angles.
+
+![Bricks connected at odd angles](http://c-mt.dk/counting/images/modelsintrosmall.png "It is currently unknown how many ways 6 bricks can be combined at other angles")
+
 
 ## Terminology
 
 * Brick: A standard "2 by 4" LEGO brick with 8 studs on top.
-* Configuration: Some bricks connected by their studs.
-* Strongly Connected Configuration (SCC): The configuration consisting of one brick is an SCC. An SCC with N bricks is made by adding a brick b to an SCC s with N-1 bricks so that there is a brick in s connecting to at least 2 studs of b.
-* Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. 
-* Non-rectilinear configuration (Non-RC): A configuration with odd angles.
-* Model: A set of Non-RC's with the property that any configuration in the set can be turned into any other combination of the set simply by turning bricks at turn points.
+* Configuration: Some bricks connected by their studs. The pictures above each show three configurations.
+* Strongly Connected Configuration (SCC): The configuration consisting of one brick is an SCC. An SCC with N bricks is made by adding a brick b to an SCC s with N-1 bricks so that there is a brick in s connecting to at least 2 studs of b. 
+
+![SCCs](http://c-mt.dk/counting/images/sccconstructionsmall.png "Notice that for any SCC with more than one brick, any additional brick has to connect to a single other brick using at least two studs")
+
+* Rectilinear configuration (RC): A configuration where all bricks are connected at right angles. The top-most image above shows three different RCs.
+* Non-rectilinear configuration (Non-RC): A configuration with odd angles, such as shown in the second image above.
+* Model: A set of Non-RC's with the property that any configuration in the set can be turned into any other combination of the set simply by turning bricks at turn points. 
 
 ## Findings
 
@@ -31,7 +41,9 @@ Different tests are used to give insight into the performance improvements of th
 
 ### Test with 3 bricks
 
-The following improvements are for finding all models with 3 bricks. Notice that no models are found.
+![Configuration consisting of 3 bricks](http://c-mt.dk/counting/images/test3brickssmall.png "An example of how to connect 3 bricks at the corners")
+
+The following improvements are for finding all models with 3 bricks. Notice that no models are actually found in this test.
 
 | Optimization           | i7    | i5  |
 |:-----------------------|------:|----:|
@@ -46,6 +58,8 @@ The following improvements are for finding all models with 3 bricks. Notice that
 
 ### Test with 4 bricks
 
+![Configuration consisting of 4 bricks](http://c-mt.dk/counting/images/test4brickssmall.png "An example of how to connect 3 SCCs at the corners")
+
 The following improvements are for finding models with 4 bricks for a given configuration. This configuration consists of an SCC with two bricks connected by 6 studs, and two SCCs with a single brick each.
 
 | Optimization           | i7    | i5  |
@@ -56,32 +70,4 @@ The following improvements are for finding models with 4 bricks for a given conf
 | Improve TSB handling by using SML-mapping for moving bricks intersecting bricks | - | - |
 | Modify the SML-result set to accomodate intervals from TSBs | - | - |
 | Handle any single brick SCCs separately - not just the last one | - | - |
-
-## Geometry:
-
-- P = 8mm
-
-- Width of brick: 15.8mm
-
-- Length of brick: 31.8mm
-
-- Stud: 4.8mm
-
-- Stud to side: 3.9mm
-
-- Maximum angle for a turn point is thus A = acrcos(6.3/8) = 0.664054277 radians (38.0475075 degrees). 
-
-
-Maximal angle steps based on number of brick of models on each side of the turn point:
-
-Simple formulas for an isosceles triangle implies the bound A on the angle that can be allowed given the distance d (in mm):
-
-sin(A/2)*d < 0.1/2 => A < asin(1/20/d)*2
-
-- Size 1: Max distance: d=sqrt(12^2+28^2)=30.46mm. Max angle: a<asin(1/20/d)*2=0.0032826623  radians. Steps: A/a < 203 => 2*203+1=407 steps in total.
-
-- Size 2: Max distance: d=sqrt(20^2+52^2)=55.71mm. Max angle: a<asin(1/20/d)*2=0.00179489564 radians. Steps: A/a < 370 => 2*370+1=741 steps in total.
-
-- Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 2*538+1=1077 steps in total.
-
 
