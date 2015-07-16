@@ -290,7 +290,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
           std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " vs allowableAnglesForBricks. Configuration: " << c2 << std::endl;	 
-          LDRPrinterHandler h;
+          LDRPrinterHandler h, d;
           h.add(&c2);
           h.print("assertion_fail");
 
@@ -300,11 +300,27 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
           }
           std::cout << std::endl;
           std::cout << "Using isRealizable on all angles:" << std::endl;	 
+          int numDisagreements = 0;
           for(unsigned short j = 0; j < steps; ++j) {
             Configuration c3 = getConfiguration(c, angleI, j);
-            std::cout << (c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size) ? "X" : "-");
+            bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+            if(realizable != S[smlI+j]) {
+              d.add(new Configuration(c3)); // OK Be cause we are about to die.
+              ++numDisagreements;
+            }
+            std::cout << (realizable ? "X" : "-");
           }
           std::cout << std::endl;
+          d.print("disagreements");
+          std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
+          for(unsigned short j = 0; j < steps; ++j) {
+            Configuration c3 = getConfiguration(c, angleI, j);
+            bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+            if(realizable != S[smlI+j]) {
+              const StepAngle angle((short)j-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
+              std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
+            }
+          }
           assert(false); int* kill = NULL; kill[0] = 0;
         }
       }//*/

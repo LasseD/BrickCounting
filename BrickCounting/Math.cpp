@@ -44,6 +44,34 @@ namespace math {
     return a;
   }
 
+  // Using http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+  bool findCircleLineIntersections(double r, const LineSegment &l, double &ai1, double &ai2) {
+    // First compute distance between circle center and line:
+    Point p1(l.P1);
+    Point p2(l.P2);
+    if(rightTurn(p1, p2, Point(0,0)))
+      std::swap(p1, p2);
+    const double &x1 = p1.X;
+    const double &y1 = p1.Y;
+    const double &x2 = p2.X;
+    const double &y2 = p2.Y;
+    const double distNominator = abs((x2-x1)*(y1) - (x1)*(y2-y1));
+    const double distDenominator = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+    const double dist = distNominator/distDenominator;
+    if(dist >= r)
+      return false;
+    double angleOfV = atan2(-x2+x1, y2-y1);
+    double angleDiff = acos(dist/r);
+    std::cout << "Radius=" << r << ", Line=" << l << ", v=" << (y2-y1) << "," << (-x2+x1) << ", angleOfV=" << angleOfV << ", angleDiff=" << angleDiff << std::endl;
+    ai1 = angleOfV-angleDiff;
+    if(ai1 < -M_PI)
+      ai1+=2*M_PI;
+    ai2 = angleOfV+angleDiff;
+    if(ai2 > M_PI)
+      ai2-=2*M_PI;
+    return true;
+  }
+
   // From http://mathworld.wolfram.com/Circle-LineIntersection.html
   int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2) {
     const double dx = l.P2.X - l.P1.X;
@@ -72,9 +100,15 @@ namespace math {
     Returns true if there is an intersection. 
    */
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax) {
+#ifdef _DEBUG
     Point i1, i2;
-    int newIntersections = math::findCircleLineIntersections(radius, line, i1, i2);      
-    if(newIntersections != 2) {
+    int ni = math::findCircleLineIntersections(radius, line, i1, i2);
+#endif
+    bool newIntersections = math::findCircleLineIntersections(radius, line, intersectionMin, intersectionMax);      
+    if(!newIntersections) {// != 2) {
+#ifdef _DEBUG
+      assert(ni != 2);
+#endif
       if(math::rightTurn(line.P1, line.P2, Point(0,0))) { // Inside half plane
         intersectionMin = -M_PI;
         intersectionMax = M_PI;
@@ -83,8 +117,20 @@ namespace math {
       return false; // Ignore no intersection and intersection in a point.
     }
 
-    intersectionMin = math::angleOfPoint(i1);
-    intersectionMax = math::angleOfPoint(i2);
+#ifdef _DEBUG
+    double im1 = math::angleOfPoint(i1);
+    double im2 = math::angleOfPoint(i2);
+    if(!(eqEpsilon(im1, intersectionMin) || eqEpsilon(im1, intersectionMax))) {
+      std::cout << "im1=" << im1 << " != intersectionMin=" << intersectionMin << ", intersectionMax=" << intersectionMax << std::endl;
+      assert(false);
+    }
+    if(!(eqEpsilon(im2, intersectionMin) || eqEpsilon(im2, intersectionMax))) {
+      std::cout << "im2=" << im2 << " != intersectionMin=" << intersectionMin << ", intersectionMax=" << intersectionMax << std::endl;
+      assert(false);
+    }
+#endif
+    //intersectionMin = math::angleOfPoint(i1);
+    //intersectionMax = math::angleOfPoint(i2);
     if(intersectionMin > intersectionMax)
       std::swap(intersectionMin, intersectionMax);
 
@@ -130,6 +176,7 @@ namespace math {
   }
 
   // http://stackoverflow.com/questions/3349125/circle-circle-intersection-points
+  // Discontinued due to poor performance.
   int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2) {
     const double distCentresSq = normSq(p);
     const double distCentres = sqrt(distCentresSq);
@@ -153,24 +200,41 @@ namespace math {
     return 2;
   }
 
+  // Basic trigonometry...
+  bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2) {
+    const double distCentres = norm(p);
+    assert(distCentres > EPSILON);
+    if(distCentres > r + pr || distCentres+pr <= r || distCentres+r <= pr)
+      return false; // No solution.
+
+    double angleP = angleOfPoint(p);
+    double angleDiff = asin(pr/distCentres);
+    ai1 = angleP - angleDiff;
+    ai2 = angleP + angleDiff;
+
+    return true;
+  }
+
   /*
     Finds the (angle) intervals of the circle at O with radius r where it intersects with the circle at p and radius pr.
    */
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
     assert(r > pr);
-    Point i1, i2;
-    int newIntersections = findCircleCircleIntersections(r, p, pr, i1, i2);
+    //Point i1, i2;
+    double ai1, ai2;
+    //int newIntersections = findCircleCircleIntersections(r, p, pr, i1, i2);
+    bool newIntersections = findCircleCircleIntersections(r, p, pr, ai1, ai2);
     IntervalList ret;
-    if(newIntersections < 2)
+    if(!newIntersections)// < 2)
       return ret;
 #ifdef _TRACE
     std::cout << "    CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
-    std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
+    //std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
 #endif
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
-    double ai1 = math::angleOfPoint(i1);
-    double ai2 = math::angleOfPoint(i2);
+    //ai1 = math::angleOfPoint(i1);
+    //ai2 = math::angleOfPoint(i2);
     if(ai1 > ai2)
       std::swap(ai1, ai2);
 

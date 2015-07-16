@@ -10,8 +10,6 @@
 #include <stdint.h>
 #include <iostream>
 
-#define _TRACE 1
-
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
 // 4mm in units:
@@ -107,7 +105,7 @@ public:
   template <int ADD_XY>
   IntervalList rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
 #ifdef _TRACE
-    std::cout << "  RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+//    std::cout << "    RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
 #endif
     IntervalList ret;
 
@@ -125,7 +123,7 @@ public:
         return empty;
       }
 #ifdef _TRACE
-      std::cout << "   INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
+//      std::cout << "     INTERECTS LINE " << segment << " IN [" << intersectionMin << ";" << intersectionMax << "]" << std::endl;
 #endif
       if(!retInitiated) {
         ret = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);
@@ -137,7 +135,7 @@ public:
       }
     }
 #ifdef _TRACE
-    std::cout << "  RECT VS Circle => " << ret << std::endl;
+//    std::cout << "    RECT VS Circle => " << ret << std::endl;
 #endif
     return ret;
   }
@@ -232,7 +230,7 @@ public:
         IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(minAngle, maxAngle, it->first, it->second);
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
 #ifdef _TRACE
-        std::cout << "   circle " << i << "(" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+        std::cout << "   circle<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
 #endif
       }
     }

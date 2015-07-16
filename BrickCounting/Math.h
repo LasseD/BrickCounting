@@ -8,6 +8,8 @@
 #include <math.h>
 #include <assert.h>
 
+#define _TRACE 1
+
 // Ensure cross platform compatibility of std::min:
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((b) < (a) ? (a) : (b))
@@ -37,7 +39,6 @@ namespace math {
   double norm(const Point &p);
   double distSq(const Point &p1, const Point &p2);
   double dist(const Point &p1, const Point &p2);
-  int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2);
   bool between(double a, double b, double c);
   bool angleBetween(double minAngle, double a, double maxAngle);
   bool between(const Point &a, const Point &b, const Point &c);
@@ -59,8 +60,11 @@ namespace math {
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
   int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2); // Actual primitive
+  bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2); // Actual primitive
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
 
+  int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2);
+  bool findCircleLineIntersections(double r, const LineSegment &l, double &ai1, double &ai2);
   /*
     The half plane is divided by the line 
    */
