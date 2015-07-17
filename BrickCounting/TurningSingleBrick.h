@@ -96,7 +96,7 @@ public:
     // Compute intersections without interval information:
     IntervalList ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
 #ifdef _TRACE
-    std::cout << " " << block << " VS MS BLOCK INTERSECTION FOUND: " << ret << std::endl;
+    std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
 #endif
 
     // Find intersect between min/max and intersection points:
@@ -220,9 +220,9 @@ struct TurningSingleBrick {
       for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
         IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
 #ifdef _TRACE
-        std::cout << "AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << std::endl;
+        std::cout << "||| AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << "|||" << std::endl;
         if(!math::intervalEquals(math::intervalAnd(ret, listForStud), ret))
-          std::cout << "REDUCTION PERFORMED!" << std::endl;
+          std::cout << "AAFB REDUCTION PERFORMED!" << std::endl;
 #endif
         ret = math::intervalAnd(ret, listForStud);
         if(ret.empty())

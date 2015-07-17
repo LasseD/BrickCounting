@@ -16,8 +16,7 @@
 #define VERTICAL_BRICK_HALF_WIDTH 1.0
 #define VERTICAL_BRICK_CENTER_TO_SIDE 0.9875
 #define VERTICAL_BRICK_CENTER_TO_TOP 1.9875
-#define L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD (1-VERTICAL_BRICK_CENTER_TO_SIDE)
-#define L_VERTICAL_BRICK_CENTER_TO_TOP_ADD (2-VERTICAL_BRICK_CENTER_TO_TOP)
+#define BRICK_UNIT_GAP (1-VERTICAL_BRICK_CENTER_TO_SIDE)
 #define STUD_RADIUS 0.3
 #define STUD_DIAM (STUD_RADIUS+STUD_RADIUS)
 // 0.0625 is 0.5 mm.
@@ -55,8 +54,8 @@ public:
     double sina = sin(angle);
     double cosa = cos(angle);
 
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
     // 4 corners:
     pois[0] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
@@ -78,9 +77,9 @@ public:
     double sina = sin(angle);
     double cosa = cos(angle);
     // 4 corners:
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
     const double DX = dx + STUD_ADD*STUD_RADIUS;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
     const double DY = dy + STUD_ADD*STUD_RADIUS;
 
     segments[0].P1 = Point(center.X+(-DX*cosa-dy*sina), center.Y+(-DX*sina+dy*cosa));
@@ -142,14 +141,12 @@ public:
 
   template <int ADD_XY>
   bool boxIntersectsInnerStud(Point &stud) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
     // X handle four inner:
-    if(stud.X < 0)
-      stud.X = -stud.X;
-    if(stud.Y < 0)
-      stud.Y = -stud.Y;
+    if(stud.X < 0) stud.X = -stud.X;
+    if(stud.Y < 0) stud.Y = -stud.Y;
 
     if(stud.X < cornerX+STUD_RADIUS && stud.Y < cornerY+STUD_RADIUS) {
       // Might intersect - check corner case:
@@ -230,7 +227,7 @@ public:
         IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(minAngle, maxAngle, it->first, it->second);
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
 #ifdef _TRACE
-        std::cout << "   circle<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+        std::cout << "   CORNER<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
 #endif
       }
     }
@@ -243,8 +240,8 @@ public:
 
   template <int ADD_XY>
   bool boxIntersectsPOIsFrom(Brick &b) const {
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
     moveBrickSoThisIsAxisAlignedAtOrigin(b);
     // Get POIs:
     Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
@@ -275,8 +272,8 @@ public:
 
   template <int ADD_XY>
   bool boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_SIDE_ADD;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * L_VERTICAL_BRICK_CENTER_TO_TOP_ADD;
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
     Point stud(studOfB);
     if(stud.X < 0)

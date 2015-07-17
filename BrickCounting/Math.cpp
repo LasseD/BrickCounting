@@ -7,7 +7,7 @@
 ///////////////////////////////////////////////////////
 namespace math {
   bool eqEpsilon(double a, double b) {
-    return a < b ? (a >= b-EPSILON && a <= b+EPSILON) : (b >= a-EPSILON && b <= a+EPSILON);
+    return a >= b-EPSILON && a <= b+EPSILON;
   }
   double round(double number) {
     return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
@@ -62,7 +62,7 @@ namespace math {
       return false;
     double angleOfV = atan2(-x2+x1, y2-y1);
     double angleDiff = acos(dist/r);
-    std::cout << "Radius=" << r << ", Line=" << l << ", v=" << (y2-y1) << "," << (-x2+x1) << ", angleOfV=" << angleOfV << ", angleDiff=" << angleDiff << std::endl;
+    //std::cout << "Radius=" << r << ", Line=" << l << ", v=" << (y2-y1) << "," << (-x2+x1) << ", angleOfV=" << angleOfV << ", angleDiff=" << angleDiff << std::endl;
     ai1 = angleOfV-angleDiff;
     if(ai1 < -M_PI)
       ai1+=2*M_PI;
@@ -263,20 +263,20 @@ namespace math {
         ret.push_back(Interval(MAX(a1, b1), M_PI));
       }
       else {
-        // a consists of [a1;M_PI] and [-M_PI;a2]:
+        // a consists of [-M_PI;a2] and [a1;M_PI]:
         if(b1 < a2)
-          ret.push_back(Interval(b1, a2));
+          ret.push_back(Interval(b1, MIN(b2,a2)));
         if(b2 > a1)
-          ret.push_back(Interval(a1, b2));
+          ret.push_back(Interval(MAX(b1,a1), b2));
       }
     }
     else {
       if(bJumps) {
         // b consists of [b1;M_PI] and [-M_PI;b2]:
         if(a1 < b2)
-          ret.push_back(Interval(a1, b2));
+          ret.push_back(Interval(a1, MIN(a2, b2)));
         if(a2 > b1)
-          ret.push_back(Interval(b1, a2));
+          ret.push_back(Interval(MAX(a1,b1), a2));
       }
       else { // Normal case: No jumping anywhere:
         if(a2 > b1 && a1 < b2)
@@ -444,15 +444,18 @@ namespace math {
     Interval prev = *it;
     ++it;
     for(; it != l.end(); ++it) {
-      if(!eqEpsilon(prev.second, it->first)) {
+      if(eqEpsilon(prev.second, it->first)) {
+        prev.second = it->second;
+      }
+      else {
         ret.push_back(prev);
         prev = *it;
       }
-      else
-        prev.second = it->second;
     }
     ret.push_back(prev);
-
+    
+    if(!intervalEquals(ret, l))
+      std::cout << "COLLAPSING INTERVALS: " << l << " -> " << ret << std::endl;
     return ret;
   }
 

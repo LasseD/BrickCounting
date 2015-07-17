@@ -310,6 +310,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
             }
             std::cout << (realizable ? "X" : "-");
           }
+          if(numDisagreements <= 4)
+            break; // TESTING: TODO: REM!
           std::cout << std::endl;
           d.print("disagreements");
           std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
@@ -330,7 +332,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
       //std::cout << "Investigating M-mapping vs " << l << std::endl;
-      for(unsigned short i = 0; i < steps; ++i) {
+      /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
       }//*/
@@ -340,7 +342,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
       //std::cout << "Investigating L-mapping vs " << l << std::endl;
-      for(unsigned short i = 0; i < steps; ++i) {
+      /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
       }//*/

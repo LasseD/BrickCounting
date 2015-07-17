@@ -118,10 +118,10 @@ void Brick::movePointSoThisIsAxisAlignedAtOrigin(Point &b) const {
   // Tranlate to make this->origin = 0,0:
   b.X -= center.X;
   b.Y -= center.Y;
-  // Rotate to make this->angle = 0.
-  double sina = sin(-angle);
-  double cosa = cos(-angle);
-  double oldX = b.X;
+  // translate according to angle to make this->angle = 0.
+  const double sina = sin(-angle);
+  const double cosa = cos(-angle);
+  const double oldX = b.X;
   b.X = oldX*cosa - b.Y*sina;
   b.Y = oldX*sina + b.Y*cosa;
 }

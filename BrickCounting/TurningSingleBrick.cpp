@@ -55,10 +55,10 @@ double MovingStud::angleToOriginalInterval(double a) const {
     // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
     assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
     if(a <= maxAngle) {
-      return MAX_ANGLE_RADIANS - MAX_ANGLE_RADIANS * (maxAngle-a)/(maxAngle+M_PI);
+      return MAX_ANGLE_RADIANS - 2*MAX_ANGLE_RADIANS * (maxAngle-a)/(2*M_PI+maxAngle-minAngle);
     }
     else {
-      return -MAX_ANGLE_RADIANS + MAX_ANGLE_RADIANS * (a-minAngle)/(M_PI-minAngle);
+      return -MAX_ANGLE_RADIANS + 2*MAX_ANGLE_RADIANS * (a-minAngle)/(2*M_PI+maxAngle-minAngle);
     }
   }
   else {
