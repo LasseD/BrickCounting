@@ -204,7 +204,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   const IConnectionPoint &ip1 = points[2*angleI];
   const IConnectionPoint &ip2 = points[2*angleI+1];
   unsigned int ip2I = ip2.first.configurationSCCI;
-  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], ip1.first);
+  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2));
 
   // Recursion:
   if(angleI < numAngles-1) {
@@ -286,43 +286,57 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
       //std::cout << "Investigating S-mapping vs " << l << std::endl;
+      int numDisagreements = 0;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
-          std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " vs allowableAnglesForBricks. Configuration: " << c2 << std::endl;	 
-          LDRPrinterHandler h, d;
-          h.add(&c2);
-          h.print("assertion_fail");
-
-          std::cout << "Content of S:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (S[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl;
-          std::cout << "Using isRealizable on all angles:" << std::endl;	 
-          int numDisagreements = 0;
-          for(unsigned short j = 0; j < steps; ++j) {
-            Configuration c3 = getConfiguration(c, angleI, j);
-            bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-            if(realizable != S[smlI+j]) {
-              d.add(new Configuration(c3)); // OK Be cause we are about to die.
-              ++numDisagreements;
-            }
-            std::cout << (realizable ? "X" : "-");
-          }
-          std::cout << std::endl;
-          d.print("disagreements");
-          std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
-          for(unsigned short j = 0; j < steps; ++j) {
-            Configuration c3 = getConfiguration(c, angleI, j);
-            bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-            if(realizable != S[smlI+j]) {
-              const StepAngle angle((short)j-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
-              std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
-            }
-          }
-          assert(false); int* kill = NULL; kill[0] = 0;
+          ++numDisagreements;
         }
+      }
+      if(numDisagreements > 0) {
+        std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
+      }
+      if(numDisagreements > 8) {
+        std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
+        LDRPrinterHandler h, d;
+
+        std::cout << "Content of S:" << std::endl;	 
+        for(unsigned short j = 0; j < steps; ++j) {
+          std::cout << (S[smlI+j] ? "X" : "-");
+        }
+        std::cout << std::endl;
+        std::cout << "Using isRealizable on all angles:" << std::endl;	 
+        bool first = true;
+        for(unsigned short j = 0; j < steps; ++j) {
+          Configuration c3 = getConfiguration(c, angleI, j);
+          bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+          if(realizable != S[smlI+j]) {
+            d.add(new Configuration(c3)); // OK Be cause we are about to die.
+            if(first) {
+              h.add(&c3);
+              h.print("assertion_fail");
+              first = false;
+            }
+          }
+          std::cout << (realizable ? "X" : "-");
+        }
+        first = true;
+        std::cout << std::endl;
+        d.print("disagreements");
+        std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
+        for(unsigned short j = 0; j < steps; ++j) {
+          Configuration c3 = getConfiguration(c, angleI, j);
+          bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+          if(realizable != S[smlI+j]) {
+            if(first) {
+              std::cout << "Configuration of first disagreement: " << c3 << std::endl;
+              first = false;
+            }
+            const StepAngle angle((short)j-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
+            std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
+          }
+        }
+        assert(false); int* kill = NULL; kill[0] = 0;
       }//*/
       sDone = true;
     }

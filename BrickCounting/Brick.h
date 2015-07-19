@@ -167,11 +167,21 @@ public:
     Otherwise, return full interval.
    */
   template <int ADD_XY>
-  IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle) const {
+  IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle, bool allowClick) const {
     Point p(0,0);
     movePointSoThisIsAxisAlignedAtOrigin(p);
-    if(boxIntersectsInnerStud<ADD_XY>(p)) {
-      return math::toIntervalsRadians(minAngle, maxAngle);
+    if(allowClick) {
+      bool fakeConnected = false;
+      ConnectionPoint fakeCP;
+      RectilinearBrick fakeRB;
+      if(boxIntersectsOuterStud<ADD_XY>(p, fakeConnected, fakeCP, fakeCP, fakeRB, fakeRB, 4)) {
+        return math::toIntervalsRadians(minAngle, maxAngle);
+      }
+    }
+    else {
+      if(boxIntersectsInnerStud<ADD_XY>(p)) {
+        return math::toIntervalsRadians(minAngle, maxAngle);
+      }
     }
     IntervalList empty;
     return empty;
@@ -191,13 +201,7 @@ public:
     std::cout << "   BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
 #endif
 
-    assert(radius < EPSILON || radius > STUD_RADIUS);
-    if(radius < EPSILON) {
-#ifdef _TRACE
-      std::cout << "  R=0, SO FIND QUICK!" << std::endl;
-#endif
-      return blockIntersectionWithRotatingStud<ADD_XY>(minAngle, maxAngle);
-    }
+    assert(radius > STUD_RADIUS);
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
     LineSegment segments[4];
     getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
@@ -305,8 +309,8 @@ public:
 
     // Might intersect - check corner case:
     if(stud.X < cornerX || stud.Y < cornerY || STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-        connected = false;
-        return true;
+      connected = false;
+      return true;
     }
     return false;
   }

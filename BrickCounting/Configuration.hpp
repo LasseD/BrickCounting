@@ -174,7 +174,7 @@ struct IBrick {
   BrickIdentifier bi;
   IBrick(const RectilinearBrick &rb, const Brick &b, const BrickIdentifier &bi) : rb(rb), b(b), bi(bi) {}
   IBrick() {}
-  IBrick(const IBrick &b) : rb(b.rb), b(b.b), bi(b.bi) {}
+  IBrick(const IBrick &ib) : rb(ib.rb), b(ib.b), bi(ib.bi) {}
 };
 
 struct Configuration : public LDRPrinter {
@@ -236,17 +236,24 @@ struct Configuration : public LDRPrinter {
     return true;
   }
 
-  std::vector<int> getPossibleCollisions(const FatSCC &scc, const BrickIdentifier &exclude) const {
+  std::vector<int> getPossibleCollisions(const FatSCC &scc, const IConnectionPair &connectionPair) const {
     std::vector<int> ret;
+
+    int prevBrickI = connectionPair.P1.first.configurationSCCI;
+    const Brick &prevOrigBrick = origBricks[prevBrickI];
+    const ConnectionPoint &prevPoint = connectionPair.P1.second;
+    const int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
+
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick ib = bricks[i];
-      if(exclude.configurationSCCI == ib.bi.configurationSCCI && exclude.brickIndexInScc == ib.bi.brickIndexInScc)
-        continue;
+      if(scc.size == 1 && connectionPair.P1.first.configurationSCCI == ib.bi.configurationSCCI && connectionPair.P1.first.brickIndexInScc == ib.bi.brickIndexInScc)
+        continue; // Exclude brick we are connecting to.
       const Brick b = ib.b;
       const int8_t levelI = b.level;
       RectilinearBrick sccBrick;
       for(int j = 0; j < scc.size; sccBrick = scc.otherBricks[j], ++j) {
-        const uint8_t levelJ = sccBrick.level();
+        const int8_t levelJ = level + sccBrick.level();
+        //const uint8_t levelJ = sccBrick.level(); // TODO: Wrong level!
         if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
           ret.push_back(i);
           break;

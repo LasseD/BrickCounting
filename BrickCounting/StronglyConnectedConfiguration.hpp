@@ -296,7 +296,7 @@ public:
   bool isRotationallySymmetric;
   std::pair<int,int> rotationBrickPosition;
 
-  FatSCC() {}
+  FatSCC() : size(1), index(0), isRotationallySymmetric(true), rotationBrickPosition(std::pair<int,int>(0, 0)) {}
   FatSCC(const FatSCC &f) : size(f.size), index(f.index), isRotationallySymmetric(f.isRotationallySymmetric), rotationBrickPosition(f.rotationBrickPosition) {
     for(int i = 0; i < size-1; ++i) {
       otherBricks[i] = f.otherBricks[i];
