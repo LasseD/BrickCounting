@@ -179,11 +179,12 @@ bool Brick::outerStudIntersectsStudAtOrigin() const {
   return false;
 }
 
-void Brick::getStudIntersectionsWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<double> &angles) const {
+bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &angle) const {
   Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
 
   // Handle four outer specially as they might cause connection:
+  bool foundAny = false;
   for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
     Point &stud = studs[i];
     double studDist = math::norm(stud);
@@ -192,8 +193,12 @@ void Brick::getStudIntersectionsWithMovingStud(double radius, double minAngle, d
     double studAngle = math::angleOfPoint(stud);
     if(!math::angleBetween(minAngle, studAngle, maxAngle))
       continue;
-    angles.push_back(studAngle);
+    if(foundAny)
+      return false;
+    foundAny = true;
+    angle = studAngle;
   }
+  return foundAny;
 }
 
 bool Brick::operator < (const Brick &b) const {

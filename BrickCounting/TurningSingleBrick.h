@@ -88,13 +88,16 @@ public:
     return block.boxIntersectsInnerStud<ADD_XY>(endPoint2);
   }
 
+  /*
+    Return true if it clicks.
+   */
   template <int ADD_XY>
-  IntervalList /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick) const {
+  bool /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick, IntervalList &ret) const {
 #ifdef _TRACE
     std::cout << " " << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << " STARTED " << std::endl;
 #endif
     // Compute intersections without interval information:
-    IntervalList ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
+    ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
 #ifdef _TRACE
     std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
 #endif
@@ -112,39 +115,36 @@ public:
 #endif
 
     if(!allowClick)
-      return ret;
+      return false;
 
     if(radius < EPSILON) {
       // If the MS has radius=0, then it can turn anywhere in case of click:
       if(block.outerStudIntersectsStudAtOrigin()) {
-        return math::toIntervalsRadians(minAngle, maxAngle);
+        ret = math::toIntervalsRadians(minAngle, maxAngle);
+        return true;
       }
     }
 
     // Add intervals for studs:
-    std::vector<double> studAngles;
-    block.getStudIntersectionsWithMovingStud(radius, minAngle, maxAngle, studAngles);
-    std::vector<double> studAnglesTransformed;
-    for(std::vector<double>::const_iterator it = studAngles.begin(); it != studAngles.end(); ++it) {
+    double studAngle;
+    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, minAngle, maxAngle, studAngle);
+    if(!anyStudAngles)
+      return false;
 #ifdef _TRACE
-      std::cout << "  Adding stud at angle " << *it << ", in original interval: " << angleToOriginalInterval(*it) << std::endl;
+    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << angleToOriginalInterval(studAngle) << std::endl;
 #endif
-      studAnglesTransformed.push_back(angleToOriginalInterval(*it));
-    }
-    std::sort(studAnglesTransformed.begin(), studAnglesTransformed.end());
-    IntervalList studIntervals;
+    double studAngleTransformed = angleToOriginalInterval(studAngle);
     double angleOfSnapRadius = atan(SNAP_DISTANCE/radius);
-    for(std::vector<double>::const_iterator it = studAnglesTransformed.begin(); it != studAnglesTransformed.end(); ++it) {
 #ifdef _TRACE
-      std::cout << "  Adding stud interval " << Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius) << std::endl;
+    std::cout << "  Adding stud interval " << Interval(studAngleTransformed-angleOfSnapRadius, studAngleTransformed+angleOfSnapRadius) << std::endl;
 #endif
-      studIntervals.push_back(Interval(*it-angleOfSnapRadius, *it+angleOfSnapRadius));
-    }
-
+    IntervalList studInterval;
+    studInterval.push_back(Interval(studAngleTransformed-angleOfSnapRadius, studAngleTransformed+angleOfSnapRadius));
 #ifdef _TRACE
     std::cout << " AAFB RET " << ret << " | " << studIntervals << " = " << math::intervalOr(ret, studIntervals) << std::endl;
 #endif
-    return math::intervalOr(ret, studIntervals);
+    ret = math::intervalOr(ret, studInterval);
+    return true;
   }
 };
 
@@ -195,7 +195,8 @@ struct TurningSingleBrick {
         maxAngle -= 2*M_PI;
       MovingStud ms(math::norm(studsOfBrick[i]), minAngle, maxAngle);
 
-      IntervalList listForStud = ms.allowableAnglesForBlock<ADD_XY>(blockAbove, i >= 4); // The last 4 studs are outer and thus allowing clicking.
+      IntervalList listForStud;
+      bool anyClicked = ms.allowableAnglesForBlock<ADD_XY>(blockAbove, i >= 4, listForStud); // The last 4 studs are outer and thus allowing clicking.
       ret = math::intervalAnd(ret, listForStud);
     }
     l = ret;
@@ -218,7 +219,8 @@ struct TurningSingleBrick {
     else if(level + 1 == brick.level) {
       // Turning below:
       for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
-        IntervalList listForStud = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4); // The last 4 studs are outer and thus allowing clicking.
+        IntervalList listForStud;
+        bool anyClicked = movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4, listForStud); // The last 4 studs are outer and thus allowing clicking.
 #ifdef _TRACE
         std::cout << "||| AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << "|||" << std::endl;
         if(!math::intervalEquals(math::intervalAnd(ret, listForStud), ret))

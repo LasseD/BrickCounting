@@ -24,7 +24,6 @@ private:
   FatSCC combination[6];
   ConfigurationEncoder encoder;
   std::ofstream &os;
-  counter angleMappingBoosts[BOOST_STAGES];
   
   //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
   //std::set<FatSCC> foundSCCs; // For debugging only!
@@ -51,6 +50,7 @@ public:
   bool isRotationallyMinimal(const IConnectionPairList &l) const;
 
   counter attempts, models, problematic; // rectilinear, nonRectilinearConfigurations, 
+  counter angleMappingBoosts[BOOST_STAGES];
 };
 
 #endif // SINGLE_CONFIGURATION_MANAGER_H

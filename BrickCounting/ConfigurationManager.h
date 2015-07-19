@@ -10,6 +10,7 @@ private:
   unsigned long sccsSize[5];
 
   counter attempts, rectilinear, nonRectilinearConfigurations, models, problematic;
+  counter angleMappingBoosts[BOOST_STAGES];
 
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os);
 

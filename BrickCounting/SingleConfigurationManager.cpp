@@ -173,8 +173,7 @@ void SingleConfigurationManager::run() {
   std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
   std::cout << " models found: " << models << std::endl;
-#endif
-#ifdef _DEBUG
+
   // Print boost in debug!
   std::cout << "Boosts performed in AngleMappings:" << std::endl;
   for(int i = 0; i < BOOST_STAGES; ++i) {

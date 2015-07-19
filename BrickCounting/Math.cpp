@@ -62,7 +62,6 @@ namespace math {
       return false;
     double angleOfV = atan2(-x2+x1, y2-y1);
     double angleDiff = acos(dist/r);
-    //std::cout << "Radius=" << r << ", Line=" << l << ", v=" << (y2-y1) << "," << (-x2+x1) << ", angleOfV=" << angleOfV << ", angleDiff=" << angleDiff << std::endl;
     ai1 = angleOfV-angleDiff;
     if(ai1 < -M_PI)
       ai1+=2*M_PI;
@@ -202,15 +201,21 @@ namespace math {
 
   // Basic trigonometry...
   bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2) {
-    const double distCentres = norm(p);
+    const double distCentresSq = normSq(p);
+    const double distCentres = sqrt(distCentresSq);
     assert(distCentres > EPSILON);
     if(distCentres > r + pr || distCentres+pr <= r || distCentres+r <= pr)
       return false; // No solution.
 
-    double angleP = angleOfPoint(p);
-    double angleDiff = asin(pr/distCentres);
+    const double angleP = angleOfPoint(p);
+    const double angleDiff = acos((pr*pr-distCentresSq-r*r)/(-2*r*distCentres));
+    assert(angleDiff >= 0);
     ai1 = angleP - angleDiff;
+    while(ai1 < -M_PI)
+      ai1 += 2*M_PI;
     ai2 = angleP + angleDiff;
+    while(ai2 > M_PI)
+      ai2 -= 2*M_PI;
 
     return true;
   }
@@ -220,21 +225,13 @@ namespace math {
    */
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
     assert(r > pr);
-    //Point i1, i2;
     double ai1, ai2;
-    //int newIntersections = findCircleCircleIntersections(r, p, pr, i1, i2);
     bool newIntersections = findCircleCircleIntersections(r, p, pr, ai1, ai2);
     IntervalList ret;
     if(!newIntersections)// < 2)
       return ret;
-#ifdef _TRACE
-    std::cout << "    CC r=" << r << ", p=" << p << ", pr=" << pr << std::endl;
-    //std::cout << "    CC INTERSECTIONS " << i1 << ", " << i2 << std::endl;
-#endif
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
-    //ai1 = math::angleOfPoint(i1);
-    //ai2 = math::angleOfPoint(i2);
     if(ai1 > ai2)
       std::swap(ai1, ai2);
 
@@ -454,8 +451,10 @@ namespace math {
     }
     ret.push_back(prev);
     
+#ifdef _TRACE
     if(!intervalEquals(ret, l))
       std::cout << "COLLAPSING INTERVALS: " << l << " -> " << ret << std::endl;
+#endif
     return ret;
   }
 

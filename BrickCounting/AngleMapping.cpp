@@ -310,8 +310,6 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
             }
             std::cout << (realizable ? "X" : "-");
           }
-          if(numDisagreements <= 4)
-            break; // TESTING: TODO: REM!
           std::cout << std::endl;
           d.print("disagreements");
           std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;

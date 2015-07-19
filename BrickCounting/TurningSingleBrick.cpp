@@ -53,7 +53,12 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
 double MovingStud::angleToOriginalInterval(double a) const {
   if(maxAngle < minAngle) {
     // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
-    assert((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI));
+#ifdef _DEBUG
+    if(!((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI))) {
+      std::cout << "ERROR ON REV ANGLES (-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI). min=" << minAngle << ", a=" << a << ", max=" << maxAngle << std::endl;
+      assert(false);
+    }
+#endif
     if(a <= maxAngle) {
       return MAX_ANGLE_RADIANS - 2*MAX_ANGLE_RADIANS * (maxAngle-a)/(2*M_PI+maxAngle-minAngle);
     }

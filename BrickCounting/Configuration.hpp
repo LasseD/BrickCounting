@@ -346,7 +346,8 @@ struct Configuration : public LDRPrinter {
     int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, 3, 85, LDR_COLOR_BLACK};
 
     for(int i = 0; i < bricksSize; ++i) {
-      bricks[i].b.toLDR(os, x, y, colors[bricks[i].bi.configurationSCCI]);
+      const Brick &b = bricks[i].b;
+      b.toLDR(os, x, y, colors[bricks[i].bi.configurationSCCI]);
     }
   }
 

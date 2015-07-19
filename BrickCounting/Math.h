@@ -8,7 +8,7 @@
 #include <math.h>
 #include <assert.h>
 
-#define _TRACE 1
+//#define _TRACE 1
 
 // Ensure cross platform compatibility of std::min:
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

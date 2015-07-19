@@ -16,6 +16,10 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurationsEncoded.size();
     models+=mgr.models;
     problematic+=mgr.problematic;
+    for(int i = 0; i < BOOST_STAGES; ++i) {
+      angleMappingBoosts[i] += mgr.angleMappingBoosts[i];
+    }
+
     return;
   }
 
@@ -66,6 +70,11 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " " << nonRectilinearConfigurations << " corner connected SCCs." << std::endl;
   std::cout << " " << models << " models." << std::endl;
   std::cout << " " << problematic << " problematic." << std::endl;
+  std::cout << " Boosts performed in AngleMappings:" << std::endl;
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
+  }
+
   time(&endTime);
   double seconds = difftime(endTime,startTime);
   std::cout << " " << seconds << " seconds." << std::endl;
@@ -113,6 +122,9 @@ void ConfigurationManager::runForSize(int size) {
 }
 
 ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    angleMappingBoosts[i] = 0;
+  }
   StronglyConnectedConfigurationManager sccMgr;
   int upTo = 3; // Should be 5. Decreases file loading time - never run for full input in bebug mode!
   for(int i = 0; i < upTo; ++i) {
@@ -122,16 +134,16 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(3);
+  v.push_back(2);
   v.push_back(1);
-  //v.push_back(1);
+  v.push_back(1);
 
-  //runForCombinationType(v, 3);
-  
+  runForCombinationType(v, 4);
+  /*
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[2][7]);
+  v2.push_back(sccs[1][2]);
   v2.push_back(sccs[0][0]);
-  //v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
 
   std::ofstream os;
   os.open("abe.txt", std::ios::out);
