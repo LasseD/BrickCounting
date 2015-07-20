@@ -188,6 +188,28 @@ public:
   }
 
   /*
+    Helper method for blockIntersectionWithFan when radius is 0.
+    If point doesn't intersect, then return empty interval.
+    Otherwise, return full interval.
+   */
+  template <int ADD_XY>
+  IntervalList /*Brick::*/blockIntersectionWithRotatingPoint(double minAngle, double maxAngle) const {
+    Point p(0,0);
+    movePointSoThisIsAxisAlignedAtOrigin(p);
+
+    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+
+    if(p.X < 0) p.X = -p.X;
+    if(p.Y < 0) p.Y = -p.Y;
+
+    if(p.X < cornerX && p.Y < cornerY)
+      return math::toIntervalsRadians(minAngle, maxAngle);
+    IntervalList empty;
+    return empty;
+  }
+
+  /*
   Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
   Intersects block on either a line segment or a quarter-circle at one of the corners. This problem can be split into two intersections against rectangles and four against circles.
   Returns intervals of intersections between minAngle and maxAngle.
@@ -233,6 +255,17 @@ public:
     }
 
     return ret;
+  }
+
+  /*
+  Investigates the equivalent problem where a circle (center p, radius) intersects the brick.
+  Returns intervals of intersections between minAngle and maxAngle.
+  */
+  template <int ADD_XY>
+  IntervalList /*Brick::*/blockIntersectionWithMovingPoint(double radius, double minAngle, double maxAngle) const {
+    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+    getBoxPOIs<ADD_XY>(pois);
+    return rectangleIntersectionWithCircle<ADD_XY>(pois, radius, minAngle, maxAngle);
   }
 
   Point /*Brick::*/getStudPosition(ConnectionPointType type) const;

@@ -9,6 +9,11 @@
 
 typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.
 
+namespace math {
+  double angleToOriginalInterval(double a, double minAngle, double maxAngle);
+  IntervalList intervalsToOriginalInterval(const IntervalList &l, double minAngle, double maxAngle);
+}
+
 /*
 Fan: A "pizza slice" of a circle. Centered at 0,0.
 Angles: There is always a continuous interval between min and max, and min < max.
@@ -38,6 +43,17 @@ struct Fan {
     }
     return false;
   }
+
+    template <int ADD_XY>
+  void /*Fan::*/allowableAnglesForBlock(const Brick &block, IntervalList &ret) const {
+    // Compute intersections without interval information:
+    if(radius < EPSILON)
+      ret = block.blockIntersectionWithRotatingPoint<ADD_XY>(minAngle, maxAngle);
+    else
+      ret = block.blockIntersectionWithMovingPoint<ADD_XY>(radius, minAngle, maxAngle);
+    ret = math::intervalInverseRadians(ret, minAngle, maxAngle);
+    ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
+  }
 };
 
 std::ostream& operator<<(std::ostream &os, const Fan& f);
@@ -57,8 +73,6 @@ private:
   Point /*MovingStud::*/minPoint() const;
   Point /*MovingStud::*/maxPoint() const;
 public:
-  double /*MovingStud::*/angleToOriginalInterval(double a) const;
-  IntervalList /*MovingStud::*/intervalsToOriginalInterval(const IntervalList &l) const;
   bool /*MovingStud::*/intersectsStud(const Point &stud) const;
 
   /*
@@ -108,7 +122,7 @@ public:
     std::cout << "  Inversed: " << ret << std::endl;
 #endif
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
-    ret = intervalsToOriginalInterval(ret);
+    ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
 #ifdef _TRACE
     std::cout << "  Transformed: " << ret << std::endl;
 #endif
@@ -122,9 +136,9 @@ public:
     if(!anyStudAngles)
       return;
 #ifdef _TRACE
-    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << angleToOriginalInterval(studAngle) << std::endl;
+    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, minAngle, maxAngle) << std::endl;
 #endif
-    double studAngleTransformed = angleToOriginalInterval(studAngle);
+    double studAngleTransformed = math::angleToOriginalInterval(studAngle, minAngle, maxAngle);
     clicks.push_back(ClickInfo(studAngleTransformed, radius));
     return;
   }
@@ -205,9 +219,39 @@ struct TurningSingleBrick {
   }
 
   template <int ADD_XY>
-  void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAtSameLevel(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
-    // TODO: Implement!
-    // TODO! FIXME! USE 2 * BRICK POIS VS FANS
+  void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAtSameLevel(const Brick &brick, IntervalList &l) const {
+    l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS)); // Initially all angles allowed.
+
+    // First test own fans against the brick:
+    for(int i = 0; i < 4; ++i) {
+      IntervalList listForFan;
+      fans[i].allowableAnglesForBlock<ADD_XY>(brick, listForFan);
+      l = math::intervalAnd(l, listForFan);
+      if(l.empty())
+        return;
+    }
+
+    // Secondly test fans of other brick against this:
+    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+    brick.getBoxPOIs<ADD_XY>(pois);
+    // Create new moving studs for the brick and check those:
+    for(int i = 0; i < 4; ++i) {
+      // Create moving stud:
+      double midAngle = math::angleOfPoint(pois[i]);
+      double minAngle = midAngle - MAX_ANGLE_RADIANS;
+      if(minAngle < -M_PI)
+        minAngle += 2*M_PI;
+      double maxAngle = midAngle + MAX_ANGLE_RADIANS;
+      if(maxAngle > M_PI)
+        maxAngle -= 2*M_PI;
+      Fan f(math::norm(pois[i]), minAngle, maxAngle);
+
+      IntervalList listForFan;
+      f.allowableAnglesForBlock<ADD_XY>(blockAbove, listForFan);
+      l = math::intervalAnd(l, listForFan);
+      if(l.empty())
+        return;
+    }
   }
 
   template <int ADD_XY>
@@ -217,7 +261,7 @@ struct TurningSingleBrick {
 #endif
     int8_t level = blocks[0].level;
     if(brick.level == level) {
-      allowableAnglesForBrickTurningAtSameLevel<ADD_XY>(brick, l, clicks);
+      allowableAnglesForBrickTurningAtSameLevel<ADD_XY>(brick, l);
     }
     else if(level + 1 == brick.level) {
       allowableAnglesForBrickTurningBelow<ADD_XY>(brick, l, clicks);

@@ -1,5 +1,34 @@
 #include "TurningSingleBrick.h"
 
+namespace math {
+  double angleToOriginalInterval(double a, double minAngle, double maxAngle) {
+    if(maxAngle < minAngle) {
+      // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
+      if(a <= maxAngle) {
+        return MAX_ANGLE_RADIANS - 2*MAX_ANGLE_RADIANS * (maxAngle-a)/(2*M_PI+maxAngle-minAngle);
+      }
+      else {
+        return -MAX_ANGLE_RADIANS + 2*MAX_ANGLE_RADIANS * (a-minAngle)/(2*M_PI+maxAngle-minAngle);
+      }
+    }
+    else {
+      return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
+    }
+  }
+
+  IntervalList intervalsToOriginalInterval(const IntervalList &l, double minAngle, double maxAngle) {
+    IntervalList ret;
+    for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+      double a = angleToOriginalInterval(it->first, minAngle, maxAngle);
+      double b = angleToOriginalInterval(it->second, minAngle, maxAngle);
+      ret.push_back(Interval(a,b));
+    }
+    std::sort(ret.begin(), ret.end());
+    ret = math::collapseIntervals(ret);
+    return ret;
+  }
+}
+
 Fan::Fan() : radius(0), minAngle(0), maxAngle(0) {}
 Fan::Fan(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
 Fan::Fan(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
@@ -48,54 +77,6 @@ bool Fan::intersectsStud(const Point &stud) const {
 std::ostream& operator<<(std::ostream &os, const Fan& f) {
   os << "Fan[r=" << f.radius << ",min=" << f.minAngle << ",max=" << f.maxAngle << "]";
   return os;
-}
-
-double MovingStud::angleToOriginalInterval(double a) const {
-  if(maxAngle < minAngle) {
-    // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
-#ifdef _DEBUG
-    if(!((-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI))) {
-      std::cout << "ERROR ON REV ANGLES (-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI). min=" << minAngle << ", a=" << a << ", max=" << maxAngle << std::endl;
-      assert(false);
-    }
-#endif
-    if(a <= maxAngle) {
-      return MAX_ANGLE_RADIANS - 2*MAX_ANGLE_RADIANS * (maxAngle-a)/(2*M_PI+maxAngle-minAngle);
-    }
-    else {
-      return -MAX_ANGLE_RADIANS + 2*MAX_ANGLE_RADIANS * (a-minAngle)/(2*M_PI+maxAngle-minAngle);
-    }
-  }
-  else {
-#ifdef _DEBUG
-    if(!(minAngle <= a && a <= maxAngle)) {
-      std::cout << "ERROR ON ANGLES minAngle <= a && a <= maxAngle. min=" << minAngle << ", a=" << a << ", max=" << maxAngle << std::endl;
-      assert(false);
-    }
-#endif
-    return -MAX_ANGLE_RADIANS + (2*MAX_ANGLE_RADIANS * (a-minAngle)/(maxAngle-minAngle));
-  }
-}
-
-IntervalList MovingStud::intervalsToOriginalInterval(const IntervalList &l) const {
-  IntervalList ret;
-
-  for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
-    double a = angleToOriginalInterval(it->first);
-    double b = angleToOriginalInterval(it->second);
-#ifdef _DEBUG
-    if(a > b) {
-      std::cout << "ERROR: " << a << " > " << b << " IN MovingStud::intervalsToOriginalInterval!" << std::endl;
-      assert(false);
-    }
-#endif
-    ret.push_back(Interval(a,b));
-  }
-    
-  std::sort(ret.begin(), ret.end());
-  ret = math::collapseIntervals(ret);
-
-  return ret;
 }
 
 /*
