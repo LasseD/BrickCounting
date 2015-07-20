@@ -253,7 +253,6 @@ struct Configuration : public LDRPrinter {
       RectilinearBrick sccBrick;
       for(int j = 0; j < scc.size; sccBrick = scc.otherBricks[j], ++j) {
         const int8_t levelJ = level + sccBrick.level();
-        //const uint8_t levelJ = sccBrick.level(); // TODO: Wrong level!
         if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
           ret.push_back(i);
           break;

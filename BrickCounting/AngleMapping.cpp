@@ -4,6 +4,7 @@
 #include "Configuration.hpp"
 #include "TurningSingleBrick.h"
 #include <time.h>
+#include <sstream>
 
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os) : numAngles(numScc-1), numBricks(0), encoder(encoder), os(os) {
   // Boosts:
@@ -282,8 +283,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     }
 
     // Check using TSB:
-    IntervalList l;
-    if(!sDone && tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l)) {
+    if(!sDone) {
+      IntervalList l;
+      tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
       //std::cout << "Investigating S-mapping vs " << l << std::endl;
       int numDisagreements = 0;
@@ -296,7 +298,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       if(numDisagreements > 0) {
         std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
       }
-      if(numDisagreements > 8) {
+      if(numDisagreements > 20) {
         std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
         LDRPrinterHandler h, d;
 
@@ -338,32 +340,29 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
         }
         assert(false); int* kill = NULL; kill[0] = 0;
       }//*/
-      sDone = true;
     }
-    l.clear();
-    if(!mDone && tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l)) {
+    if(!mDone) {
+      IntervalList l;
+      tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
       //std::cout << "Investigating M-mapping vs " << l << std::endl;
       /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
       }//*/
-      mDone = true;
     }
-    l.clear();
-    if(!lDone && tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l)) {
+    if(!lDone) {
+      IntervalList l;
+      tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
       //std::cout << "Investigating L-mapping vs " << l << std::endl;
       /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
       }//*/
-      lDone = true;
     }
-    if(sDone && mDone && lDone) {
-      ++boosts[2];
-      return;
-    }
+    ++boosts[2];
+    return;
   }
 
   for(unsigned short i = 0; i < steps; ++i) {
@@ -445,6 +444,16 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
   findExtremeConfigurations(0, p, true, rect, nonRect, toLdr);
 }
 
+char AngleMapping::smlChar(uint64_t smlIndex) const {
+  if(L[smlIndex])
+    return 'L';
+  if(M[smlIndex])
+    return 'M';
+  if(S[smlIndex])
+    return 'S';
+  return '-';
+}
+
 void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const {
   Configuration c = getConfiguration(p);
   std::vector<Connection> cc = getConfigurationConnections(p);
@@ -470,7 +479,40 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
     os << "  This configuration represents M-island " << (mIslandI+1) << "/" << mIslandTotal << ". There are " << lIslandTotal << " L-islands in this M-island" << std::endl;
   else
     os << "  S islands without M-islands inside!" << std::endl;        
-  os << "  Configuration: " << c << std::endl;
+
+  if(numAngles < 3) {
+    //Create maping file:
+    std::stringstream mappingFileName;
+    mappingFileName << "manual\\" << numBricks << "\\";
+    encoder.writeFileName(mappingFileName, cc);
+    mappingFileName << "_mapping.txt";
+    std::ofstream mappingFile;
+    mappingFile.open(mappingFileName.str(), std::ios::out);
+    mappingFile << numAngles << " ";
+    for(int i = 0; i < numAngles; ++i)
+      mappingFile << " " << (2*angleSteps[i]+1);
+
+    // Print SML Mapping!
+    if(numAngles == 1) {
+      for(int i = 0; i < 2*angleSteps[0]+1; ++i) {
+        assert(i < sizeMappings);
+        mappingFile << smlChar(i);
+      }
+      mappingFile << std::endl;
+    }
+    else {
+      for(int i = 0; i < 2*angleSteps[1]+1; ++i) {
+        for(int j = 0; j < 2*angleSteps[0]+1; ++j) {
+          int index = i*(2*angleSteps[1]+1)+j;
+          assert(index < sizeMappings);
+          mappingFile << smlChar(index);
+        }
+        mappingFile << std::endl;
+      }
+    }
+    mappingFile.flush();
+    mappingFile.close();
+  }
   os << std::endl;
 }
 

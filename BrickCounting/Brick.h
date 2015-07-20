@@ -200,8 +200,6 @@ public:
     getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
     std::cout << "   BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
 #endif
-
-    assert(radius > STUD_RADIUS);
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
     LineSegment segments[4];
     getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    

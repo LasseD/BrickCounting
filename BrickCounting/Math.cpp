@@ -203,9 +203,13 @@ namespace math {
   bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2) {
     const double distCentresSq = normSq(p);
     const double distCentres = sqrt(distCentresSq);
-    assert(distCentres > EPSILON);
     if(distCentres > r + pr || distCentres+pr <= r || distCentres+r <= pr)
       return false; // No solution.
+    if(pr > distCentres) { // Special case: pr encloses origin:
+      ai1 = -M_PI;
+      ai2 = M_PI;
+      return true;
+    }
 
     const double angleP = angleOfPoint(p);
     const double angleDiff = acos((pr*pr-distCentresSq-r*r)/(-2*r*distCentres));
@@ -224,7 +228,6 @@ namespace math {
     Finds the (angle) intervals of the circle at O with radius r where it intersects with the circle at p and radius pr.
    */
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
-    assert(r > pr);
     double ai1, ai2;
     bool newIntersections = findCircleCircleIntersections(r, p, pr, ai1, ai2);
     IntervalList ret;

@@ -116,14 +116,6 @@ public:
     if(!allowClick || radius < EPSILON)
       return;
 
-    if(radius < EPSILON) {
-      // If the MS has radius=0, then it can turn anywhere in case of click:
-      if(block.outerStudIntersectsStudAtOrigin()) {
-        ret = math::toIntervalsRadians(minAngle, maxAngle); // TODO: FIXME: WRONG!
-      }
-      return;
-    }
-
     // Add intervals for studs:
     double studAngle;
     bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, minAngle, maxAngle, studAngle);
@@ -167,6 +159,26 @@ struct TurningSingleBrick {
   }
 
   template <int ADD_XY>
+  void /*TurningSingleBrick::*/allowableAnglesForBrickTurningBelow(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
+    IntervalList ret;
+    ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    // Turning below:
+    for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
+      IntervalList listForStud;
+      movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4, listForStud, clicks); // The last 4 studs are outer and thus allowing clicking.
+#ifdef _TRACE
+      std::cout << "||| AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << "|||" << std::endl;
+      if(!math::intervalEquals(math::intervalAnd(ret, listForStud), ret))
+        std::cout << "AAFB REDUCTION PERFORMED!" << std::endl;
+#endif
+      ret = math::intervalAnd(ret, listForStud);
+      if(ret.empty())
+        break;
+    }
+    l = ret;
+  }
+
+  template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAbove(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
     IntervalList ret;
     ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
@@ -193,43 +205,29 @@ struct TurningSingleBrick {
   }
 
   template <int ADD_XY>
-  bool /*TurningSingleBrick::*/allowableAnglesForBrick(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
+  void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAtSameLevel(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
+    // TODO: Implement!
+    // TODO! FIXME! USE 2 * BRICK POIS VS FANS
+  }
+
+  template <int ADD_XY>
+  void /*TurningSingleBrick::*/allowableAnglesForBrick(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
 #ifdef _TRACE
     std::cout << "AAFB (allowableAnglesForBrick) " << brick << " STARTING!" << std::endl;
 #endif
-    IntervalList ret;
-    ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
-
     int8_t level = blocks[0].level;
     if(brick.level == level) {
-      // Same level:
-      // TODO! FIXME! USE 2 * BRICK POIS VS FANS
-      return false;
+      allowableAnglesForBrickTurningAtSameLevel<ADD_XY>(brick, l, clicks);
     }
     else if(level + 1 == brick.level) {
-      // Turning below:
-      for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
-        IntervalList listForStud;
-        movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4, listForStud, clicks); // The last 4 studs are outer and thus allowing clicking.
-#ifdef _TRACE
-        std::cout << "||| AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << "|||" << std::endl;
-        if(!math::intervalEquals(math::intervalAnd(ret, listForStud), ret))
-          std::cout << "AAFB REDUCTION PERFORMED!" << std::endl;
-#endif
-        ret = math::intervalAnd(ret, listForStud);
-        if(ret.empty())
-          break;
-      }
-      l = ret;
-      return true;
+      allowableAnglesForBrickTurningBelow<ADD_XY>(brick, l, clicks);
     }
     else if(level - 1 == brick.level) {
-      // Turning above:
       allowableAnglesForBrickTurningAbove<ADD_XY>(brick, l, clicks);
-      return true;
     }
-    l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
-    return true;
+    else {
+      l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    }
   }
 
   template <int ADD_XY>
@@ -295,7 +293,7 @@ struct TurningSingleBrickInvestigator {
   }
 
   template <int ADD_XY>
-  bool /*TurningSingleBrickInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
+  void /*TurningSingleBrickInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
 #ifdef _TRACE
     std::cout << "----------------- INITIATING ALLOWABLE ANGLES ----------------------" << std::endl;
 #endif
@@ -316,12 +314,7 @@ struct TurningSingleBrickInvestigator {
 
       IntervalList joiner;
       std::vector<ClickInfo> clicks;
-      if(!tsb.allowableAnglesForBrick<ADD_XY>(b, joiner, clicks)) {
-#ifdef _TRACE
-        std::cout << "----------------- STOPPING ALLOWABLE ANGLES ----------------------" << std::endl;
-#endif
-        return false;
-      }
+      tsb.allowableAnglesForBrick<ADD_XY>(b, joiner, clicks);
 #ifdef _TRACE
       std::cout << "Joining allowable angles for " << b << ": " << ret << " & " << joiner << " = " << math::intervalAnd(ret,joiner) << std::endl;
 #endif
@@ -351,7 +344,6 @@ struct TurningSingleBrickInvestigator {
 #ifdef _TRACE
     std::cout << "----------------- ENDING ALLOWABLE ANGLES ----------------------" << std::endl;
 #endif
-    return true;
   }
 
   /*
