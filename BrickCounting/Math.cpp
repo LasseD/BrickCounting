@@ -468,15 +468,23 @@ namespace math {
     for(unsigned int i = 0; i < sizeArray; ++i) {
       double v = min + ((max-min)*i)/((double)sizeArray-1);
       if(it == l.end() || v < it->first) {
-        array[sizeArray-1-i] = false;
+        array[i] = false; // sizeArray-1-i
       }
       else if(v > it->second) {
-        array[sizeArray-1-i] = false;
+        array[i] = false; // sizeArray-1-i
         ++it;
       }
       else
-        array[sizeArray-1-i] = true;
+        array[i] = true; // sizeArray-1-i
     }
+  }
+
+  IntervalList intervalReverse(const IntervalList &l) {
+    IntervalList ret;
+    for(int i = l.size()-1; i >= 0; --i) {
+      ret.push_back(Interval(-l[i].second, -l[i].first));
+    }
+    return ret;
   }
 
   IntervalList toIntervalsRadians(double min, double max) {

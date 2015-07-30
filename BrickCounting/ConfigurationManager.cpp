@@ -138,28 +138,29 @@ void ConfigurationManager::test() {
   v.push_back(1);
   v.push_back(1);
 
-  runForCombinationType(v, 4);
-  /*
+  //runForCombinationType(v, 4);
+  
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][2]);
+  v2.push_back(sccs[1][3]);
   v2.push_back(sccs[0][0]);
   v2.push_back(sccs[0][0]);
 
   std::ofstream os;
   os.open("abe.txt", std::ios::out);
-  runForCombination(v2, v, -1, os);//*/
-  /*
+  //runForCombination(v2, v, -1, os);//*/
+  
   SingleConfigurationManager sm(v2, os);
   std::vector<IConnectionPoint> pools;
 
   std::vector<IConnectionPair> pairs;
   RectilinearBrick b0;
-  RectilinearBrick &b1 = sccs[1][1].otherBricks[0];
+  RectilinearBrick &b1 = sccs[1][3].otherBricks[0];
 
-  IConnectionPoint icp1(BrickIdentifier(2,0,0),ConnectionPoint(SE,b0,true ,0));
-  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NE,b0,false,0));
-  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(SE,b0,true ,0));
-  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,false,0));
+  IConnectionPoint icp1(BrickIdentifier(3,1,0),ConnectionPoint(SW,b1,true ,1));
+  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(SW,b0,false,0));
+  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,false,0));
+  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NW,b0,true ,0));
+  // ICP[BI[scc=3,1,0],ASW]<>ICP[BI[scc=0,0,1],BSW] ICP[BI[scc=0,0,1],BNW]<>ICP[BI[scc=0,0,2],ANW]
 
   pairs.push_back(IConnectionPair(icp1,icp2));
   pairs.push_back(IConnectionPair(icp3,icp4));

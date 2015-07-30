@@ -86,19 +86,20 @@ struct Connection {
   Connection(){}
   Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      //this->angle.negate();
+      assert(false);
       std::swap(p1, p2);
     }
   }
   Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
   Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      //this->angle.negate();
+      assert(false);
       std::swap(this->p1, this->p2);
     }  
   } 
   double angleToRadians() const {
-    return p1.second.above ? angle.toRadians() : -angle.toRadians();
+    return angle.toRadians(); // TODO: Why? FIXME!
+    //return p1.second.above ? angle.toRadians() : -angle.toRadians();
   }
   bool operator<(const Connection &c) const {
     if(angle != c.angle)      

@@ -53,6 +53,7 @@ namespace math {
   IntervalList intervalAndRadians(double a1, double a2, double b1, double b2);
   IntervalList intervalInverseRadians(const IntervalList &l, double min, double max);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
+  IntervalList intervalReverse(const IntervalList &l);
   IntervalList collapseIntervals(const IntervalList &l);
   void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
   IntervalList toIntervalsRadians(double min, double max);

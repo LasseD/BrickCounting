@@ -296,11 +296,18 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
         }
       }
       if(numDisagreements > 0) {
-        std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
+        //std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
       }
       if(numDisagreements > 20) {
         std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
         LDRPrinterHandler h, d;
+
+        std::cout << " Connection points: " << std::endl;
+        for(unsigned int i = 0; i <= angleI; ++i) {
+          const IConnectionPoint &ip1 = points[2*i];
+          const IConnectionPoint &ip2 = points[2*i+1];
+          std::cout << "  " << ip1 << "-->" << ip2 << std::endl;
+        }
 
         std::cout << "Content of S:" << std::endl;	 
         for(unsigned short j = 0; j < steps; ++j) {
@@ -346,9 +353,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
       //std::cout << "Investigating M-mapping vs " << l << std::endl;
-      /*for(unsigned short i = 0; i < steps; ++i) {
+      for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
+        assert(!(!M[smlI+i] && S[smlI+i]));
       }//*/
     }
     if(!lDone) {
@@ -356,9 +364,15 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
       math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
       //std::cout << "Investigating L-mapping vs " << l << std::endl;
-      /*for(unsigned short i = 0; i < steps; ++i) {
+      for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
+        if(!L[smlI+i] && M[smlI+i]) {
+          LDRPrinterHandler h;
+          h.add(&c2);
+          h.print("LM_disparity");
+          assert(false);
+        }
       }//*/
     }
     ++boosts[2];
@@ -489,7 +503,7 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
     std::ofstream mappingFile;
     mappingFile.open(mappingFileName.str(), std::ios::out);
     mappingFile << numAngles << " ";
-    for(int i = 0; i < numAngles; ++i)
+    for(unsigned int i = 0; i < numAngles; ++i)
       mappingFile << " " << (2*angleSteps[i]+1);
 
     // Print SML Mapping!

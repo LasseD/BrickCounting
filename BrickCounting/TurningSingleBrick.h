@@ -44,13 +44,21 @@ struct Fan {
     return false;
   }
 
-    template <int ADD_XY>
+  template <int ADD_XY>
   void /*Fan::*/allowableAnglesForBlock(const Brick &block, IntervalList &ret) const {
     // Compute intersections without interval information:
     if(radius < EPSILON)
       ret = block.blockIntersectionWithRotatingPoint<ADD_XY>(minAngle, maxAngle);
-    else
+    else {
       ret = block.blockIntersectionWithMovingPoint<ADD_XY>(radius, minAngle, maxAngle);
+    }
+#ifdef _TRACE
+    if(!ret.empty()) {
+      std::cout << "  FAN intersection with block " << block << ": " << ret << std::endl;
+      std::cout << "  FAN inverse: " << math::intervalInverseRadians(ret, minAngle, maxAngle) << std::endl;
+      std::cout << "  FAN orig interval: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, minAngle, maxAngle), minAngle, maxAngle) << std::endl;
+    }
+#endif
     ret = math::intervalInverseRadians(ret, minAngle, maxAngle);
     ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
   }
@@ -103,7 +111,7 @@ public:
     std::cout << " " << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << " STARTED " << std::endl;
 #endif
     // Compute intersections without interval information:
-    if(radius < EPSILON) {
+    if(radius < SNAP_DISTANCE) {
 #ifdef _TRACE
       std::cout << "  R=0, SO FIND QUICK!" << std::endl;
 #endif
@@ -112,20 +120,18 @@ public:
     else
       ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
 #ifdef _TRACE
-    std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
+    if(!ret.empty()) {
+      std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
+      std::cout << "  Inversed: " << math::intervalInverseRadians(ret, minAngle, maxAngle) << std::endl;
+      std::cout << "  Transformed: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, minAngle, maxAngle), minAngle, maxAngle) << std::endl;
+    }
 #endif
 
     // Find intersect between min/max and intersection points:
     // Inverse ret:
     ret = math::intervalInverseRadians(ret, minAngle, maxAngle);
-#ifdef _TRACE
-    std::cout << "  Inversed: " << ret << std::endl;
-#endif
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
     ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
-#ifdef _TRACE
-    std::cout << "  Transformed: " << ret << std::endl;
-#endif
 
     if(!allowClick || radius < EPSILON)
       return;
@@ -152,7 +158,6 @@ struct TurningSingleBrick {
   Fan fans[4];
   MovingStud movingStuds[NUMBER_OF_STUDS];
   Point studTranslation;
-  //MovingStud movingAntiStuds[4];
 
   void createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair);
   void createMovingStuds();
@@ -189,7 +194,10 @@ struct TurningSingleBrick {
       if(ret.empty())
         break;
     }
-    l = ret;
+    l = ret;//math::intervalReverse(ret);
+#ifdef _TRACE
+    std::cout << "AAFB BELOW returns " << l << std::endl;
+#endif
   }
 
   template <int ADD_XY>
@@ -212,20 +220,34 @@ struct TurningSingleBrick {
       MovingStud ms(math::norm(studsOfBrick[i]), minAngle, maxAngle);
 
       IntervalList listForStud;
-      ms.allowableAnglesForBlock<ADD_XY>(blockAbove, i >= 4, listForStud, clicks); // The last 4 studs are outer and thus allowing clicking.
+      std::vector<ClickInfo> reversedClicks;
+      ms.allowableAnglesForBlock<ADD_XY>(blockAbove, i >= 4, listForStud, reversedClicks); // The last 4 studs are outer and thus allowing clicking.
+      for(std::vector<ClickInfo>::const_iterator it = reversedClicks.begin(); it != reversedClicks.end(); ++it) {
+        clicks.push_back(ClickInfo(-(it->first), it->second));
+      }
       ret = math::intervalAnd(ret, listForStud);
     }
-    l = ret;
+    l = math::intervalReverse(ret);
+#ifdef _TRACE
+    std::cout << "AAFB ABOVE returns " << l << std::endl;
+#endif
   }
 
   template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAtSameLevel(const Brick &brick, IntervalList &l) const {
+#ifdef _TRACE
+    std::cout << "AAFBTSL brick " << brick << " VS TSB " << blocks[0] << "-->" << blocks[1] << std::endl;
+#endif
     l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS)); // Initially all angles allowed.
 
     // First test own fans against the brick:
     for(int i = 0; i < 4; ++i) {
       IntervalList listForFan;
       fans[i].allowableAnglesForBlock<ADD_XY>(brick, listForFan);
+#ifdef _TRACE
+      if(!math::intervalEquals(l, math::intervalAnd(l, math::intervalReverse(listForFan))))
+        std::cout << " AAFBTSL fan reduction: " << fans[i] << ", " << brick << ": " << listForFan << std::endl;
+#endif
       l = math::intervalAnd(l, listForFan);
       if(l.empty())
         return;
@@ -248,10 +270,21 @@ struct TurningSingleBrick {
 
       IntervalList listForFan;
       f.allowableAnglesForBlock<ADD_XY>(blockAbove, listForFan);
+      
+#ifdef _TRACE
+      if(!math::intervalEquals(l, math::intervalAnd(l, listForFan))) {
+        std::cout << " AAFBTSL REVERSE fan reduction: " << f << ", " << blockAbove << ": " << listForFan << std::endl;
+        std::cout << " AAFBTSL REVERSE fan reduction reversed: " << math::intervalReverse(listForFan) << std::endl;
+      }
+#endif
+      listForFan = math::intervalReverse(listForFan);
       l = math::intervalAnd(l, listForFan);
       if(l.empty())
         return;
     }
+#ifdef _TRACE
+    std::cout << "AAFBTSL returns " << l << std::endl;
+#endif
   }
 
   template <int ADD_XY>
@@ -365,9 +398,18 @@ struct TurningSingleBrickInvestigator {
       ret = math::intervalAnd(ret, joiner);
       // Add clicks by investigating realizable on each info.
       for(std::vector<ClickInfo>::const_iterator it2 = clicks.begin(); it2 != clicks.end(); ++it2) {
+#ifdef _TRACE
+        std::cout << " Checking click, angle=" << it2->first << ", dist=" << it2->second << std::endl;
+#endif
+        if(it2->second <= SNAP_DISTANCE) {
+#ifdef _TRACE
+          std::cout << "  Ignoring local (dist < " << SNAP_DISTANCE << ")" << std::endl;
+#endif
+          continue; // Clicking locally at all angles - do nothing.
+        }
         Configuration c2(configuration);
         FatSCC scc; // Initializes for single brick SCC.
-        StepAngle stepAngle(-(short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
+        StepAngle stepAngle((short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
         Connection connection(connectionPair, stepAngle);
         c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
         if(c2.isRealizable<ADD_XY>(possibleCollisions, 1)) {
@@ -378,14 +420,23 @@ struct TurningSingleBrickInvestigator {
           IntervalList studInterval;
           studInterval.push_back(Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius));
 #ifdef _TRACE
-          std::cout << " AAFB RET " << ret << " | " << studIntervals << " = " << math::intervalOr(ret, studIntervals) << std::endl;
+          std::cout << " AAFB RET " << ret << " | " << studInterval << " = " << math::intervalOr(ret, studInterval) << std::endl;
 #endif
           ret = math::intervalOr(ret, studInterval);
         }
+#ifdef _TRACE
+        else {
+          std::cout << " NOT REALIZABLE: " << c2 << std::endl;
+          LDRPrinterHandler h;
+          h.add(&c2);
+          h.print("unrealizable");
+        }
+#endif
       }
     }
     l = ret;
 #ifdef _TRACE
+    std::cout << "TSB Investigator returns " << ret << std::endl;
     std::cout << "----------------- ENDING ALLOWABLE ANGLES ----------------------" << std::endl;
 #endif
   }
