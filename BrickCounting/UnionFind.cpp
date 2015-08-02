@@ -85,8 +85,8 @@ void SimpleUnionFind::createReducedUnions() {
     reducedUnions[numReducedUnions++] = unionI;
   }
 
-  if(numUnions > numReducedUnions*100)
-    std::cout << "Reducing " << numUnions << " to " << numReducedUnions << "!" << std::endl;
+//  if(numUnions > numReducedUnions*100)
+//    std::cout << "Reducing " << numUnions << " to " << numReducedUnions << "!" << std::endl;
 
   delete[] indexed;
 }

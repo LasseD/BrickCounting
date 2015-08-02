@@ -52,4 +52,6 @@ public:
   unsigned int numReducedUnions;
 };
 
+
+
 #endif // UNION_FIND_H

@@ -382,8 +382,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!mDone) {
       IntervalList l;
       tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
-#ifdef _DEBUG
       math::intervalToArray(l, &M[smlI], steps);
+#ifdef _DEBUG
       //std::cout << "Investigating M-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
@@ -456,6 +456,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!lDone)
       L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
   }
+
+//  if(angleTypes[angleI] != 0)
+//    std::cout << "No boost because last SCC size is " << sccs[numAngles].size << " and angle type is " << angleTypes[angleI] << std::endl;
   ++boosts[3]; // no boost :(
 }
 
