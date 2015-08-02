@@ -17,6 +17,10 @@ typedef unsigned long long counter;
 
 struct SIsland; // forward declaration.
 
+namespace math {
+  void intervalToArray(const IntervalList &l, bool *array, unsigned int sizeArray);
+}
+
 /*
 Mapping angles (See README):
 Size 0 => Granularity 0 - 0 => 1 step.

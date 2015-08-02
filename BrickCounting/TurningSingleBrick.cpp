@@ -1,7 +1,10 @@
 #include "TurningSingleBrick.h"
 
 namespace math {
-  double angleToOriginalInterval(double a, double minAngle, double maxAngle) {
+  double angleToOriginalInterval(double a, const RadianInterval &interval) {
+    const double &minAngle = interval.P1;
+    const double &maxAngle = interval.P2;
+
     if(maxAngle < minAngle) {
       // There are now two intervals: [-PI;maxAngle] and [minAngle;PI].
       if(a <= maxAngle) {
@@ -16,11 +19,11 @@ namespace math {
     }
   }
 
-  IntervalList intervalsToOriginalInterval(const IntervalList &l, double minAngle, double maxAngle) {
+  IntervalList intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval) {
     IntervalList ret;
     for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
-      double a = angleToOriginalInterval(it->first, minAngle, maxAngle);
-      double b = angleToOriginalInterval(it->second, minAngle, maxAngle);
+      double a = angleToOriginalInterval(it->first, interval);
+      double b = angleToOriginalInterval(it->second, interval);
       ret.push_back(Interval(a,b));
     }
     std::sort(ret.begin(), ret.end());
@@ -29,23 +32,14 @@ namespace math {
   }
 }
 
-Fan::Fan() : radius(0), minAngle(0), maxAngle(0) {}
-Fan::Fan(const Fan &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
-Fan::Fan(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
-  assert(minAngle >= -M_PI - EPSILON);
-  assert(minAngle < M_PI + EPSILON);
-  assert(maxAngle >= -M_PI - EPSILON);
-  assert(maxAngle < M_PI + EPSILON);
-}
+Fan::Fan() : radius(0), interval(0,0) {}
+Fan::Fan(const Fan &f) : radius(f.radius), interval(f.interval) {}
+Fan::Fan(double radius, double min, double max) : radius(radius), interval(min,max) {}
+Fan::Fan(double radius, const RadianInterval &interval) : radius(radius), interval(interval) {}
 
-MovingStud::MovingStud() : radius(0), minAngle(0), maxAngle(0) {}
-MovingStud::MovingStud(const MovingStud &f) : radius(f.radius), minAngle(f.minAngle), maxAngle(f.maxAngle) {}
-MovingStud::MovingStud(double radius, double min, double max) : radius(radius), minAngle(min), maxAngle(max) {
-  assert(minAngle >= -M_PI - EPSILON);
-  assert(minAngle < M_PI + EPSILON);
-  assert(maxAngle >= -M_PI - EPSILON);
-  assert(maxAngle < M_PI + EPSILON);
-}
+MovingStud::MovingStud() : radius(0), interval(0,0) {}
+MovingStud::MovingStud(const MovingStud &f) : radius(f.radius), interval(f.interval) {}
+MovingStud::MovingStud(double radius, double min, double max) : radius(radius), interval(min,max) {}
 
 /*
 A fan intersects a line segment if the segment intersects the circle between minAngle and maxAngle
@@ -56,10 +50,10 @@ bool Fan::intersectsLineSegment(const LineSegment &l) const {
   if(intersections == 0)
     return false;
   // Return true if one of the intersections is between minAngle and maxAngle:
-  if(math::between(l.P1, i1, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i1), maxAngle)) {
+  if(math::between(l.P1, i1, l.P2) && math::inRadianInterval(math::angleOfPoint(i1), interval)) {
     return true;
   }
-  if(math::between(l.P1, i2, l.P2) && math::angleBetween(minAngle, math::angleOfPoint(i2), maxAngle)) {
+  if(math::between(l.P1, i2, l.P2) && math::inRadianInterval(math::angleOfPoint(i2), interval)) {
     return true;
   }
   return false;
@@ -71,11 +65,11 @@ AND if the center of the stud lies between minAngle and maxAngle
 */
 bool Fan::intersectsStud(const Point &stud) const {
   return math::normSq(stud) < (radius + STUD_RADIUS)*(radius + STUD_RADIUS) && 
-         math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
+         math::inRadianInterval(math::angleOfPoint(stud), interval);
 }
 
 std::ostream& operator<<(std::ostream &os, const Fan& f) {
-  os << "Fan[r=" << f.radius << ",min=" << f.minAngle << ",max=" << f.maxAngle << "]";
+  os << "Fan[r=" << f.radius << ",min=" << f.interval.P1 << ",max=" << f.interval.P2 << "]";
   return os;
 }
 
@@ -89,19 +83,19 @@ bool MovingStud::tractIntersectsLineSegment(const LineSegment &l) const {
   const double outerWallRadius = radius + STUD_RADIUS;
   bool endPointsBetweenWalls = (innerWallRadius <= normP1 && normP1 <= outerWallRadius) &&
                                (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
-  bool endPointsInside = endPointsBetweenWalls && (math::angleBetween(minAngle, math::angleOfPoint(l.P1), maxAngle) || 
-                                                   math::angleBetween(minAngle, math::angleOfPoint(l.P2), maxAngle));
+  bool endPointsInside = endPointsBetweenWalls && (math::inRadianInterval(math::angleOfPoint(l.P1), interval) || 
+                                                   math::inRadianInterval(math::angleOfPoint(l.P2), interval));
   return endPointsInside || 
-    Fan(innerWallRadius, minAngle, maxAngle).intersectsLineSegment(l) ||
-    Fan(outerWallRadius, minAngle, maxAngle).intersectsLineSegment(l);
+    Fan(innerWallRadius, interval).intersectsLineSegment(l) ||
+    Fan(outerWallRadius, interval).intersectsLineSegment(l);
 }
 
 Point MovingStud::minPoint() const {
-  return Point(radius*cos(minAngle), radius*sin(minAngle));
+  return Point(radius*cos(interval.P1), radius*sin(interval.P1));
 }
 
 Point MovingStud::maxPoint() const {
-  return Point(radius*cos(maxAngle), radius*sin(maxAngle));
+  return Point(radius*cos(interval.P2), radius*sin(interval.P2));
 }
 
 /*
@@ -110,7 +104,7 @@ The moving stud intersects a stud, if it intersects the tract or one of the end 
 bool MovingStud::intersectsStud(const Point &stud) const {  
   bool intersectsTract = math::normSq(stud) > (radius - STUD_DIAM)*(radius - STUD_DIAM) && 
                          math::normSq(stud) < (radius + STUD_DIAM)*(radius + STUD_DIAM) && 
-                         math::angleBetween(minAngle, math::angleOfPoint(stud), maxAngle);
+                         math::inRadianInterval(math::angleOfPoint(stud), interval);
   if(intersectsTract)
     return true;
   Point minP = minPoint();
@@ -121,7 +115,7 @@ bool MovingStud::intersectsStud(const Point &stud) const {
 }
 
 std::ostream& operator<<(std::ostream &os, const MovingStud& f) {
-  os << "MovingStud[r=" << f.radius << ",min=" << f.minAngle << ",max=" << f.maxAngle << "]";
+  os << "MovingStud[r=" << f.radius << ",min=" << f.interval.P1 << ",max=" << f.interval.P2 << "]";
   return os;
 }
 

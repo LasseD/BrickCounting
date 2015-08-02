@@ -6,6 +6,24 @@
 #include <time.h>
 #include <sstream>
 
+namespace math {
+  void intervalToArray(const IntervalList &l, bool *array, unsigned int sizeArray) {
+    IntervalList::const_iterator it = l.begin();
+    for(unsigned int i = 0; i < sizeArray; ++i) {
+      double v = -MAX_ANGLE_RADIANS + ((MAX_ANGLE_RADIANS+MAX_ANGLE_RADIANS)*i)/((double)sizeArray-1);
+      if(it == l.end() || v < it->first) {
+        array[i] = false; // sizeArray-1-i
+      }
+      else if(v > it->second) {
+        array[i] = false; // sizeArray-1-i
+        ++it;
+      }
+      else
+        array[i] = true; // sizeArray-1-i
+    }
+  }
+}
+
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os) : numAngles(numScc-1), numBricks(0), encoder(encoder), os(os) {
   // Boosts:
   for(int i = 0; i < BOOST_STAGES; ++i)
@@ -235,6 +253,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     ++boosts[0];
     return;
   }
+#ifdef _TRACE
+  std::cout << "NO SML: " << noS << ", " << noM << ", " << noL << std::endl;
+#endif
 
   // Speed up using TSB:
   if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
@@ -247,6 +268,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         S[smlI+i] = true;
+#ifdef _DEBUG
       /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
@@ -257,37 +279,45 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
           assert(false);
         }
       }//*/
+#endif
       sDone = true;
     }
     if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         M[smlI+i] = true;
+#ifdef _DEBUG
       /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
       }//*/
+#endif
       mDone = true;
     }
     if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
       for(unsigned int i = 0; i < steps; ++i) 
         L[smlI+i] = true;
+#ifdef _DEBUG
       /*for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
         assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
       }//*/
+#endif
       lDone = true;
     }
     if(sDone && mDone && lDone) {
       ++boosts[1];
       return;
     }
+#ifdef _TRACE
+    std::cout << "TSB Investigation clearance SML: " << sDone << ", " << mDone << ", " << lDone << std::endl;
+#endif
 
     // Check using TSB:
     if(!sDone) {
       IntervalList l;
       tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
-      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &S[smlI], steps);
-      //std::cout << "Investigating S-mapping vs " << l << std::endl;
+      math::intervalToArray(l, &S[smlI], steps);
+#ifdef _DEBUG
       int numDisagreements = 0;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
@@ -347,33 +377,71 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
         }
         assert(false); int* kill = NULL; kill[0] = 0;
       }//*/
+#endif
     }
     if(!mDone) {
       IntervalList l;
       tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
-      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &M[smlI], steps);
+#ifdef _DEBUG
+      math::intervalToArray(l, &M[smlI], steps);
       //std::cout << "Investigating M-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
-        assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
-        assert(!(!M[smlI+i] && S[smlI+i]));
+        //assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
+        if(M[smlI+i] && !S[smlI+i]) {
+          std::cout << "Content of S:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (S[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl << "Content of M:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (M[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl << "Content of L:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (L[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl;
+
+          LDRPrinterHandler h;
+          h.add(&c2);
+          h.print("SM_disparity");
+          assert(false);
+        }
       }//*/
+#endif
     }
     if(!lDone) {
       IntervalList l;
       tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
-      math::intervalToArray(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS), l, &L[smlI], steps);
+      math::intervalToArray(l, &L[smlI], steps);
+#ifdef _DEBUG
       //std::cout << "Investigating L-mapping vs " << l << std::endl;
       for(unsigned short i = 0; i < steps; ++i) {
         Configuration c2 = getConfiguration(c, angleI, i);
-        assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
-        if(!L[smlI+i] && M[smlI+i]) {
+        //assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
+        if(L[smlI+i] && !M[smlI+i]) {
+          std::cout << "Content of S:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (S[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl << "Content of M:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (M[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl << "Content of L:" << std::endl;	 
+          for(unsigned short j = 0; j < steps; ++j) {
+            std::cout << (L[smlI+j] ? "X" : "-");
+          }
+          std::cout << std::endl;
+
           LDRPrinterHandler h;
           h.add(&c2);
           h.print("LM_disparity");
           assert(false);
         }
       }//*/
+#endif
     }
     ++boosts[2];
     return;

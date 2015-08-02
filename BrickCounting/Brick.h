@@ -104,34 +104,55 @@ public:
    */
   template <int ADD_XY>
   IntervalList /*Brick::*/rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
+#ifdef _TRACE
+    std::cout << "    RECT VS Circle INIT. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << ", radius=" << radius << std::endl;
+#endif
     IntervalList ret;
 
     bool retInitiated = false;
     // Intersection with the circle must be on the right side of all four line segments:
     for(int i = 0; i < 4; ++i) {
       // Find intersections:
-      double intersectionMin, intersectionMax;
+      RadianInterval intersection;
       const Point &p1 = points[i];
       const Point &p2 = points[(i+1)%4];
       LineSegment segment(p1, p2);
-      bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersectionMin, intersectionMax);
+#ifdef _TRACE
+      std::cout << "     RECT VS Circle SEGMENT: " << segment << std::endl;
+#endif
+      bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersection);
       if(!intersects) {
+#ifdef _TRACE
+        std::cout << "      RECT VS Circle BAIL." << std::endl;
+#endif
         IntervalList empty;
         return empty;
       }
       if(!retInitiated) {
-        ret = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);
+        ret = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection);
+#ifdef _TRACE
+        const double &intersectionMin = intersection.P1;
+        const double &intersectionMax = intersection.P2;
+        std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << ret << std::endl;
+#endif
         retInitiated = true;
       }
       else {
-        IntervalList toMerge = math::intervalAndRadians(minAngle, maxAngle, intersectionMin, intersectionMax);
+        IntervalList toMerge = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection);
+#ifdef _TRACE
+        const double &intersectionMin = intersection.P1;
+        const double &intersectionMax = intersection.P2;
+        std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << toMerge << " => " << math::intervalAnd(ret, toMerge) << std::endl;
+#endif
         ret = math::intervalAnd(ret, toMerge);
       }
+      if(ret.empty())
+        return ret;
     }
 #ifdef _TRACE
     if(!ret.empty()) {
-      std::cout << "    RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
-      std::cout << "    RECT VS Circle => " << ret << std::endl;
+      std::cout << "     RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+      std::cout << "     RECT VS Circle => " << ret << std::endl;
     }
 #endif
     return ret;
@@ -175,12 +196,12 @@ public:
       ConnectionPoint fakeCP;
       RectilinearBrick fakeRB;
       if(boxIntersectsOuterStud<ADD_XY>(p, fakeConnected, fakeCP, fakeCP, fakeRB, fakeRB, 4)) {
-        return math::toIntervalsRadians(minAngle, maxAngle);
+        return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
       }
     }
     else {
       if(boxIntersectsInnerStud<ADD_XY>(p)) {
-        return math::toIntervalsRadians(minAngle, maxAngle);
+        return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
       }
     }
     IntervalList empty;
@@ -204,7 +225,7 @@ public:
     if(p.Y < 0) p.Y = -p.Y;
 
     if(p.X < cornerX && p.Y < cornerY)
-      return math::toIntervalsRadians(minAngle, maxAngle);
+      return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
     IntervalList empty;
     return empty;
   }
@@ -217,10 +238,7 @@ public:
   template <int ADD_XY>
   IntervalList /*Brick::*/blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
 #ifdef _TRACE
-    std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
-    LineSegment sx[4];
-    getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
-    std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+    bool spilled = false;
 #endif
     // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
     LineSegment segments[4];
@@ -228,16 +246,30 @@ public:
     Point p1[4] = {segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2};
     IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
 #ifdef _TRACE
-    if(!ret.empty())
+    if(!ret.empty()) {
+      std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+      LineSegment sx[4];
+      getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+      std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
       std::cout << "   WIDE Box intersect: " << ret << std::endl;
+      spilled = true;
+    }
 #endif
 
     Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
     IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
     ret = math::intervalOr(ret, intersectionsWithRect2);
 #ifdef _TRACE
-    if(!ret.empty())
+    if(!ret.empty()) {
+      if(!spilled) {
+        std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+        LineSegment sx[4];
+        getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+        std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+        spilled = true;
+      }
       std::cout << "   TALL Box intersect: " << intersectionsWithRect2 << " => " << ret << std::endl;
+    }
 #endif
 
     // Now check quarter circles: 
@@ -248,11 +280,19 @@ public:
       // Find intersections:
       IntervalList intervalFromCircle = math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS);
       for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
-        IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(minAngle, maxAngle, it->first, it->second);
+        IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), RadianInterval(it->first, it->second));
         ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
 #ifdef _TRACE
-        if(!ret.empty())
+        if(!ret.empty()) {
+          if(!spilled) {
+            std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+            LineSegment sx[4];
+            getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+            std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+            spilled = true;
+          }
           std::cout << "   CORNER<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+        }
 #endif
       }
     }

@@ -24,6 +24,7 @@ typedef std::pair<double,double> Point;
 std::ostream& operator<<(std::ostream &os, const Point& p);
 
 typedef std::pair<double,double> Interval;
+typedef Interval RadianInterval; // Counter clockwise from P1 to P2.
 typedef std::vector<Interval> IntervalList;
 std::ostream& operator<<(std::ostream &os, const IntervalList& p);
 
@@ -40,7 +41,7 @@ namespace math {
   double distSq(const Point &p1, const Point &p2);
   double dist(const Point &p1, const Point &p2);
   bool between(double a, double b, double c);
-  bool angleBetween(double minAngle, double a, double maxAngle);
+  bool inRadianInterval(double a, const RadianInterval &interval);
   bool between(const Point &a, const Point &b, const Point &c);
   double angleOfPoint(const Point &p);
   /*
@@ -50,16 +51,16 @@ namespace math {
 
   bool intervalEquals(const IntervalList &a, const IntervalList &b);
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
-  IntervalList intervalAndRadians(double a1, double a2, double b1, double b2);
-  IntervalList intervalInverseRadians(const IntervalList &l, double min, double max);
+  IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b);
+  IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax);
   IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
   IntervalList intervalReverse(const IntervalList &l);
   IntervalList collapseIntervals(const IntervalList &l);
-  void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray);
-  IntervalList toIntervalsRadians(double min, double max);
+  IntervalList toIntervalsRadians(const RadianInterval &interval);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
+  // TODO: FROM HERE:
   int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2); // Actual primitive
   bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2); // Actual primitive
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
@@ -69,7 +70,7 @@ namespace math {
   /*
     The half plane is divided by the line 
    */
-  bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax);
+  bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, RadianInterval &intersection);
 }
 
 #endif // MATH_H

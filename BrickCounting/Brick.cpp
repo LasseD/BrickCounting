@@ -192,7 +192,7 @@ bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, do
       continue;
     }
     double studAngle = math::angleOfPoint(stud);
-    if(!math::angleBetween(minAngle, studAngle, maxAngle)) {
+    if(!math::inRadianInterval(studAngle, RadianInterval(minAngle, maxAngle))) {
       continue;
     }
     if(foundAny) {

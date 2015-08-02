@@ -98,19 +98,19 @@ namespace math {
       [intersectionMin;M_PI] and [-M_PI;intersectionMax]
     Returns true if there is an intersection. 
    */
-  bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, double &intersectionMin, double &intersectionMax) {
+  bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, RadianInterval &intersection) {
 #ifdef _DEBUG
     Point i1, i2;
     int ni = math::findCircleLineIntersections(radius, line, i1, i2);
 #endif
-    bool newIntersections = math::findCircleLineIntersections(radius, line, intersectionMin, intersectionMax);      
+    bool newIntersections = math::findCircleLineIntersections(radius, line, intersection.P1, intersection.P2);      
     if(!newIntersections) {// != 2) {
 #ifdef _DEBUG
       assert(ni != 2);
 #endif
       if(math::rightTurn(line.P1, line.P2, Point(0,0))) { // Inside half plane
-        intersectionMin = -M_PI;
-        intersectionMax = M_PI;
+        intersection.P1 = -M_PI;
+        intersection.P2 = M_PI;
         return true;
       }
       return false; // Ignore no intersection and intersection in a point.
@@ -119,29 +119,27 @@ namespace math {
 #ifdef _DEBUG
     double im1 = math::angleOfPoint(i1);
     double im2 = math::angleOfPoint(i2);
-    if(!(eqEpsilon(im1, intersectionMin) || eqEpsilon(im1, intersectionMax))) {
-      std::cout << "im1=" << im1 << " != intersectionMin=" << intersectionMin << ", intersectionMax=" << intersectionMax << std::endl;
+    if(!(eqEpsilon(im1, intersection.P1) || eqEpsilon(im1, intersection.P2))) {
+      std::cout << "im1=" << im1 << " != intersectionMin=" << intersection.P1 << ", intersectionMax=" << intersection.P2 << std::endl;
       assert(false);
     }
-    if(!(eqEpsilon(im2, intersectionMin) || eqEpsilon(im2, intersectionMax))) {
-      std::cout << "im2=" << im2 << " != intersectionMin=" << intersectionMin << ", intersectionMax=" << intersectionMax << std::endl;
+    if(!(eqEpsilon(im2, intersection.P1) || eqEpsilon(im2, intersection.P2))) {
+      std::cout << "im2=" << im2 << " != intersectionMin=" << intersection.P1 << ", intersectionMax=" << intersection.P2 << std::endl;
       assert(false);
     }
 #endif
-    //intersectionMin = math::angleOfPoint(i1);
-    //intersectionMax = math::angleOfPoint(i2);
-    if(intersectionMin > intersectionMax)
-      std::swap(intersectionMin, intersectionMax);
+    if(intersection.P1 > intersection.P2)
+      std::swap(intersection.P1, intersection.P2);
 
     // Find mid-point and determine interval inside of half plane:
-    double midAngle = (intersectionMin + intersectionMax)/2;
+    double midAngle = (intersection.P1 + intersection.P2)/2;
     Point midPoint(radius*cos(midAngle), radius*sin(midAngle));
     if(math::rightTurn(line.P1, line.P2, midPoint)) {
       // OK: Mid-point of interval (on side without jump) is inside the half plane.
     }
     else {
       // Swap the intersections to indicate that the side with the jump is inside the half plane.
-      std::swap(intersectionMin, intersectionMax);
+      std::swap(intersection.P1, intersection.P2);
     }
 
     return true; // Interval found.
@@ -151,17 +149,20 @@ namespace math {
   bool between(double a, double b, double c) {
     return (a <= b && b <= c) || (a >= b && b >= c);
   }
-  bool angleBetween(double minAngle, double a, double maxAngle) {
+  bool inRadianInterval(double a, const RadianInterval &interval) {
+    const double &from = interval.P1;
+    const double &to = interval.P2;
     assert(a >= -M_PI - EPSILON);
     assert(a <= M_PI + EPSILON);
-    assert(minAngle >= -M_PI - EPSILON);
-    assert(minAngle < M_PI + EPSILON);
-    assert(maxAngle >= -M_PI - EPSILON);
-    assert(maxAngle < M_PI + EPSILON);
-    if(minAngle > maxAngle) {
-      return (-M_PI <= a && a <= maxAngle) || (minAngle <= a && a <= M_PI);
+    assert(from >= -M_PI - EPSILON);
+    assert(from < M_PI + EPSILON);
+    assert(to >= -M_PI - EPSILON);
+    assert(to < M_PI + EPSILON);
+    
+    if(from > to) { // Jumps at PI/-PI:
+      return (-M_PI <= a && a <= to) || (from <= a && a <= M_PI);
     }
-    return minAngle <= a && a <= maxAngle;
+    return from <= a && a <= to;
   }
   bool between(const Point &a, const Point &b, const Point &c) {
     return between(a.X, b.X, c.X) && between(a.Y, b.Y, c.Y);
@@ -251,7 +252,12 @@ namespace math {
   /*
     Handles splitting of a and b if they jump.
    */
-  IntervalList intervalAndRadians(double a1, double a2, double b1, double b2) {
+  IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b) {
+    const double &a1 = a.P1;
+    const double &a2 = a.P2;
+    const double &b1 = b.P1;
+    const double &b2 = b.P2;
+
     bool aJumps = a1 > a2;
     bool bJumps = b1 > b2;
     IntervalList ret;
@@ -260,6 +266,12 @@ namespace math {
         // a consists of [a1;M_PI] and [-M_PI;a2],
         // b consists of [b1;M_PI] and [-M_PI;b2]:
         ret.push_back(Interval(-M_PI, MIN(a2, b2)));
+        if(b1 < a2) {
+          ret.push_back(Interval(b1, a2));
+        }
+        if(a1 < b2) {
+          ret.push_back(Interval(a1, b2));
+        }
         ret.push_back(Interval(MAX(a1, b1), M_PI));
       }
       else {
@@ -378,10 +390,13 @@ namespace math {
     return ret;
   }
 
-  IntervalList intervalInverseRadians(const IntervalList &l, double min, double max) {
+  IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax) {
+    const double &min = minmax.P1;
+    const double &max = minmax.P2;
+
     IntervalList ret;
     if(l.empty()) {
-      return toIntervalsRadians(min, max);
+      return toIntervalsRadians(minmax);
     }
 
     IntervalList::const_iterator it = l.begin();
@@ -453,41 +468,21 @@ namespace math {
       }
     }
     ret.push_back(prev);
-    
-#ifdef _TRACE
-    if(!intervalEquals(ret, l))
-      std::cout << "COLLAPSING INTERVALS: " << l << " -> " << ret << std::endl;
-#endif
     return ret;
-  }
-
-  void intervalToArray(const Interval &fullInterval, const IntervalList &l, bool *array, unsigned int sizeArray) {
-    const double min = fullInterval.first;
-    const double max = fullInterval.second;
-    IntervalList::const_iterator it = l.begin();
-    for(unsigned int i = 0; i < sizeArray; ++i) {
-      double v = min + ((max-min)*i)/((double)sizeArray-1);
-      if(it == l.end() || v < it->first) {
-        array[i] = false; // sizeArray-1-i
-      }
-      else if(v > it->second) {
-        array[i] = false; // sizeArray-1-i
-        ++it;
-      }
-      else
-        array[i] = true; // sizeArray-1-i
-    }
   }
 
   IntervalList intervalReverse(const IntervalList &l) {
     IntervalList ret;
-    for(int i = l.size()-1; i >= 0; --i) {
+    for(long long i = l.size()-1; i >= 0; --i) {
       ret.push_back(Interval(-l[i].second, -l[i].first));
     }
     return ret;
   }
 
-  IntervalList toIntervalsRadians(double min, double max) {
+  IntervalList toIntervalsRadians(const RadianInterval &interval) {
+    const double &min = interval.P1;
+    const double &max = interval.P2;
+
     IntervalList ret;
     if(min < max) {
       ret.push_back(Interval(min, max));

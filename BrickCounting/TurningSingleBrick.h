@@ -10,8 +10,8 @@
 typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.
 
 namespace math {
-  double angleToOriginalInterval(double a, double minAngle, double maxAngle);
-  IntervalList intervalsToOriginalInterval(const IntervalList &l, double minAngle, double maxAngle);
+  double angleToOriginalInterval(double a, const RadianInterval &interval);
+  IntervalList intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval);
 }
 
 /*
@@ -20,11 +20,13 @@ Angles: There is always a continuous interval between min and max, and min < max
 Angle: 0 is horizontal ->
 */
 struct Fan {
-  double radius, minAngle, maxAngle;
+  double radius;
+  RadianInterval interval;
 
   /*Fan::*/Fan();
   /*Fan::*/Fan(const Fan &f);
   /*Fan::*/Fan(double radius, double min, double max);
+  /*Fan::*/Fan(double radius, const RadianInterval &interval);
 
   bool /*Fan::*/intersectsLineSegment(const LineSegment &l) const;    
   bool /*Fan::*/intersectsStud(const Point &stud) const;
@@ -48,19 +50,19 @@ struct Fan {
   void /*Fan::*/allowableAnglesForBlock(const Brick &block, IntervalList &ret) const {
     // Compute intersections without interval information:
     if(radius < EPSILON)
-      ret = block.blockIntersectionWithRotatingPoint<ADD_XY>(minAngle, maxAngle);
+      ret = block.blockIntersectionWithRotatingPoint<ADD_XY>(interval.P1, interval.P2);
     else {
-      ret = block.blockIntersectionWithMovingPoint<ADD_XY>(radius, minAngle, maxAngle);
+      ret = block.blockIntersectionWithMovingPoint<ADD_XY>(radius, interval.P1, interval.P2);
     }
 #ifdef _TRACE
     if(!ret.empty()) {
       std::cout << "  FAN intersection with block " << block << ": " << ret << std::endl;
-      std::cout << "  FAN inverse: " << math::intervalInverseRadians(ret, minAngle, maxAngle) << std::endl;
-      std::cout << "  FAN orig interval: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, minAngle, maxAngle), minAngle, maxAngle) << std::endl;
+      std::cout << "  FAN inverse: " << math::intervalInverseRadians(ret, interval) << std::endl;
+      std::cout << "  FAN orig interval: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, interval), interval) << std::endl;
     }
 #endif
-    ret = math::intervalInverseRadians(ret, minAngle, maxAngle);
-    ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
+    ret = math::intervalInverseRadians(ret, interval);
+    ret = math::intervalsToOriginalInterval(ret, interval);
   }
 };
 
@@ -70,7 +72,8 @@ std::ostream& operator<<(std::ostream &os, const Fan& f);
 The shape of a moving stud consists of a tract and two circles at the ends (end circles).
 */
 struct MovingStud {
-  double radius, minAngle, maxAngle;
+  double radius;
+  RadianInterval interval;
 
   /*MovingStud::*/MovingStud();
   /*MovingStud::*/MovingStud(const MovingStud &f);
@@ -108,43 +111,43 @@ public:
   template <int ADD_XY>
   void /*MovingStud::*/allowableAnglesForBlock(const Brick &block, bool allowClick, IntervalList &ret, std::vector<ClickInfo> &clicks) const {
 #ifdef _TRACE
-    std::cout << " " << block << " VS MS r=" << radius << ", [" << minAngle << ";" << maxAngle << "], AC=" << allowClick << " STARTED " << std::endl;
+    std::cout << " " << block << " VS MS r=" << radius << ", [" << interval << "], AC=" << allowClick << " STARTED " << std::endl;
 #endif
     // Compute intersections without interval information:
     if(radius < SNAP_DISTANCE) {
 #ifdef _TRACE
       std::cout << "  R=0, SO FIND QUICK!" << std::endl;
 #endif
-      ret = block.blockIntersectionWithRotatingStud<ADD_XY>(minAngle, maxAngle, allowClick);
+      ret = block.blockIntersectionWithRotatingStud<ADD_XY>(interval.P1, interval.P2, allowClick);
     }
     else
-      ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, minAngle, maxAngle);
+      ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, interval.P1, interval.P2);
 #ifdef _TRACE
     if(!ret.empty()) {
       std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
-      std::cout << "  Inversed: " << math::intervalInverseRadians(ret, minAngle, maxAngle) << std::endl;
-      std::cout << "  Transformed: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, minAngle, maxAngle), minAngle, maxAngle) << std::endl;
+      std::cout << "  Inversed: " << math::intervalInverseRadians(ret, interval) << std::endl;
+      std::cout << "  Transformed: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, interval), interval) << std::endl;
     }
 #endif
 
     // Find intersect between min/max and intersection points:
     // Inverse ret:
-    ret = math::intervalInverseRadians(ret, minAngle, maxAngle);
+    ret = math::intervalInverseRadians(ret, interval);
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
-    ret = math::intervalsToOriginalInterval(ret, minAngle, maxAngle);
+    ret = math::intervalsToOriginalInterval(ret, interval);
 
     if(!allowClick || radius < EPSILON)
       return;
 
     // Add intervals for studs:
     double studAngle;
-    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, minAngle, maxAngle, studAngle);
+    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, interval.P1, interval.P2, studAngle);
     if(!anyStudAngles)
       return;
 #ifdef _TRACE
-    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, minAngle, maxAngle) << std::endl;
+    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, interval) << std::endl;
 #endif
-    double studAngleTransformed = math::angleToOriginalInterval(studAngle, minAngle, maxAngle);
+    double studAngleTransformed = math::angleToOriginalInterval(studAngle, interval);
     clicks.push_back(ClickInfo(studAngleTransformed, radius));
     return;
   }
@@ -372,7 +375,7 @@ struct TurningSingleBrickInvestigator {
   template <int ADD_XY>
   void /*TurningSingleBrickInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
 #ifdef _TRACE
-    std::cout << "----------------- INITIATING ALLOWABLE ANGLES ----------------------" << std::endl;
+    std::cout << "----------------- INITIATING ALLOWABLE ANGLES <" << ADD_XY <<  "> ----------------------" << std::endl;
 #endif
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
@@ -437,7 +440,7 @@ struct TurningSingleBrickInvestigator {
     l = ret;
 #ifdef _TRACE
     std::cout << "TSB Investigator returns " << ret << std::endl;
-    std::cout << "----------------- ENDING ALLOWABLE ANGLES ----------------------" << std::endl;
+    std::cout << "----------------- ENDING ALLOWABLE ANGLES <" << ADD_XY <<  "> ----------------------" << std::endl;
 #endif
   }
 

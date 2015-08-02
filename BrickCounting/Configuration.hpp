@@ -86,14 +86,16 @@ struct Connection {
   Connection(){}
   Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      assert(false);
+      assert(false);std::cerr << "DIE X687464" << std::endl;
+      int *die = NULL; die[0] = 42;
       std::swap(p1, p2);
     }
   }
   Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
   Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) {
     if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      assert(false);
+      assert(false);std::cerr << "DIE X687463" << std::endl;
+      int *die = NULL; die[0] = 42;
       std::swap(this->p1, this->p2);
     }  
   } 
