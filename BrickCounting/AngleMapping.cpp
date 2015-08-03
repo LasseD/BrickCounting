@@ -457,16 +457,14 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
   }
 
-//  if(angleTypes[angleI] != 0)
-//    std::cout << "No boost because last SCC size is " << sccs[numAngles].size << " and angle type is " << angleTypes[angleI] << std::endl;
   ++boosts[3]; // no boost :(
 }
 
 void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
   // Add all S-islands:
-  for(unsigned int i = 0; i < ufS->numReducedUnions; ++i) {
+  for(unsigned int i = 0; i < ufS->numRoots(); ++i) {
     Position rep;
-    const uint32_t unionI = ufS->reducedUnions[i];
+    const uint32_t unionI = ufS->getRoot(i);
     ufS->getRepresentative(unionI, rep);
     assert(ufS->get(rep) == unionI);
     assert(S[ufS->indexOf(rep)]);
@@ -576,6 +574,7 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
     mappingFile << numAngles << " ";
     for(unsigned int i = 0; i < numAngles; ++i)
       mappingFile << " " << (2*angleSteps[i]+1);
+    mappingFile << std::endl;
 
     // Print SML Mapping!
     if(numAngles == 1) {
@@ -621,9 +620,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   for(unsigned int i = 0; i < numAngles; ++i) {
     sizes[i] = 2*angleSteps[i]+1;
   }
-  ufS = new SimpleUnionFind(numAngles, sizes, S);
-  ufM = new SimpleUnionFind(numAngles, sizes, M);
-  ufL = new SimpleUnionFind(numAngles, sizes, L);
+  ufS = new UnionFind::SimpleUnionFind(numAngles, sizes, S);
+  ufM = new UnionFind::SimpleUnionFind(numAngles, sizes, M);
+  ufL = new UnionFind::SimpleUnionFind(numAngles, sizes, L);
 
   // Find islands:
   std::multimap<Encoding, SIsland> sIslands;

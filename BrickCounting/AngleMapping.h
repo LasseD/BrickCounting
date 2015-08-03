@@ -34,7 +34,7 @@ public:
   uint64_t sizeMappings; 
   FatSCC sccs[6];
   bool *S, *M, *L; 
-  SimpleUnionFind *ufS, *ufM, *ufL;
+  UnionFind::SimpleUnionFind *ufS, *ufM, *ufL;
   IConnectionPoint points[10];
   unsigned int angleTypes[5]; // Connection(aka. angle) -> 0, 1, 2, or 3.
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
@@ -84,8 +84,8 @@ struct MIsland {
 MIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
     rectilinear = a->M[a->rectilinearIndex] && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
     // Add all L-islands:
-    for(unsigned int i = 0; i < a->ufL->numReducedUnions; ++i) {
-      const uint32_t unionI = a->ufL->reducedUnions[i];
+    for(unsigned int i = 0; i < a->ufL->numRoots(); ++i) {
+      const uint32_t unionI = a->ufL->getRoot(i);
       Position rep;
       a->ufL->getRepresentative(unionI, rep);
       assert(a->M[a->ufL->indexOf(rep)]);
@@ -104,8 +104,8 @@ struct SIsland {
 
   SIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
     // Add all M-islands:
-    for(unsigned int i = 0; i < a->ufM->numReducedUnions; ++i) {
-      const uint32_t unionI = a->ufM->reducedUnions[i];
+    for(unsigned int i = 0; i < a->ufM->numRoots(); ++i) {
+      const uint32_t unionI = a->ufM->getRoot(i);
       Position rep;
       a->ufM->getRepresentative(unionI, rep);
       assert(a->S[a->ufM->indexOf(rep)]);
