@@ -162,7 +162,7 @@ struct TurningSingleBrick {
   MovingStud movingStuds[NUMBER_OF_STUDS];
   Point studTranslation;
 
-  void createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair);
+  void createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair, const RectilinearBrick &b);
   void createMovingStuds();
 
   template <int ADD_XY>
@@ -359,13 +359,14 @@ struct TurningSingleBrick {
   }
 };
 
-struct TurningSingleBrickInvestigator {
+struct TurningSCCInvestigator {
   Configuration baseConfiguration;
   IConnectionPair connectionPair;
+  FatSCC scc;
 
-  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator() {}
-  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const TurningSingleBrickInvestigator &b) : baseConfiguration(b.baseConfiguration), connectionPair(b.connectionPair) {}
-  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const Configuration &baseConfiguration, int configurationSCCI, const IConnectionPair &connectionPair) : baseConfiguration(baseConfiguration), connectionPair(connectionPair) {
+  /*TurningSCCInvestigator::*/TurningSCCInvestigator() {}
+  /*TurningSCCInvestigator::*/TurningSCCInvestigator(const TurningSCCInvestigator &b) : baseConfiguration(b.baseConfiguration), connectionPair(b.connectionPair), scc(b.scc) {}
+  /*TurningSCCInvestigator::*/TurningSCCInvestigator(const Configuration &baseConfiguration, const FatSCC &scc, int configurationSCCI, const IConnectionPair &connectionPair) : baseConfiguration(baseConfiguration), connectionPair(connectionPair), scc(scc) {
     if(configurationSCCI == connectionPair.P1.first.configurationSCCI) {
       std::swap(this->connectionPair.P1,this->connectionPair.P2);
     }
@@ -373,68 +374,71 @@ struct TurningSingleBrickInvestigator {
   }
 
   template <int ADD_XY>
-  void /*TurningSingleBrickInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
-#ifdef _TRACE
-    std::cout << "----------------- INITIATING ALLOWABLE ANGLES <" << ADD_XY <<  "> ----------------------" << std::endl;
-#endif
-    // Create TurningSingleBrick:
-    TurningSingleBrick tsb;
-    tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair);
-    tsb.createFans<ADD_XY>();
-    tsb.createMovingStuds();
-
+  void /*TurningSCCInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
     IntervalList ret;
     ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
 
-    // Check all possible collision bricks:
-    for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
-      Brick b = baseConfiguration.bricks[*it].b;
-      b.center.X -= tsb.studTranslation.X;
-      b.center.Y -= tsb.studTranslation.Y;
+      RectilinearBrick b;
+    for(int i = 0; i < scc.size; b = scc.otherBricks[i++]) {
+#ifdef _TRACE
+      std::cout << "----------------- INITIATING ALLOWABLE ANGLES <" << ADD_XY <<  "> ----------------------" << std::endl;
+#endif
+      // Create TurningSingleBrick:
+      TurningSingleBrick tsb;
+      tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair, b);
+      tsb.createFans<ADD_XY>();
+      tsb.createMovingStuds();
 
-      IntervalList joiner;
-      std::vector<ClickInfo> clicks;
-      tsb.allowableAnglesForBrick<ADD_XY>(b, joiner, clicks);
+      // Check all possible collision bricks:
+      for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
+        Brick b = baseConfiguration.bricks[*it].b;
+        b.center.X -= tsb.studTranslation.X;
+        b.center.Y -= tsb.studTranslation.Y;
+
+        IntervalList joiner;
+        std::vector<ClickInfo> clicks;
+        tsb.allowableAnglesForBrick<ADD_XY>(b, joiner, clicks);
 #ifdef _TRACE
-      std::cout << "Joining allowable angles for " << b << ": " << ret << " & " << joiner << " = " << math::intervalAnd(ret,joiner) << std::endl;
+        std::cout << "Joining allowable angles for " << b << ": " << ret << " & " << joiner << " = " << math::intervalAnd(ret,joiner) << std::endl;
 #endif
-      ret = math::intervalAnd(ret, joiner);
-      // Add clicks by investigating realizable on each info.
-      for(std::vector<ClickInfo>::const_iterator it2 = clicks.begin(); it2 != clicks.end(); ++it2) {
+        ret = math::intervalAnd(ret, joiner);
+        // Add clicks by investigating realizable on each info.
+        for(std::vector<ClickInfo>::const_iterator it2 = clicks.begin(); it2 != clicks.end(); ++it2) {
 #ifdef _TRACE
-        std::cout << " Checking click, angle=" << it2->first << ", dist=" << it2->second << std::endl;
+          std::cout << " Checking click, angle=" << it2->first << ", dist=" << it2->second << std::endl;
 #endif
-        if(it2->second <= SNAP_DISTANCE) {
+          if(it2->second <= SNAP_DISTANCE) {
 #ifdef _TRACE
-          std::cout << "  Ignoring local (dist < " << SNAP_DISTANCE << ")" << std::endl;
+            std::cout << "  Ignoring local (dist < " << SNAP_DISTANCE << ")" << std::endl;
 #endif
-          continue; // Clicking locally at all angles - do nothing.
+            continue; // Clicking locally at all angles - do nothing.
+          }
+          Configuration c2(baseConfiguration);
+          FatSCC scc; // Initializes for single brick SCC.
+          StepAngle stepAngle((short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
+          Connection connection(connectionPair, stepAngle);
+          c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
+          if(c2.isRealizable<ADD_XY>(possibleCollisions, 1)) {
+            double angleOfSnapRadius = atan(SNAP_DISTANCE/it2->second)/2;
+#ifdef _TRACE
+            std::cout << "  Adding stud interval " << Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius) << std::endl;
+#endif
+            IntervalList studInterval;
+            studInterval.push_back(Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius));
+#ifdef _TRACE
+            std::cout << " AAFB RET " << ret << " | " << studInterval << " = " << math::intervalOr(ret, studInterval) << std::endl;
+#endif
+            ret = math::intervalOr(ret, studInterval);
+          }
+#ifdef _TRACE
+          else {
+            std::cout << " NOT REALIZABLE: " << c2 << std::endl;
+            LDRPrinterHandler h;
+            h.add(&c2);
+            h.print("unrealizable");
+          }
+#endif
         }
-        Configuration c2(baseConfiguration);
-        FatSCC scc; // Initializes for single brick SCC.
-        StepAngle stepAngle((short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
-        Connection connection(connectionPair, stepAngle);
-        c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
-        if(c2.isRealizable<ADD_XY>(possibleCollisions, 1)) {
-          double angleOfSnapRadius = atan(SNAP_DISTANCE/it2->second)/2;
-#ifdef _TRACE
-          std::cout << "  Adding stud interval " << Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius) << std::endl;
-#endif
-          IntervalList studInterval;
-          studInterval.push_back(Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius));
-#ifdef _TRACE
-          std::cout << " AAFB RET " << ret << " | " << studInterval << " = " << math::intervalOr(ret, studInterval) << std::endl;
-#endif
-          ret = math::intervalOr(ret, studInterval);
-        }
-#ifdef _TRACE
-        else {
-          std::cout << " NOT REALIZABLE: " << c2 << std::endl;
-          LDRPrinterHandler h;
-          h.add(&c2);
-          h.print("unrealizable");
-        }
-#endif
       }
     }
     l = ret;
@@ -448,21 +452,24 @@ struct TurningSingleBrickInvestigator {
   The TSB is clear form the bricks indicated in possibleCollisions if none of these bricks intersect the TSB. 
   */
   template <int ADD_XY>
-  bool /*TurningSingleBrickInvestigator::*/isClear(const std::vector<int> &possibleCollisions) const {
-    // Create TurningSingleBrick:
-    TurningSingleBrick tsb;
-    tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair);
-    tsb.createFans<ADD_XY>();
-    tsb.createMovingStuds();
+  bool /*TurningSCCInvestigator::*/isClear(const std::vector<int> &possibleCollisions) const {
+    RectilinearBrick b;
+    for(int i = 0; i < scc.size; b = scc.otherBricks[i++]) {
+      // Create TurningSingleBrick:
+      TurningSingleBrick tsb;
+      tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair, b);
+      tsb.createFans<ADD_XY>();
+      tsb.createMovingStuds();
 
-    // Check all possible collision bricks:
-    for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
-      Brick b = baseConfiguration.bricks[*it].b;
-      b.center.X -= tsb.studTranslation.X;
-      b.center.Y -= tsb.studTranslation.Y;
+      // Check all possible collision bricks:
+      for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
+        Brick b = baseConfiguration.bricks[*it].b;
+        b.center.X -= tsb.studTranslation.X;
+        b.center.Y -= tsb.studTranslation.Y;
 
-      if(tsb.intersectsBrick<ADD_XY>(b)) {
-        return false;
+        if(tsb.intersectsBrick<ADD_XY>(b)) {
+          return false;
+        }
       }
     }
     return true;

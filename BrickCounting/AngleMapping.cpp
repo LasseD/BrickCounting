@@ -258,11 +258,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
 #endif
 
   // Speed up using TSB:
-  if(sccs[numAngles].size == 1 && angleTypes[angleI] == 1) {
-    assert(steps == 407);
+  if(angleTypes[angleI] != 0) {
+    assert(steps != 1);
     const IConnectionPair icp(ip1,ip2);
 
-    TurningSingleBrickInvestigator tsbInvestigator(c, ip2I, icp);
+    TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
 
     // First check quick clear:
     if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
@@ -328,7 +328,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
       if(numDisagreements > 0) {
         //std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
       }
-      if(numDisagreements > 20) {
+      if(numDisagreements > 24) {
         std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
         LDRPrinterHandler h, d;
 

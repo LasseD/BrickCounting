@@ -119,7 +119,7 @@ std::ostream& operator<<(std::ostream &os, const MovingStud& f) {
   return os;
 }
 
-void TurningSingleBrick::createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair) {
+void TurningSingleBrick::createBricksAndStudTranslation(const Configuration &configuration, const IConnectionPair &connectionPair, const RectilinearBrick &rb) {
   int prevBrickI = connectionPair.P1.first.configurationSCCI;
   const Brick &prevOrigBrick = configuration.origBricks[prevBrickI];
   const ConnectionPoint &prevPoint = connectionPair.P1.second;
@@ -128,9 +128,8 @@ void TurningSingleBrick::createBricksAndStudTranslation(const Configuration &con
   studTranslation = prevBrick.getStudPosition(prevPoint.type);
 
   double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
-  int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
+  int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1) + rb.level();
 
-  RectilinearBrick rb;
   blocks[0] = Brick(rb, currPoint, Point(0,0), angle-MAX_ANGLE_RADIANS, level);
   blocks[1] = Brick(rb, currPoint, Point(0,0), angle+MAX_ANGLE_RADIANS, level);
   blockAbove = Brick(rb, currPoint, Point(0,0), angle, level);

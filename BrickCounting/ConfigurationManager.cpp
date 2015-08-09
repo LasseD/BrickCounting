@@ -135,18 +135,19 @@ ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonR
 void ConfigurationManager::test() {
   std::vector<int> v;
   v.push_back(2);
-  v.push_back(1);
-  v.push_back(1);
+  v.push_back(2);
+//  v.push_back(1);
 
   //runForCombinationType(v, 4);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][3]);
-  v2.push_back(sccs[0][0]);
-  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[1][0]);
+  v2.push_back(sccs[1][0]);
+  //v2.push_back(sccs[0][0]);
+  //v2.push_back(sccs[0][0]);
 
   std::ofstream os;
-  os.open("abe.txt", std::ios::out);
+  os.open("abe2.txt", std::ios::out);
   runForCombination(v2, v, -1, os);//*/
   /*
   SingleConfigurationManager sm(v2, os);
