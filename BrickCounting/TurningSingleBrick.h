@@ -360,16 +360,16 @@ struct TurningSingleBrick {
 };
 
 struct TurningSingleBrickInvestigator {
-  Configuration configuration;
+  Configuration baseConfiguration;
   IConnectionPair connectionPair;
 
   /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator() {}
-  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const TurningSingleBrickInvestigator &b) : configuration(b.configuration), connectionPair(b.connectionPair) {}
-  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const Configuration &configuration, int configurationSCCI, const IConnectionPair &connectionPair) : configuration(configuration), connectionPair(connectionPair) {
+  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const TurningSingleBrickInvestigator &b) : baseConfiguration(b.baseConfiguration), connectionPair(b.connectionPair) {}
+  /*TurningSingleBrickInvestigator::*/TurningSingleBrickInvestigator(const Configuration &baseConfiguration, int configurationSCCI, const IConnectionPair &connectionPair) : baseConfiguration(baseConfiguration), connectionPair(connectionPair) {
     if(configurationSCCI == connectionPair.P1.first.configurationSCCI) {
       std::swap(this->connectionPair.P1,this->connectionPair.P2);
     }
-    assert(this->connectionPair.P1.first.configurationSCCI <= this->connectionPair.P2.first.configurationSCCI);
+    assert(this->connectionPair.P1.first.configurationSCCI < this->connectionPair.P2.first.configurationSCCI);
   }
 
   template <int ADD_XY>
@@ -379,7 +379,7 @@ struct TurningSingleBrickInvestigator {
 #endif
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
-    tsb.createBricksAndStudTranslation(configuration, connectionPair);
+    tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair);
     tsb.createFans<ADD_XY>();
     tsb.createMovingStuds();
 
@@ -388,7 +388,7 @@ struct TurningSingleBrickInvestigator {
 
     // Check all possible collision bricks:
     for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
-      Brick b = configuration.bricks[*it].b;
+      Brick b = baseConfiguration.bricks[*it].b;
       b.center.X -= tsb.studTranslation.X;
       b.center.Y -= tsb.studTranslation.Y;
 
@@ -410,7 +410,7 @@ struct TurningSingleBrickInvestigator {
 #endif
           continue; // Clicking locally at all angles - do nothing.
         }
-        Configuration c2(configuration);
+        Configuration c2(baseConfiguration);
         FatSCC scc; // Initializes for single brick SCC.
         StepAngle stepAngle((short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
         Connection connection(connectionPair, stepAngle);
@@ -451,13 +451,13 @@ struct TurningSingleBrickInvestigator {
   bool /*TurningSingleBrickInvestigator::*/isClear(const std::vector<int> &possibleCollisions) const {
     // Create TurningSingleBrick:
     TurningSingleBrick tsb;
-    tsb.createBricksAndStudTranslation(configuration, connectionPair);
+    tsb.createBricksAndStudTranslation(baseConfiguration, connectionPair);
     tsb.createFans<ADD_XY>();
     tsb.createMovingStuds();
 
     // Check all possible collision bricks:
     for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
-      Brick b = configuration.bricks[*it].b;
+      Brick b = baseConfiguration.bricks[*it].b;
       b.center.X -= tsb.studTranslation.X;
       b.center.Y -= tsb.studTranslation.Y;
 

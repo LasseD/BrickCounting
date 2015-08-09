@@ -23,10 +23,7 @@ namespace UnionFind {
 
   void UnionFindStructure::join(uint32_t a, uint32_t b) {
     assert(!flattened);
-    if(a > b) {
-      join(b,a);
-      return;
-    }
+    assert(a < b);
     if(joins[a].find(b) == joins[a].end()) {
       joins[a].insert(b);
     }
@@ -62,13 +59,14 @@ namespace UnionFind {
         minInUnions[top] = i;
         handled[top] = true;
 
-        for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it)
+        for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it)
           s.push(*it);
       }
     }
 
     delete[] handled;
     delete[] joins;
+    flattened = true;
   }
 
   SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, bool const * const M) : numDimensions(numDimensions), numUnions(0), sizeV(1) {
@@ -84,14 +82,17 @@ namespace UnionFind {
       if(dimensionSizes[i] > maxDimensionSize)
         maxDimensionSize = dimensionSizes[i];
     }
-    v = new uint32_t[sizeV];
 
     // Initially fill v:
-    Position position;
-    initialFillV(0, position, M);
+    v = new uint32_t[sizeV];
+    initialFillV(M);
 
+    // Perform joins:
     ufs = new UnionFindStructure(numUnions);
+    Position position;
     buildUnions(0, position, M);
+
+    // Flatten:
     ufs->flatten();
 
     time(&endTime);
@@ -105,13 +106,11 @@ namespace UnionFind {
     delete ufs;
   }
 
-  uint32_t SimpleUnionFind::numRoots() const {
-    assert(ufs->flattened);
-    return ufs->roots.size();
+  std::vector<uint32_t>::const_iterator SimpleUnionFind::rootsBegin() const {
+    return ufs->roots.begin();
   }
-  uint32_t SimpleUnionFind::getRoot(uint32_t i) const {
-    assert(ufs->flattened);
-    return ufs->roots[i];
+  std::vector<uint32_t>::const_iterator SimpleUnionFind::rootsEnd() const {
+    return ufs->roots.end();
   }
 
   uint64_t SimpleUnionFind::indexOf(const Position &position) const {
@@ -119,6 +118,23 @@ namespace UnionFind {
     for(unsigned int i = 1; i < numDimensions; ++i)
       index = (index * dimensionSizes[i]) + position.p[i];
     return index;
+  }
+
+  void SimpleUnionFind::getPosition(uint64_t index, Position &position) const {
+#ifdef _DEBUG
+    const uint64_t save = index;
+#endif
+    for(unsigned int i = 0; i < numDimensions; ++i) {
+      int revDim = numDimensions-i-1;
+      position.p[revDim] = index % dimensionSizes[revDim];
+      index /= dimensionSizes[revDim];
+    }
+#ifdef _DEBUG
+    if(save != indexOf(position)) {
+      std::cerr << "Assertion error on index " << index << "!= " << indexOf(position) << std::endl;
+      assert(false);
+    }
+#endif
   }
 
   uint32_t SimpleUnionFind::get(const Position &position) const {
@@ -134,83 +150,72 @@ namespace UnionFind {
   }
 
   void SimpleUnionFind::getRepresentative(unsigned int unionI, Position &rep) const {
-    rep = unionRepresentatives[unionI];
+    uint64_t representativeIndex = unionRepresentatives[unionI];
+    getPosition(representativeIndex, rep);
   }
 
-  /*
-  Computes unionRepresentatives, unions, numUnions, v.
-  */
-  void SimpleUnionFind::initialFillV(unsigned int positionI, Position &position, bool const * const M) {
-    if(positionI < numDimensions) {
-      for(unsigned short i = 0; i < dimensionSizes[positionI]; ++i) {
-        position.p[positionI] = i;
-        initialFillV(positionI+1, position, M);
+  void SimpleUnionFind::initialFillV(bool const * const M) {
+    assert(numUnions == 0);
+    unsigned short lastDimensionSize = dimensionSizes[numDimensions-1];
+    for(uint64_t i = 0; i < sizeV; i+=lastDimensionSize) {
+      if(M[i]) {
+        v[i] = numUnions;
+        unionRepresentatives.push_back(i);
+        ++numUnions;
       }
-      return;
-    }
-    uint64_t positionIndex = indexOf(position);
-    if(!M[positionIndex]) {
-      return;
-    }
 
-    uint32_t unionI = numUnions;
+      for(uint64_t j = 1; j < lastDimensionSize; ++j) {
+        if(!M[i+j]) 
+          continue;
+        if(M[i+j-1]) { 
+          v[i+j] = v[i+j-1];
+          continue;
+        }
 
-    // Compute position from already seen positions:
-    for(unsigned int i = 0; i < numDimensions; ++i) {
-      unsigned short val = position.p[i];
-      if(val == 0)
-        continue;
-      --position.p[i];
-      uint64_t neighbourPositionIndex = indexOf(position); // TODO! FIXME! Speed upby pre-computing indexOf.
-      if(M[neighbourPositionIndex] && v[neighbourPositionIndex] < unionI) {
-        unionI = v[neighbourPositionIndex];
-        ++position.p[i];
-        break;
+        v[i+j] = numUnions;
+        unionRepresentatives.push_back(i+j);
+        ++numUnions;
       }
-      ++position.p[i];
-    }
-    v[positionIndex] = unionI;
-
-    if(unionI == numUnions) { // Create new union:
-      unionRepresentatives.push_back(position);
-      ++numUnions;
     }
   }
 
   void SimpleUnionFind::buildUnions(unsigned int positionI, Position &position, bool const * const M) {
-    if(positionI < numDimensions) {
+    if(positionI < numDimensions-1) {
       for(unsigned short i = 0; i < dimensionSizes[positionI]; ++i) {
         position.p[positionI] = i;
         buildUnions(positionI+1, position, M);
       }
       return;
     }
+    assert(positionI == numDimensions-1);
+    position.p[positionI] = 0;
 
     uint64_t positionIndex = indexOf(position);
     assert(positionIndex < sizeV);
-    if(!M[positionIndex]) {
-      return; // No union work to be done.
-    }
 
-    // Compute min in region:
-    uint32_t unionI = v[positionIndex];
-    assert(unionI < numUnions);
-    for(unsigned int i = 0; i < numDimensions; ++i) {
-      int oldPosition = position.p[i];
-      for(int addI = -1; addI <= 1; addI+=2) {
-        int newPosition = oldPosition + addI;
-        if(newPosition < 0 || newPosition >= dimensionSizes[i])
+    // Run and join for each lower dimension:
+
+    for(unsigned int i = 0; i < numDimensions-1; ++i) {
+      unsigned short oldPosition = position.p[i];
+      if(oldPosition == 0)
+        continue; // Can't further decrease in this dimension.
+      position.p[i] = oldPosition - 1;
+      uint64_t neighbourPositionIndex = indexOf(position);
+      position.p[i] = oldPosition;
+
+      // Join all in dimension:
+      for(unsigned short i = 0; i < dimensionSizes[numDimensions-1]; ++i) {
+        uint64_t pos = positionIndex + i;
+        if(!M[pos]) {
           continue;
-
-        position.p[i] = (unsigned short)newPosition;
-
-        uint64_t neighbourPositionIndex = indexOf(position); // TODO! FIXME! Speed upby pre-computing indexOf.
-        if(M[neighbourPositionIndex] && v[neighbourPositionIndex] != unionI) {
-          ufs->join(v[neighbourPositionIndex], unionI);
         }
+        uint64_t lowerPos = neighbourPositionIndex + i;
+        if(!M[lowerPos]) {
+          continue;
+        }
+        if(i == 0 || !(M[lowerPos-1] && M[pos-1]))
+          ufs->join(v[lowerPos], v[pos]);
       }
-      position.p[i] = (unsigned short)oldPosition;
     }
   }
-
 }

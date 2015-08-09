@@ -60,7 +60,6 @@ namespace math {
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
-  // TODO: FROM HERE:
   int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2); // Actual primitive
   bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2); // Actual primitive
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList

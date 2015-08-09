@@ -100,8 +100,7 @@ struct Connection {
     }  
   } 
   double angleToRadians() const {
-    return angle.toRadians(); // TODO: Why? FIXME!
-    //return p1.second.above ? angle.toRadians() : -angle.toRadians();
+    return angle.toRadians();
   }
   bool operator<(const Connection &c) const {
     if(angle != c.angle)      

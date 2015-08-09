@@ -84,8 +84,8 @@ struct MIsland {
 MIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
     rectilinear = a->M[a->rectilinearIndex] && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
     // Add all L-islands:
-    for(unsigned int i = 0; i < a->ufL->numRoots(); ++i) {
-      const uint32_t unionI = a->ufL->getRoot(i);
+    for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
+      const uint32_t unionI = *it;
       Position rep;
       a->ufL->getRepresentative(unionI, rep);
       assert(a->M[a->ufL->indexOf(rep)]);
@@ -104,8 +104,8 @@ struct SIsland {
 
   SIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
     // Add all M-islands:
-    for(unsigned int i = 0; i < a->ufM->numRoots(); ++i) {
-      const uint32_t unionI = a->ufM->getRoot(i);
+    for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
+      const uint32_t unionI = *it;
       Position rep;
       a->ufM->getRepresentative(unionI, rep);
       assert(a->S[a->ufM->indexOf(rep)]);

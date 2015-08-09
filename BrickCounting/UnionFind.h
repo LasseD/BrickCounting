@@ -28,7 +28,7 @@ namespace UnionFind {
     bool flattened;
     std::set<uint32_t> *joins; // When join(a,b), a<b, b is inserted into joins[a].
     uint32_t *minInUnions; // After flattening: Each index references min element in union. Might be element itself!
-    std::vector<int> roots; // all minInUnions-indices that reference themselves.
+    std::vector<uint32_t> roots; // all minInUnions-indices that reference themselves.
 
     UnionFindStructure(uint32_t numUnions);
     ~UnionFindStructure();
@@ -42,17 +42,15 @@ namespace UnionFind {
   private:
     unsigned int numDimensions;
     unsigned short dimensionSizes[MAX_DIMENSIONS];
-    std::vector<Position> unionRepresentatives; // Of found unions
+    std::vector<uint64_t> unionRepresentatives; // Of found unions
 
-    UnionFindStructure *ufs; // TODO: FIXME: Replace the stuff below:
-    //std::set<uint32_t> *unions;
-    //uint32_t *mins; // references min in same union.
+    UnionFindStructure *ufs;
     uint32_t numUnions;
 
     uint32_t *v;
     uint64_t sizeV;
   
-    void initialFillV(unsigned int positionI, Position &position, bool const * const M);
+    void initialFillV(bool const * const M);
     void buildUnions(unsigned int positionI, Position &position, bool const * const M);
 
   public:
@@ -61,10 +59,11 @@ namespace UnionFind {
 
     uint64_t indexOf(const Position &position) const;
     uint32_t get(const Position &position) const;
+    void getPosition(uint64_t index, Position &position) const;
     uint32_t get(uint64_t positionIndex) const;
     void getRepresentative(unsigned int unionI, Position &position) const;
-    uint32_t numRoots() const;
-    uint32_t getRoot(uint32_t i) const;
+    std::vector<uint32_t>::const_iterator rootsBegin() const;
+    std::vector<uint32_t>::const_iterator rootsEnd() const;
   };
 }
 

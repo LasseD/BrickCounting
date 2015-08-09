@@ -254,7 +254,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
     return;
   }
 #ifdef _TRACE
-  std::cout << "NO SML: " << noS << ", " << noM << ", " << noL << std::endl;
+  std::cout << "NO SML statuses: " << noS << ", " << noM << ", " << noL << std::endl;
 #endif
 
   // Speed up using TSB:
@@ -462,10 +462,13 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
 
 void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
   // Add all S-islands:
-  for(unsigned int i = 0; i < ufS->numRoots(); ++i) {
+  for(std::vector<uint32_t>::const_iterator it = ufS->rootsBegin(); it != ufS->rootsEnd(); ++it) {
+    const uint32_t unionI = *it;
     Position rep;
-    const uint32_t unionI = ufS->getRoot(i);
     ufS->getRepresentative(unionI, rep);
+    if(ufS->get(rep) != unionI) {
+      std::cout << ufS->get(rep) <<"!="<< unionI << std::endl;
+    }
     assert(ufS->get(rep) == unionI);
     assert(S[ufS->indexOf(rep)]);
 
@@ -685,11 +688,12 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     // Update output:
     if(!allNrcInRange.empty()) {
       nrcToPrint.push_back(*allNrcInRange.begin());
-      if(allNrcInRange.size() > 1)
+      if(allNrcInRange.size() > 1) {
         for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
           modelsToPrint.push_back(*itR);
         }
         models+=allNrcInRange.size();
+      }
     }
 
     if(rangeIsRect)
