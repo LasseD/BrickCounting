@@ -62,14 +62,9 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
     }
   }
 
-  if(numAngles > 3) {
-    std::cout << "NOT CREATING SML MAPPING FOR NUMANGLES > 3!" << std::endl;
-    return;
-  }
-
   // sizeMappings:
   sizeMappings = 1;
-  for(i = 0; i < numAngles; ++i) {
+  for(i = 0; i < numAngles-1; ++i) {
     sizeMappings *= (2*angleSteps[i]+1);
   }
 #ifdef _TRACE
@@ -77,17 +72,15 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
 #endif
 
   // S, M & L:
-  S = new bool[sizeMappings];
-  M = new bool[sizeMappings];
-  L = new bool[sizeMappings];
+  SS = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
+  MM = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
+  LL = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
 }
 
 AngleMapping::~AngleMapping() {
-  if(numAngles > 3)
-    return;
-  delete[] S;
-  delete[] M;
-  delete[] L;
+  delete SS;
+  delete MM;
+  delete LL;
 }
 
 void AngleMapping::setupAngleTypes() {
@@ -168,6 +161,7 @@ void AngleMapping::setupAngleTypes() {
   }
 }
 
+/*
 Configuration AngleMapping::getConfiguration(const Position &p) const {
   Configuration c(sccs[0]);
   for(unsigned int i = 0; i < numAngles; ++i) {
@@ -178,6 +172,20 @@ Configuration AngleMapping::getConfiguration(const Position &p) const {
     assert(ip2.P1.configurationSCCI != 0);
     c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
   }
+  return c;
+}*/
+
+Configuration AngleMapping::getConfiguration(const MixedPosition &p) const {
+  Configuration c(sccs[0]);
+  for(unsigned int i = 0; i < numAngles-1; ++i) {
+    const IConnectionPoint &ip1 = points[2*i];
+    const IConnectionPoint &ip2 = points[2*i+1];
+    const StepAngle angle((short)p.p[i]-(short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
+    const Connection cc(ip1, ip2, angle);
+    assert(ip2.P1.configurationSCCI != 0);
+    c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
+  }
+  // TODO: Add last angle!
   return c;
 }
 
@@ -194,7 +202,7 @@ Configuration AngleMapping::getConfiguration(const Configuration &baseConfigurat
   return c;
 }
 
-std::vector<Connection> AngleMapping::getConfigurationConnections(const Position &p) const {
+std::vector<Connection> AngleMapping::getConfigurationConnections(const MixedPosition &p) const {
   std::vector<Connection> res;
   for(unsigned int i = 0; i < numAngles; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
@@ -209,7 +217,7 @@ std::vector<Connection> AngleMapping::getConfigurationConnections(const Position
 Evaluate the SML matrix.
 Parameters:
 - angleI: Used as recursion index in angles. Initialize with 0. 
-- smlI: Index into SML now being build dynamically, rather than computed using smlIndex(position). Initially 0.
+- smlI: Index into SML. Initially 0.
 - c: Configuration being constructed dynamically. Initially containing sccs[0].
 - possibleCollisions: possible connections pre-computed to be used in next step. Remember to initialize!
 */
@@ -243,9 +251,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   assert(angleI == numAngles-1);
 
   // Speed up for noSML:
-  if(noS) for(unsigned int i = 0; i < steps; ++i) S[smlI+i] = false;
-  if(noM) for(unsigned int i = 0; i < steps; ++i) M[smlI+i] = false;
-  if(noL) for(unsigned int i = 0; i < steps; ++i) L[smlI+i] = false;
+  if(noS) SS->insertEmpty(smlI);
+  if(noM) MM->insertEmpty(smlI);
+  if(noL) LL->insertEmpty(smlI);
   bool sDone = noS;
   bool mDone = noM;
   bool lDone = noL;
@@ -257,220 +265,159 @@ void AngleMapping::evalSML(unsigned int angleI, uint64_t smlI, const Configurati
   std::cout << "NO SML statuses: " << noS << ", " << noM << ", " << noL << std::endl;
 #endif
 
-  // Speed up using TSB:
-  if(angleTypes[angleI] != 0) {
-    assert(steps != 1);
-    const IConnectionPair icp(ip1,ip2);
+  if(angleTypes[angleI] == 0) {
+    Configuration c2 = getConfiguration(c, angleI, 0);
+    IntervalList full;
+    full.push_back(Interval(-EPSILON,EPSILON));
 
-    TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
-
-    // First check quick clear:
-    if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
-      for(unsigned int i = 0; i < steps; ++i) 
-        S[smlI+i] = true;
-#ifdef _DEBUG
-      /*for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
-          std::cout << "Assertion error on S[" << i << "]=" << S[smlI+i] << " configuration: " << c2 << std::endl;	 
-          LDRPrinterHandler h;
-          h.add(&c2);
-          h.print("assertion_fail");
-          assert(false);
-        }
-      }//*/
-#endif
-      sDone = true;
-    }
-    if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
-      for(unsigned int i = 0; i < steps; ++i) 
-        M[smlI+i] = true;
-#ifdef _DEBUG
-      /*for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
-      }//*/
-#endif
-      mDone = true;
-    }
-    if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
-      for(unsigned int i = 0; i < steps; ++i) 
-        L[smlI+i] = true;
-#ifdef _DEBUG
-      /*for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
-      }//*/
-#endif
-      lDone = true;
-    }
-    if(sDone && mDone && lDone) {
-      ++boosts[1];
-      return;
-    }
-#ifdef _TRACE
-    std::cout << "TSB Investigation clearance SML: " << sDone << ", " << mDone << ", " << lDone << std::endl;
-#endif
-
-    // Check using TSB:
     if(!sDone) {
-      IntervalList l;
-      tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
-      math::intervalToArray(l, &S[smlI], steps);
-#ifdef _DEBUG
-      int numDisagreements = 0;
-      for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
-          ++numDisagreements;
-        }
-      }
-      if(numDisagreements > 0) {
-        //std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
-      }
-      if(numDisagreements > 24) {
-        std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
-        LDRPrinterHandler h, d;
-
-        std::cout << " Connection points: " << std::endl;
-        for(unsigned int i = 0; i <= angleI; ++i) {
-          const IConnectionPoint &ip1 = points[2*i];
-          const IConnectionPoint &ip2 = points[2*i+1];
-          std::cout << "  " << ip1 << "-->" << ip2 << std::endl;
-        }
-
-        std::cout << "Content of S:" << std::endl;	 
-        for(unsigned short j = 0; j < steps; ++j) {
-          std::cout << (S[smlI+j] ? "X" : "-");
-        }
-        std::cout << std::endl;
-        std::cout << "Using isRealizable on all angles:" << std::endl;	 
-        bool first = true;
-        for(unsigned short j = 0; j < steps; ++j) {
-          Configuration c3 = getConfiguration(c, angleI, j);
-          bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-          if(realizable != S[smlI+j]) {
-            d.add(new Configuration(c3)); // OK Be cause we are about to die.
-            if(first) {
-              h.add(&c3);
-              h.print("assertion_fail");
-              first = false;
-            }
-          }
-          std::cout << (realizable ? "X" : "-");
-        }
-        first = true;
-        std::cout << std::endl;
-        d.print("disagreements");
-        std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
-        for(unsigned short j = 0; j < steps; ++j) {
-          Configuration c3 = getConfiguration(c, angleI, j);
-          bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-          if(realizable != S[smlI+j]) {
-            if(first) {
-              std::cout << "Configuration of first disagreement: " << c3 << std::endl;
-              first = false;
-            }
-            const StepAngle angle((short)j-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
-            std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
-          }
-        }
-        assert(false); int* kill = NULL; kill[0] = 0;
-      }//*/
-#endif
+      if(c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size))
+        SS->insert(smlI, full);
+      else
+        SS->insertEmpty(smlI);
     }
     if(!mDone) {
-      IntervalList l;
-      tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
-      math::intervalToArray(l, &M[smlI], steps);
-#ifdef _DEBUG
-      //std::cout << "Investigating M-mapping vs " << l << std::endl;
-      for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        //assert(M[smlI+i] == c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size));
-        if(M[smlI+i] && !S[smlI+i]) {
-          std::cout << "Content of S:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (S[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl << "Content of M:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (M[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl << "Content of L:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (L[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl;
-
-          LDRPrinterHandler h;
-          h.add(&c2);
-          h.print("SM_disparity");
-          assert(false);
-        }
-      }//*/
-#endif
+      if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+        MM->insert(smlI, full);
+      else
+        MM->insertEmpty(smlI);
     }
     if(!lDone) {
-      IntervalList l;
-      tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
-      math::intervalToArray(l, &L[smlI], steps);
-#ifdef _DEBUG
-      //std::cout << "Investigating L-mapping vs " << l << std::endl;
-      for(unsigned short i = 0; i < steps; ++i) {
-        Configuration c2 = getConfiguration(c, angleI, i);
-        //assert(L[smlI+i] == c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size));
-        if(L[smlI+i] && !M[smlI+i]) {
-          std::cout << "Content of S:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (S[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl << "Content of M:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (M[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl << "Content of L:" << std::endl;	 
-          for(unsigned short j = 0; j < steps; ++j) {
-            std::cout << (L[smlI+j] ? "X" : "-");
-          }
-          std::cout << std::endl;
-
-          LDRPrinterHandler h;
-          h.add(&c2);
-          h.print("LM_disparity");
-          assert(false);
-        }
-      }//*/
-#endif
+      if(c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size))
+        LL->insert(smlI, full);
+      else
+        LL->insertEmpty(smlI);
     }
+    ++boosts[1];
+    return;
+  }
+
+  const IConnectionPair icp(ip1,ip2);
+  TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
+
+  // First check quick clear:
+  if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
+    IntervalList full;
+    full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    SS->insert(smlI, full);
+    sDone = true;
+  }
+  if(!mDone && tsbInvestigator.isClear<0>(possibleCollisions)) {
+    IntervalList full;
+    full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    MM->insert(smlI, full);
+    mDone = true;
+  }
+  if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
+    IntervalList full;
+    full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    LL->insert(smlI, full);
+    lDone = true;
+  }
+  if(sDone && mDone && lDone) {
     ++boosts[2];
     return;
   }
 
-  for(unsigned short i = 0; i < steps; ++i) {
-    Configuration c2 = getConfiguration(c, angleI, i);
-    if(!sDone)
-      S[smlI+i] = c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-    if(!mDone)
-      M[smlI+i] = c2.isRealizable< 0>(possibleCollisions, sccs[numAngles].size);
-    if(!lDone)
-      L[smlI+i] = c2.isRealizable< 1>(possibleCollisions, sccs[numAngles].size);
-  }
+  // Check using TSB:
+  if(!sDone) {
+    IntervalList l;
+    tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
+    SS->insert(smlI, l);
+#ifdef _DEBUG
+    bool *S = new bool[steps];
+    math::intervalToArray(l, S, steps);
 
-  ++boosts[3]; // no boost :(
+    int numDisagreements = 0;
+    for(unsigned short i = 0; i < steps; ++i) {
+      Configuration c2 = getConfiguration(c, angleI, i);
+      if(S[smlI+i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
+        ++numDisagreements;
+      }
+    }
+    if(numDisagreements > 0) {
+      //std::cout << "Assertion warning on S vs allowableAnglesForBricks. Number of disagreements: " << numDisagreements << std::endl;	 
+    }
+    if(numDisagreements > 24) {
+      std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
+      LDRPrinterHandler h, d;
+
+      std::cout << " Connection points: " << std::endl;
+      for(unsigned int i = 0; i <= angleI; ++i) {
+        const IConnectionPoint &ip1 = points[2*i];
+        const IConnectionPoint &ip2 = points[2*i+1];
+        std::cout << "  " << ip1 << "-->" << ip2 << std::endl;
+      }
+
+      std::cout << "Content of S:" << std::endl;	 
+      for(unsigned short j = 0; j < steps; ++j) {
+        std::cout << (S[smlI+j] ? "X" : "-");
+      }
+      std::cout << std::endl;
+      std::cout << "Using isRealizable on all angles:" << std::endl;	 
+      bool first = true;
+      for(unsigned short j = 0; j < steps; ++j) {
+        Configuration c3 = getConfiguration(c, angleI, j);
+        bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+        if(realizable != S[smlI+j]) {
+          d.add(new Configuration(c3)); // OK Be cause we are about to die.
+          if(first) {
+            h.add(&c3);
+            h.print("assertion_fail");
+            first = false;
+          }
+        }
+        std::cout << (realizable ? "X" : "-");
+      }
+      first = true;
+      std::cout << std::endl;
+      d.print("disagreements");
+      std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
+      for(unsigned short j = 0; j < steps; ++j) {
+        Configuration c3 = getConfiguration(c, angleI, j);
+        bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+        if(realizable != S[smlI+j]) {
+          if(first) {
+            std::cout << "Configuration of first disagreement: " << c3 << std::endl;
+            first = false;
+          }
+          const StepAngle angle((short)j-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
+          std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
+        }
+      }
+      assert(false); int* kill = NULL; kill[0] = 0;
+    }
+    delete[] S;
+#endif
+  }
+  if(!mDone) {
+    IntervalList l;
+    tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
+    MM->insert(smlI, l);
+  }
+  if(!lDone) {
+    IntervalList l;
+    tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
+    LL->insert(smlI, l);
+  }
+  ++boosts[3];
 }
 
 void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
   // Add all S-islands:
   for(std::vector<uint32_t>::const_iterator it = ufS->rootsBegin(); it != ufS->rootsEnd(); ++it) {
     const uint32_t unionI = *it;
-    Position rep;
+    MixedPosition rep;
     ufS->getRepresentative(unionI, rep);
     if(ufS->get(rep) != unionI) {
       std::cout << ufS->get(rep) <<"!="<< unionI << std::endl;
     }
     assert(ufS->get(rep) == unionI);
-    assert(S[ufS->indexOf(rep)]);
+#ifdef _DEBUG
+    IntervalList l;
+    SS->get(ufS->indexOf(rep), l);
+    assert(math::intervalContains(l, rep.lastAngle));
+#endif
 
     Configuration c = getConfiguration(rep);
     std::vector<IConnectionPair> found;
@@ -482,6 +429,7 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
   }
 }
 
+/*
 void AngleMapping::findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr) {
   if(angleI < numAngles) {
     p.p[angleI] = 0;
@@ -528,19 +476,9 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
     }
   }
   findExtremeConfigurations(0, p, true, rect, nonRect, toLdr);
-}
+}*/
 
-char AngleMapping::smlChar(uint64_t smlIndex) const {
-  if(L[smlIndex])
-    return 'L';
-  if(M[smlIndex])
-    return 'M';
-  if(S[smlIndex])
-    return 'S';
-  return '-';
-}
-
-void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const {
+void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const {
   Configuration c = getConfiguration(p);
   std::vector<Connection> cc = getConfigurationConnections(p);
 
@@ -575,26 +513,29 @@ void AngleMapping::reportProblematic(const Position &p, int mIslandI, int mIslan
     std::ofstream mappingFile;
     mappingFile.open(mappingFileName.str(), std::ios::out);
     mappingFile << numAngles << " ";
-    for(unsigned int i = 0; i < numAngles; ++i)
+    for(unsigned int i = 0; i < numAngles-1; ++i)
       mappingFile << " " << (2*angleSteps[i]+1);
     mappingFile << std::endl;
 
     // Print SML Mapping!
     if(numAngles == 1) {
-      for(int i = 0; i < 2*angleSteps[0]+1; ++i) {
-        assert(i < sizeMappings);
-        mappingFile << smlChar(i);
-      }
-      mappingFile << std::endl;
+      IntervalList s, m , l;
+      SS->get(0, s);
+      MM->get(0, m);
+      LL->get(0, l);
+      mappingFile << s << std::endl;
+      mappingFile << m << std::endl;
+      mappingFile << l << std::endl;
     }
     else {
-      for(int i = 0; i < 2*angleSteps[1]+1; ++i) {
-        for(int j = 0; j < 2*angleSteps[0]+1; ++j) {
-          int index = i*(2*angleSteps[1]+1)+j;
-          assert(index < sizeMappings);
-          mappingFile << smlChar(index);
-        }
-        mappingFile << std::endl;
+      for(int i = 0; i < 2*angleSteps[0]+1; ++i) {
+        IntervalList s, m , l;
+        SS->get(i, s);
+        MM->get(i, m);
+        LL->get(i, l);
+        mappingFile << s << std::endl;
+        mappingFile << m << std::endl;
+        mappingFile << l << std::endl;
       }
     }
     mappingFile.flush();
@@ -609,7 +550,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
   // Compute rectilinear index:
   rectilinearIndex = angleSteps[0];
-  for(unsigned int i = 1; i < numAngles; ++i) {
+  for(unsigned int i = 1; i < numAngles-1; ++i) {
     const int push = 2*angleSteps[i] + 1;
     rectilinearIndex = (rectilinearIndex * push) + angleSteps[i];
   }
@@ -623,9 +564,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   for(unsigned int i = 0; i < numAngles; ++i) {
     sizes[i] = 2*angleSteps[i]+1;
   }
-  ufS = new UnionFind::SimpleUnionFind(numAngles, sizes, S);
-  ufM = new UnionFind::SimpleUnionFind(numAngles, sizes, M);
-  ufL = new UnionFind::SimpleUnionFind(numAngles, sizes, L);
+  ufS = new UnionFind::IntervalUnionFind(numAngles, sizes, *SS);
+  ufM = new UnionFind::IntervalUnionFind(numAngles, sizes, *MM);
+  ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL);
 
   // Find islands:
   std::multimap<Encoding, SIsland> sIslands;

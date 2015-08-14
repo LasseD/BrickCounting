@@ -7,6 +7,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <assert.h>
+#include <stdint.h>
 
 //#define _TRACE 1
 
@@ -50,6 +51,7 @@ namespace math {
   double normalizeAngle(double a);
 
   bool intervalEquals(const IntervalList &a, const IntervalList &b);
+  bool intervalContains(const IntervalList &a, double d);
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
   IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b);
   IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax);
@@ -70,6 +72,22 @@ namespace math {
     The half plane is divided by the line 
    */
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, RadianInterval &intersection);
+
+  typedef std::pair<unsigned long, unsigned short> IntervalIndicator; // location, size
+
+  struct IntervalListVector {
+  private:
+    Interval *intervals;
+    IntervalIndicator *indicators;
+    const uint64_t intervalsSize, indicatorSize;
+    uint64_t intervalsI;
+  public:
+    IntervalListVector(uint64_t indicatorSize, unsigned int maxLoadFactor);
+    ~IntervalListVector();
+    void insert(uint64_t location, const IntervalList &intervalList);
+    void insertEmpty(uint64_t location);
+    void get(uint64_t location, IntervalList &intervalList);
+  };
 }
 
 #endif // MATH_H

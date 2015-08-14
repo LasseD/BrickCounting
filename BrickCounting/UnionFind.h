@@ -4,21 +4,19 @@
 #include <stdint.h>
 #include <vector>
 #include <set>
+#include "Math.h"
 
 #define MAX_DIMENSIONS 5
 #define MAX_UNIONS 100
 
-struct Position {
-  unsigned short p[MAX_DIMENSIONS];
+struct MixedPosition {
+  unsigned short p[MAX_DIMENSIONS-1];
+  double lastAngle;
 
-  Position() {}
-  Position(const Position &o) {
-    for(int i = 0 ; i < MAX_DIMENSIONS; ++i)
+  MixedPosition() {}
+  MixedPosition(const MixedPosition &o) : lastAngle(o.lastAngle) {
+    for(int i = 0 ; i < MAX_DIMENSIONS-1; ++i)
       p[i] = o.p[i];
-  }
-  void init() {
-    for(int i = 0 ; i < MAX_DIMENSIONS; ++i)
-      p[i] = 0;
   }
 };
 
@@ -38,6 +36,32 @@ namespace UnionFind {
     void flatten(); // Removes joins-structures. Creates minInUnions-list.
   };
 
+  class IntervalUnionFind {
+  private:
+    unsigned int numStepDimensions;
+    unsigned short dimensionSizes[MAX_DIMENSIONS-1]; // "-1" because last dimension is not a step dimension.
+    std::vector<std::pair<uint64_t,double>> unionRepresentatives; // Of found unions
+
+    UnionFindStructure *ufs;
+    uint32_t numUnions;
+  
+    void initialFillV(bool const * const M);
+    void buildUnions(unsigned int positionI, MixedPosition &position, const math::IntervalListVector &M);
+
+  public:
+    IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M);
+    ~IntervalUnionFind();
+
+    uint64_t indexOf(const MixedPosition &position) const;
+    uint32_t get(const MixedPosition &position) const;
+    void getPosition(uint64_t index, MixedPosition &position) const;
+    uint32_t get(uint64_t positionIndex) const;
+    void getRepresentative(unsigned int unionI, MixedPosition &position) const;
+    std::vector<uint32_t>::const_iterator rootsBegin() const;
+    std::vector<uint32_t>::const_iterator rootsEnd() const;
+  };
+
+  /*
   class SimpleUnionFind {
   private:
     unsigned int numDimensions;
@@ -64,7 +88,7 @@ namespace UnionFind {
     void getRepresentative(unsigned int unionI, Position &position) const;
     std::vector<uint32_t>::const_iterator rootsBegin() const;
     std::vector<uint32_t>::const_iterator rootsEnd() const;
-  };
+  };*/
 }
 
 #endif // UNION_FIND_H

@@ -69,6 +69,52 @@ namespace UnionFind {
     flattened = true;
   }
 
+  /*
+    unsigned int numStepDimensions;
+    unsigned short dimensionSizes[MAX_DIMENSIONS-1]; // "-1" because last dimension is not a step dimension.
+    std::vector<std::pair<uint64_t,double>> unionRepresentatives; // Of found unions
+    UnionFindStructure *ufs;
+    uint32_t numUnions;
+  */
+  IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M) {
+    // TODO: Implement
+  }
+  IntervalUnionFind::~IntervalUnionFind() {
+    // TODO: Implement
+  }
+  void IntervalUnionFind::initialFillV(bool const * const M) {
+    // TODO: Implement
+  }
+  void IntervalUnionFind::buildUnions(unsigned int positionI, MixedPosition &position, const math::IntervalListVector &M) {
+    // TODO: Implement
+  }
+  uint64_t IntervalUnionFind::indexOf(const MixedPosition &position) const {
+    // TODO: Implement
+    return 0;
+  }
+  uint32_t IntervalUnionFind::get(const MixedPosition &position) const {
+    // TODO: Implement
+    return 0;
+  }
+  void IntervalUnionFind::getPosition(uint64_t index, MixedPosition &position) const {
+    // TODO: Implement
+  }
+  uint32_t IntervalUnionFind::get(uint64_t positionIndex) const {
+    // TODO: Implement
+    return 0;
+  }
+  void IntervalUnionFind::getRepresentative(unsigned int unionI, MixedPosition &position) const {
+    // TODO: Implement
+  }
+  std::vector<uint32_t>::const_iterator IntervalUnionFind::rootsBegin() const {
+    return ufs->roots.begin();
+  }
+  std::vector<uint32_t>::const_iterator IntervalUnionFind::rootsEnd() const {
+    return ufs->roots.end();
+  }
+
+
+  /*
   SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, bool const * const M) : numDimensions(numDimensions), numUnions(0), sizeV(1) {
     time_t startTime, endTime;
     time(&startTime);
@@ -217,5 +263,5 @@ namespace UnionFind {
           ufs->join(v[lowerPos], v[pos]);
       }
     }
-  }
+  }*/
 }

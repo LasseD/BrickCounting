@@ -12,6 +12,7 @@
 #define STEPS_2 370
 #define STEPS_3 538
 #define BOOST_STAGES 4
+#define MAX_LOAD_FACTOR 3
 
 typedef unsigned long long counter;
 
@@ -33,8 +34,9 @@ public:
   unsigned int numAngles, numBricks; //, numScc = numAngles+1;
   uint64_t sizeMappings; 
   FatSCC sccs[6];
-  bool *S, *M, *L; 
-  UnionFind::SimpleUnionFind *ufS, *ufM, *ufL;
+  math::IntervalListVector *SS, *MM, *LL;
+
+  UnionFind::IntervalUnionFind *ufS, *ufM, *ufL;
   IConnectionPoint points[10];
   unsigned int angleTypes[5]; // Connection(aka. angle) -> 0, 1, 2, or 3.
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
@@ -59,19 +61,18 @@ public:
   2) Combine regions in S,M,L in order to determine new models.
   */
   void findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic);
-  //uint64_t smlIndex(const Position &p) const;
 
 private:
-  char smlChar(uint64_t smlIndex) const;
-  void reportProblematic(const Position &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const;
-  void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
+  void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const;
+  //void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void evalSML(unsigned int angleI, uint64_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
   void findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys);
-  void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
+  //void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
-  Configuration getConfiguration(const Position &p) const;
+  //Configuration getConfiguration(const Position &p) const;
+  Configuration getConfiguration(const MixedPosition &p) const;
   Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
-  std::vector<Connection> getConfigurationConnections(const Position &p) const;
+  std::vector<Connection> getConfigurationConnections(const MixedPosition &p) const;
 };
 
 
@@ -79,16 +80,22 @@ struct MIsland {
   int lIslands;
   bool rectilinear;
   unsigned int sizeRep;
-  Position representative;
+  MixedPosition representative;
 
-MIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
-    rectilinear = a->M[a->rectilinearIndex] && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
+MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
+    IntervalList rectilinearList;
+    a->MM->get(a->rectilinearIndex, rectilinearList);
+    rectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
     // Add all L-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
-      Position rep;
+      MixedPosition rep;
       a->ufL->getRepresentative(unionI, rep);
-      assert(a->M[a->ufL->indexOf(rep)]);
+#ifdef _DEBUG
+      IntervalList l;
+      a->MM->get(a->ufM->indexOf(rep), l);
+      assert(math::intervalContains(l, rep.lastAngle));
+#endif
       if(a->ufM->get(rep) == unionFindIndex) {
         ++lIslands;
       }
@@ -100,15 +107,19 @@ MIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : lIslands(
 struct SIsland {
   std::vector<MIsland> mIslands;
   unsigned int sizeRep;
-  Position representative;
+  MixedPosition representative;
 
-  SIsland(AngleMapping *a, uint32_t unionFindIndex, const Position &p) : sizeRep(a->numAngles), representative(p) {
+  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : sizeRep(a->numAngles), representative(p) {
     // Add all M-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
-      Position rep;
+      MixedPosition rep;
       a->ufM->getRepresentative(unionI, rep);
-      assert(a->S[a->ufM->indexOf(rep)]);
+#ifdef _DEBUG
+      IntervalList l;
+      a->SS->get(a->ufS->indexOf(rep), l);
+      assert(math::intervalContains(l, rep.lastAngle));
+#endif
       if(a->ufS->get(rep) == unionFindIndex) {
         mIslands.push_back(MIsland(a, unionI, rep));      
       }

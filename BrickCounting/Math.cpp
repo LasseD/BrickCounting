@@ -311,6 +311,15 @@ namespace math {
     return true;
   }
 
+  bool intervalContains(const IntervalList &a, double d) {
+    for(IntervalList::const_iterator it = a.begin(); it != a.end(); ++it) {
+      if(it->second < d)
+        continue;
+      return it->first <= d;
+    }
+    return false;
+  }
+
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b) {
     IntervalList ret;
     IntervalList::const_iterator itA = a.begin();
@@ -493,6 +502,35 @@ namespace math {
     }
     return ret;
   }
+
+  IntervalListVector::IntervalListVector(uint64_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
+    intervals = new Interval[intervalsSize];
+    indicators = new IntervalIndicator[indicatorSize];
+  }
+  IntervalListVector::~IntervalListVector() {
+    delete[] intervals;
+    delete[] indicators;
+  }
+  void IntervalListVector::insert(uint64_t location, const IntervalList &intervalList) {
+    assert(location < indicatorSize);
+    assert(intervalsI + intervalList.size() < intervalsSize);
+    indicators[location].first = intervalsI;
+    indicators[location].second = (unsigned short)intervalList.size();;
+    for(IntervalList::const_iterator it = intervalList.begin(); it != intervalList.end(); ++it)
+      intervals[intervalsI++] = *it;
+  }
+  void IntervalListVector::insertEmpty(uint64_t location) {
+    assert(location < indicatorSize);
+    assert(intervalsI < intervalsSize);
+    indicators[location].first = intervalsI;
+    indicators[location].second = 0;
+  }
+  void IntervalListVector::get(uint64_t location, IntervalList &intervalList) {
+    assert(location < indicatorSize);
+    uint64_t intervalsI = indicators[location].first;
+    for(unsigned short i = 0; i < indicators[location].second; ++i)
+      intervalList.push_back(intervals[intervalsI+i]);
+  }
 }
 
 std::ostream& operator<<(std::ostream &os, const Point& p) {
@@ -513,4 +551,3 @@ std::ostream& operator<<(std::ostream &os, const IntervalList& l) {
   os << "}";
   return os;
 }
-
