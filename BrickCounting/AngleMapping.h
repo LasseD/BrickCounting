@@ -32,7 +32,7 @@ Size 2 => Granularity -538 - 538 => 1076 steps.
 class AngleMapping {
 public:
   unsigned int numAngles, numBricks; //, numScc = numAngles+1;
-  uint64_t sizeMappings; 
+  uint32_t sizeMappings; 
   FatSCC sccs[6];
   math::IntervalListVector *SS, *MM, *LL;
 
@@ -41,7 +41,8 @@ public:
   unsigned int angleTypes[5]; // Connection(aka. angle) -> 0, 1, 2, or 3.
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
   const ConfigurationEncoder &encoder;
-  uint64_t rectilinearIndex;
+  uint32_t rectilinearIndex;
+  MixedPosition rectilinearPosition;
   counter boosts[BOOST_STAGES];
 private:
   std::ofstream &os;
@@ -82,21 +83,16 @@ struct MIsland {
   unsigned int sizeRep;
   MixedPosition representative;
 
-MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
+  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
-    rectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->get(a->rectilinearIndex) == a->ufM->get(p);
+    rectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
     // Add all L-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
-      a->ufL->getRepresentative(unionI, rep);
-#ifdef _DEBUG
-      IntervalList l;
-      a->MM->get(a->ufM->indexOf(rep), l);
-      assert(math::intervalContains(l, rep.lastAngle));
-#endif
-      if(a->ufM->get(rep) == unionFindIndex) {
+      a->ufL->getRepresentativeOfUnion(unionI, rep);
+      if(a->ufM->getRootForPosition(rep) == unionFindIndex) {
         ++lIslands;
       }
     }
@@ -114,13 +110,8 @@ struct SIsland {
     for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
-      a->ufM->getRepresentative(unionI, rep);
-#ifdef _DEBUG
-      IntervalList l;
-      a->SS->get(a->ufS->indexOf(rep), l);
-      assert(math::intervalContains(l, rep.lastAngle));
-#endif
-      if(a->ufS->get(rep) == unionFindIndex) {
+      a->ufM->getRepresentativeOfUnion(unionI, rep);
+      if(a->ufS->getRootForPosition(rep) == unionFindIndex) {
         mIslands.push_back(MIsland(a, unionI, rep));      
       }
     }

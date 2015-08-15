@@ -503,7 +503,7 @@ namespace math {
     return ret;
   }
 
-  IntervalListVector::IntervalListVector(uint64_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
+  IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0), numNonEmptyIntervals(0) {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
   }
@@ -511,25 +511,44 @@ namespace math {
     delete[] intervals;
     delete[] indicators;
   }
-  void IntervalListVector::insert(uint64_t location, const IntervalList &intervalList) {
+  void IntervalListVector::insert(uint32_t location, const IntervalList &intervalList) {
     assert(location < indicatorSize);
     assert(intervalsI + intervalList.size() < intervalsSize);
     indicators[location].first = intervalsI;
     indicators[location].second = (unsigned short)intervalList.size();;
     for(IntervalList::const_iterator it = intervalList.begin(); it != intervalList.end(); ++it)
       intervals[intervalsI++] = *it;
+    if(!intervalList.empty())
+      ++numNonEmptyIntervals;
   }
-  void IntervalListVector::insertEmpty(uint64_t location) {
+  void IntervalListVector::insertEmpty(uint32_t location) {
     assert(location < indicatorSize);
     assert(intervalsI < intervalsSize);
     indicators[location].first = intervalsI;
     indicators[location].second = 0;
   }
-  void IntervalListVector::get(uint64_t location, IntervalList &intervalList) {
+  void IntervalListVector::get(uint32_t location, IntervalList &intervalList) const {
     assert(location < indicatorSize);
-    uint64_t intervalsI = indicators[location].first;
+    uint32_t intervalsI = indicators[location].first;
     for(unsigned short i = 0; i < indicators[location].second; ++i)
       intervalList.push_back(intervals[intervalsI+i]);
+  }
+  Interval IntervalListVector::get(uint32_t location, unsigned int intervalIndex) const {
+    assert(location < indicatorSize);
+    uint32_t intervalsI = indicators[location].first;
+    return intervals[intervalsI+intervalIndex];
+  }
+  uint32_t IntervalListVector::sizeIndicator() const {
+    return indicatorSize;
+  }
+  uint32_t IntervalListVector::sizeNonEmptyIntervalLists() const {
+    return intervalsI;
+  }
+  uint32_t IntervalListVector::sizeNonEmptyIntervals() const {
+    return numNonEmptyIntervals;
+  }
+  uint32_t IntervalListVector::intervalSizeForIndicator(uint32_t i) const {
+    return indicators[i].second;
   }
 }
 

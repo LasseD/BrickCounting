@@ -185,7 +185,14 @@ Configuration AngleMapping::getConfiguration(const MixedPosition &p) const {
     assert(ip2.P1.configurationSCCI != 0);
     c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
   }
-  // TODO: Add last angle!
+  // Add last angle:
+  const IConnectionPoint &ip1 = points[2*(numAngles-1)];
+  const IConnectionPoint &ip2 = points[2*(numAngles-1)+1];
+  const StepAngle angle((short)math::round(p.lastAngle*10000/MAX_ANGLE_RADIANS), 10000);
+  const Connection cc(ip1, ip2, angle);
+  assert(ip2.P1.configurationSCCI != 0);
+  c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
+
   return c;
 }
 
@@ -408,16 +415,14 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
   for(std::vector<uint32_t>::const_iterator it = ufS->rootsBegin(); it != ufS->rootsEnd(); ++it) {
     const uint32_t unionI = *it;
     MixedPosition rep;
-    ufS->getRepresentative(unionI, rep);
-    if(ufS->get(rep) != unionI) {
-      std::cout << ufS->get(rep) <<"!="<< unionI << std::endl;
-    }
-    assert(ufS->get(rep) == unionI);
+    ufS->getRepresentativeOfUnion(unionI, rep);
+
 #ifdef _DEBUG
-    IntervalList l;
-    SS->get(ufS->indexOf(rep), l);
-    assert(math::intervalContains(l, rep.lastAngle));
+    if(ufS->getRootForPosition(rep) != unionI) {
+      std::cout << ufS->getRootForPosition(rep) <<"!="<< unionI << std::endl;
+    }
 #endif
+    assert(ufS->getRootForPosition(rep) == unionI);
 
     Configuration c = getConfiguration(rep);
     std::vector<IConnectionPair> found;
@@ -550,23 +555,22 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
   // Compute rectilinear index:
   rectilinearIndex = angleSteps[0];
+  rectilinearPosition.p[0] = angleSteps[0];
   for(unsigned int i = 1; i < numAngles-1; ++i) {
     const int push = 2*angleSteps[i] + 1;
     rectilinearIndex = (rectilinearIndex * push) + angleSteps[i];
+    rectilinearPosition.p[i] = angleSteps[i];
   }
+  rectilinearPosition.lastAngle = 0;
 
   // Evaluate SML:
   Configuration c(sccs[0]);
   evalSML(0, 0, c, false, false, false);
 
   // Evaluate union-find:
-  unsigned short sizes[5];
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    sizes[i] = 2*angleSteps[i]+1;
-  }
-  ufS = new UnionFind::IntervalUnionFind(numAngles, sizes, *SS);
-  ufM = new UnionFind::IntervalUnionFind(numAngles, sizes, *MM);
-  ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL);
+  ufS = new UnionFind::IntervalUnionFind(numAngles, *SS);
+  ufM = new UnionFind::IntervalUnionFind(numAngles, *MM);
+  ufL = new UnionFind::IntervalUnionFind(numAngles, *LL);
 
   // Find islands:
   std::multimap<Encoding, SIsland> sIslands;
