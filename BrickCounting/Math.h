@@ -80,7 +80,7 @@ namespace math {
     Interval *intervals;
     IntervalIndicator *indicators;
     const uint32_t intervalsSize, indicatorSize;
-    uint32_t intervalsI, numNonEmptyIntervals;
+    uint32_t intervalsI;
   public:
     IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor);
     ~IntervalListVector();
@@ -89,7 +89,6 @@ namespace math {
     void get(uint32_t location, IntervalList &intervalList) const;
     Interval get(uint32_t location, unsigned int intervalIndex) const;
     uint32_t sizeIndicator() const;
-    uint32_t sizeNonEmptyIntervalLists() const;
     uint32_t sizeNonEmptyIntervals() const;
     uint32_t intervalSizeForIndicator(uint32_t i) const;
   };

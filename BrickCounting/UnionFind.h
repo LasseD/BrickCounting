@@ -43,7 +43,7 @@ namespace UnionFind {
     unsigned short dimensionSizes[MAX_DIMENSIONS-1]; // "-1" because last dimension is not a step dimension.
 
     UnionFindStructure *ufs;
-    uint32_t *intervalIndicatorToUnion;
+    uint32_t *intervalIndicatorToUnion, unionI;
     std::pair<uint32_t,unsigned int> *unionToInterval;
     const math::IntervalListVector &M; // ref only, no ownership.
 
@@ -51,7 +51,7 @@ namespace UnionFind {
     void buildUnions(unsigned int positionI, MixedPosition &position);
     uint32_t indexOf(const MixedPosition &position) const;
   public:
-    IntervalUnionFind(unsigned int numDimensions, const math::IntervalListVector &M);
+    IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M);
     ~IntervalUnionFind();
 
     uint32_t getRootForPosition(const MixedPosition rep) const;

@@ -415,7 +415,7 @@ struct TurningSCCInvestigator {
           }
           Configuration c2(baseConfiguration);
           FatSCC scc; // Initializes for single brick SCC.
-          StepAngle stepAngle((short)math::round(it2->first*10000/MAX_ANGLE_RADIANS), 10000);
+          StepAngle stepAngle(it2->first);
           Connection connection(connectionPair, stepAngle);
           c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
           if(c2.isRealizable<ADD_XY>(possibleCollisions, 1)) {

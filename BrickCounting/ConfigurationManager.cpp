@@ -136,8 +136,8 @@ void ConfigurationManager::test() {
   v.push_back(1);
   v.push_back(1);
 
-  //runForCombinationType(v, 4);
-  
+  runForCombinationType(v, 4);
+  /*
   std::vector<FatSCC> v2;
   v2.push_back(sccs[1][2]);
   v2.push_back(sccs[0][0]);

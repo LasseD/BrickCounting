@@ -88,11 +88,9 @@ int main(int, char**) {
   // RC:
   ConfigurationManager mgr;
   mgr.test();
-  //mgr.runForSize(2); 
   //mgr.runForSize(3);
   //mgr.runForSize(4);
   //mgr.runForSize(5);
-  //mgr.runForSize(6);
 
   //system("pause");
   //return 0;

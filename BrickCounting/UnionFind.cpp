@@ -102,14 +102,20 @@ namespace UnionFind {
     std::pair<uint32_t,unsigned int> *unionToInterval;
     const math::IntervalListVector &M; // ref only, no ownership.
   */
-  IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, const math::IntervalListVector &M) : numStepDimensions(numDimensions-1), M(M) {
+  IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M) : numStepDimensions(numDimensions-1), unionI(0), M(M) {
     time_t startTime, endTime;
     time(&startTime);
 
+    // Initialize members:
+    for(unsigned int i = 0; i < numDimensions; ++i) {
+      this->dimensionSizes[i] = dimensionSizes[i];
+    }
+
+    // Initially fill basic vectors:
     buildIntervalIndicatorToUnion();
 
     // Perform joins:
-    ufs = new UnionFindStructure(M.sizeIndicator());
+    ufs = new UnionFindStructure(unionI);
     MixedPosition position;
     buildUnions(0, position);
 
@@ -130,7 +136,6 @@ namespace UnionFind {
     intervalIndicatorToUnion = new uint32_t[M.sizeIndicator()];
     unionToInterval = new std::pair<uint32_t,unsigned int>[M.sizeNonEmptyIntervals()];
 
-    uint32_t unionI = 0;
     for(uint32_t i = 0; i < M.sizeIndicator(); ++i) {
       uint32_t intervalSize = M.intervalSizeForIndicator(i);
       if(intervalSize == 0)
@@ -180,33 +185,46 @@ namespace UnionFind {
     }
   }
   uint32_t IntervalUnionFind::indexOf(const MixedPosition &position) const {
-    uint32_t index = position.p[0];
+    uint32_t index = numStepDimensions == 0 ? 0 : position.p[0];
     for(unsigned int i = 1; i < numStepDimensions; ++i)
       index = (index * dimensionSizes[i]) + position.p[i];
     return index;
   }
   uint32_t IntervalUnionFind::getRootForPosition(const MixedPosition rep) const {
     uint32_t indicatorIndex = indexOf(rep);
+#ifdef _DEBUG
+    if(indicatorIndex >= M.sizeIndicator()) {
+      assert(false);
+    }
+#endif
+    assert(indicatorIndex < M.sizeIndicator());
     uint32_t firstUnion = intervalIndicatorToUnion[indicatorIndex];
 
     IntervalList l;
     M.get(indicatorIndex, l);
     uint32_t index = 0;
     for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it, ++index) {
-      if(it->first <= rep.lastAngle && rep.lastAngle <= it->second)
+      if(it->first <= rep.lastAngle && rep.lastAngle <= it->second) {
         return ufs->getMinInUnion(firstUnion + index);
+      }
     }
     assert(false);std::cerr << "DIE X001" << std::endl;
     int *die = NULL; die[0] = 42;
     return 0;
   }
   void IntervalUnionFind::getRepresentativeOfUnion(unsigned int unionI, MixedPosition &rep) const {
+#ifdef _DEBUG
+    if(unionI >= M.sizeNonEmptyIntervals()) {
+      assert(false);
+    }
+#endif
+    assert(unionI < M.sizeNonEmptyIntervals());
     std::pair<uint32_t,unsigned int> intervalInfo = unionToInterval[unionI];
 
     // Construct position from interval index:
     uint32_t encodedPosition = intervalInfo.first;
     for(unsigned int i = 0; i < numStepDimensions; ++i) {
-      int revDim = numStepDimensions-i;
+      int revDim = numStepDimensions-i-1;
       rep.p[revDim] = encodedPosition % dimensionSizes[revDim];
       encodedPosition /= dimensionSizes[revDim];
     }
@@ -227,14 +245,10 @@ namespace UnionFind {
     time_t startTime, endTime;
     time(&startTime);
 
-    unsigned short maxDimensionSize = 0;
-
     // Initialize members:
     for(unsigned int i = 0; i < numDimensions; ++i) {
       this->dimensionSizes[i] = dimensionSizes[i];
       sizeV *= dimensionSizes[i];
-      if(dimensionSizes[i] > maxDimensionSize)
-        maxDimensionSize = dimensionSizes[i];
     }
 
     // Initially fill v:
