@@ -658,7 +658,8 @@ public:
     for(int i = 0; i < size-1; ++i)
       if(b == otherBricks[i])
         return i+1;
-    assert(false);
+    assert(false);std::cerr << "DIE X002" << std::endl;
+    int *die = NULL; die[0] = 42;
     return -1;
   }
 };

@@ -192,11 +192,6 @@ namespace UnionFind {
   }
   uint32_t IntervalUnionFind::getRootForPosition(const MixedPosition rep) const {
     uint32_t indicatorIndex = indexOf(rep);
-#ifdef _DEBUG
-    if(indicatorIndex >= M.sizeIndicator()) {
-      assert(false);
-    }
-#endif
     assert(indicatorIndex < M.sizeIndicator());
     uint32_t firstUnion = intervalIndicatorToUnion[indicatorIndex];
 
@@ -213,11 +208,6 @@ namespace UnionFind {
     return 0;
   }
   void IntervalUnionFind::getRepresentativeOfUnion(unsigned int unionI, MixedPosition &rep) const {
-#ifdef _DEBUG
-    if(unionI >= M.sizeNonEmptyIntervals()) {
-      assert(false);
-    }
-#endif
     assert(unionI < M.sizeNonEmptyIntervals());
     std::pair<uint32_t,unsigned int> intervalInfo = unionToInterval[unionI];
 

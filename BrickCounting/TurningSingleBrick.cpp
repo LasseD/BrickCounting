@@ -128,9 +128,11 @@ void TurningSingleBrick::createBricksAndStudTranslation(const Configuration &con
   studTranslation = prevBrick.getStudPosition(prevPoint.type);
 
   double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2);
-  int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1) + rb.level();
+  int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);// + rb.level() - currPoint.brick.level();
+  //std::cout << "Level: " << ((int)prevOrigBrick.level) <<"+"<< ((int)prevPoint.brick.level()) <<"+"<< (prevPoint.above ? 1 : -1) <<"+"<< ((int)rb.level()) <<"-"<< ((int)currPoint.brick.level()) << "=" << ((int)level) << std::endl;
 
   blocks[0] = Brick(rb, currPoint, Point(0,0), angle-MAX_ANGLE_RADIANS, level);
+  //std::cout << "=> " << (int)(blocks[0].level) << std::endl;
   blocks[1] = Brick(rb, currPoint, Point(0,0), angle+MAX_ANGLE_RADIANS, level);
   blockAbove = Brick(rb, currPoint, Point(0,0), angle, level);
 }

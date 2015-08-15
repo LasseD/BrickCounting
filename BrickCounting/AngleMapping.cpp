@@ -400,7 +400,12 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
           std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
         }
       }
-      assert(false); int* kill = NULL; kill[0] = 0;
+      Configuration c3 = getConfiguration(c, angleI, 0);
+      c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+      l.clear();
+      tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
+      assert(false);std::cerr << "DIE X003" << std::endl;
+      int *die = NULL; die[0] = 42;
     }
     delete[] S;
 #endif

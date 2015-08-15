@@ -378,7 +378,7 @@ struct TurningSCCInvestigator {
     IntervalList ret;
     ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
 
-      RectilinearBrick b;
+    RectilinearBrick b;
     for(int i = 0; i < scc.size; b = scc.otherBricks[i++]) {
 #ifdef _TRACE
       std::cout << "----------------- INITIATING ALLOWABLE ANGLES <" << ADD_XY <<  "> ----------------------" << std::endl;

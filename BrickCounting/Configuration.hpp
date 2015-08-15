@@ -34,21 +34,11 @@ struct StepAngle {
   StepAngle(double d) : n((short)math::round(d*10000/MAX_ANGLE_RADIANS)), d(10000) {}
   StepAngle(short n, unsigned short d) : n(n), d(d) {
     assert(d != 0);
-#ifdef _DEBUG
-    if(-d > n) {
-      assert(false);
-    }
-#endif
     assert(-d <= n);
     assert(n <= d);
   }
   StepAngle(const StepAngle &a) : n(a.n), d(a.d) {
     assert(d != 0);
-#ifdef _DEBUG
-    if(-d > n) {
-      assert(false);
-    }
-#endif
     assert(-d <= n);
     assert(n <= d);
   }

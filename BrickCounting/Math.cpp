@@ -503,7 +503,7 @@ namespace math {
     return ret;
   }
 
-  IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
+  IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(4+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
   }
@@ -512,12 +512,12 @@ namespace math {
     delete[] indicators;
   }
   void IntervalListVector::insert(uint32_t location, const IntervalList &intervalList) {
+    assert(location < indicatorSize);
 #ifdef _DEBUG
-    if(location >= indicatorSize) {
+    if(intervalsI + intervalList.size() > intervalsSize) {
       assert(false);
     }
 #endif
-    assert(location < indicatorSize);
     assert(intervalsI + intervalList.size() < intervalsSize);
     indicators[location].first = intervalsI;
     indicators[location].second = (unsigned short)intervalList.size();;
@@ -531,22 +531,12 @@ namespace math {
     indicators[location].second = 0;
   }
   void IntervalListVector::get(uint32_t location, IntervalList &intervalList) const {
-#ifdef _DEBUG
-    if(location >= indicatorSize) {
-      assert(false);
-    }
-#endif
     assert(location < indicatorSize);
     uint32_t intervalsI = indicators[location].first;
     for(unsigned short i = 0; i < indicators[location].second; ++i)
       intervalList.push_back(intervals[intervalsI+i]);
   }
   Interval IntervalListVector::get(uint32_t location, unsigned int intervalIndex) const {
-#ifdef _DEBUG
-    if(location >= indicatorSize) {
-      assert(false);
-    }
-#endif
     assert(location < indicatorSize);
     uint32_t intervalsI = indicators[location].first;
     return intervals[intervalsI+intervalIndex];

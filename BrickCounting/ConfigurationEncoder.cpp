@@ -295,7 +295,8 @@ Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
       Encoding encoded = encode(i, true, connectionPoints, connectionMaps);
       if(encoded < minEncoded) {
         std::cout << "FAIL! Init=" << i << ": " << minEncoded.first << "->" << encoded.first << std::endl;
-        assert(false);
+        assert(false);std::cerr << "DIE X004" << std::endl;
+        int *die = NULL; die[0] = 42;
       }
     }
 #endif
