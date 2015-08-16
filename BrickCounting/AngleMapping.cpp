@@ -637,6 +637,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
           rangeIsRect = true;
         }
         else {
+        reportProblematic(sIsland.representative, 0, 0, 0, toLdr); // TODO: REM
           allNrcInRange.push_back(c);
         }
 
@@ -651,7 +652,9 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 
     // Update output:
     if(!allNrcInRange.empty()) {
-      nrcToPrint.push_back(*allNrcInRange.begin());
+      if(!rangeIsRect) { // With a rectilinear configuration in the range, NRC should not be counted up.
+        nrcToPrint.push_back(*allNrcInRange.begin());
+      }
       if(allNrcInRange.size() > 1) {
         for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
           modelsToPrint.push_back(*itR);

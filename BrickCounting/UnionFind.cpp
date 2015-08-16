@@ -23,12 +23,11 @@ namespace UnionFind {
 
   void UnionFindStructure::join(uint32_t a, uint32_t b) {
     assert(!flattened);
-    if(b < a) {
-      join(b, a);
-      return;
-    }
     if(joins[a].find(b) == joins[a].end()) {
       joins[a].insert(b);
+    }
+    if(joins[b].find(a) == joins[b].end()) {
+      joins[b].insert(a);
     }
   }
   void UnionFindStructure::join(const IntervalList &l1, const IntervalList &l2, uint32_t union1, uint32_t union2) {
@@ -47,10 +46,14 @@ namespace UnionFind {
         continue;
       }
       join(union1, union2);
-      if(it1->second <= it2->second)
+      if(it1->second <= it2->second) {
         ++it1;
-      else
+        ++union1;
+      }
+      else {
         ++it2;
+        ++union2;
+      }
     }
   }
   uint32_t UnionFindStructure::getMinInUnion(uint32_t a) const {
@@ -78,14 +81,17 @@ namespace UnionFind {
 
       while(!s.empty()) {
         uint32_t top = s.top();
+        assert(top < numUnions);
         s.pop();
         if(handled[top])
           continue;
         minInUnions[top] = i;
         handled[top] = true;
 
-        for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it)
-          s.push(*it);
+        for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
+          if(!handled[*it])
+            s.push(*it);
+        }
       }
     }
 
@@ -127,6 +133,7 @@ namespace UnionFind {
     if(seconds > 2)
       std::cout << "Union find performed in " << seconds << " seconds." << std::endl;
   }
+
   IntervalUnionFind::~IntervalUnionFind() {
     delete ufs;
     delete[] intervalIndicatorToUnion;
@@ -167,12 +174,11 @@ namespace UnionFind {
 
     // Run and join for each lower dimension:
     for(unsigned int i = 0; i < numStepDimensions; ++i) {
-      unsigned short oldPosition = position.p[i];
-      if(oldPosition == 0)
+      if(position.p[i] == 0)
         continue; // Can't further decrease in this dimension.
-      position.p[i] = oldPosition - 1;
+      --position.p[i];
       uint32_t neighbourPositionIndex = indexOf(position);
-      position.p[i] = oldPosition;
+      ++position.p[i];
 
       // Join all in dimension:
       IntervalList l2;

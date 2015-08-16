@@ -414,11 +414,10 @@ struct TurningSCCInvestigator {
             continue; // Clicking locally at all angles - do nothing.
           }
           Configuration c2(baseConfiguration);
-          FatSCC scc; // Initializes for single brick SCC.
           StepAngle stepAngle(it2->first);
           Connection connection(connectionPair, stepAngle);
           c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
-          if(c2.isRealizable<ADD_XY>(possibleCollisions, 1)) {
+          if(c2.isRealizable<ADD_XY>(possibleCollisions, scc.size)) {
             double angleOfSnapRadius = atan(SNAP_DISTANCE/it2->second)/2;
 #ifdef _TRACE
             std::cout << "  Adding stud interval " << Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius) << std::endl;

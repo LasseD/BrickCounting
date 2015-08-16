@@ -76,7 +76,6 @@ private:
   std::vector<Connection> getConfigurationConnections(const MixedPosition &p) const;
 };
 
-
 struct MIsland {
   int lIslands;
   bool rectilinear;

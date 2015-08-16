@@ -513,11 +513,6 @@ namespace math {
   }
   void IntervalListVector::insert(uint32_t location, const IntervalList &intervalList) {
     assert(location < indicatorSize);
-#ifdef _DEBUG
-    if(intervalsI + intervalList.size() > intervalsSize) {
-      assert(false);
-    }
-#endif
     assert(intervalsI + intervalList.size() < intervalsSize);
     indicators[location].first = intervalsI;
     indicators[location].second = (unsigned short)intervalList.size();;
