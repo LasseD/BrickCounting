@@ -632,12 +632,21 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
         const MIsland &mIsland = *itM;
 
         Configuration c = getConfiguration(mIsland.representative);
+#ifdef _DEBUG
+        std::vector<IConnectionPair> ignore;
+        if(!c.isRealizable<-1>(ignore)) {
+          LDRPrinterHandler h;
+          h.add(new Configuration(c)); // OK Be cause we are about to die.
+          h.add(&c);
+          h.print("unrealizable");
+          assert(false);
+        }
+#endif
         if(mIsland.rectilinear) {
           assert(!rangeIsRect);
           rangeIsRect = true;
         }
         else {
-        reportProblematic(sIsland.representative, 0, 0, 0, toLdr); // TODO: REM
           allNrcInRange.push_back(c);
         }
 
