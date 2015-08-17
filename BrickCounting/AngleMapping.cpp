@@ -497,7 +497,7 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
   findExtremeConfigurations(0, p, true, rect, nonRect, toLdr);
 }*/
 
-void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr) const {
+void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr, bool includeMappingFile) const {
   Configuration c = getConfiguration(p);
   std::vector<Connection> cc = getConfigurationConnections(p);
 
@@ -511,7 +511,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   }
 
   os << "  File: ";
-  encoder.writeFileName(os, cc);
+  encoder.writeFileName(os, cc, true);
   os << std::endl;
   os << "  Angles: " << std::endl;
   for(unsigned int i = 0; i < numAngles-1; ++i) {
@@ -523,45 +523,46 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
     os << "  This configuration represents M-island " << (mIslandI+1) << "/" << mIslandTotal << ". There are " << lIslandTotal << " L-islands in this M-island" << std::endl;
   else
     os << "  S islands without M-islands inside!" << std::endl;        
+  os << std::endl;
 
-  if(numAngles < 3) {
-    //Create maping file:
-    std::stringstream mappingFileName;
-    mappingFileName << "manual\\" << numBricks << "\\";
-    encoder.writeFileName(mappingFileName, cc);
-    mappingFileName << "_mapping.txt";
-    std::ofstream mappingFile;
-    mappingFile.open(mappingFileName.str(), std::ios::out);
-    mappingFile << numAngles << " ";
-    for(unsigned int i = 0; i < numAngles-1; ++i)
-      mappingFile << " " << (2*angleSteps[i]+1);
-    mappingFile << std::endl;
+  if(numAngles >= 3 || !includeMappingFile)
+    return;
 
-    // Print SML Mapping!
-    if(numAngles == 1) {
+  //Create maping file:
+  std::stringstream mappingFileName;
+  mappingFileName << "manual\\" << numBricks << "\\";
+  encoder.writeFileName(mappingFileName, cc, false);
+  mappingFileName << "_mapping.txt";
+  std::ofstream mappingFile;
+  mappingFile.open(mappingFileName.str(), std::ios::out);
+  mappingFile << numAngles << " ";
+  for(unsigned int i = 0; i < numAngles-1; ++i)
+    mappingFile << " " << (2*angleSteps[i]+1);
+  mappingFile << std::endl;
+
+  // Print SML Mapping!
+  if(numAngles == 1) {
+    IntervalList s, m , l;
+    SS->get(0, s);
+    MM->get(0, m);
+    LL->get(0, l);
+    mappingFile << s << std::endl;
+    mappingFile << m << std::endl;
+    mappingFile << l << std::endl;
+  }
+  else {
+    for(int i = 0; i < 2*angleSteps[0]+1; ++i) {
       IntervalList s, m , l;
-      SS->get(0, s);
-      MM->get(0, m);
-      LL->get(0, l);
+      SS->get(i, s);
+      MM->get(i, m);
+      LL->get(i, l);
       mappingFile << s << std::endl;
       mappingFile << m << std::endl;
       mappingFile << l << std::endl;
     }
-    else {
-      for(int i = 0; i < 2*angleSteps[0]+1; ++i) {
-        IntervalList s, m , l;
-        SS->get(i, s);
-        MM->get(i, m);
-        LL->get(i, l);
-        mappingFile << s << std::endl;
-        mappingFile << m << std::endl;
-        mappingFile << l << std::endl;
-      }
-    }
-    mappingFile.flush();
-    mappingFile.close();
   }
-  os << std::endl;
+  mappingFile.flush();
+  mappingFile.close();
 }
 
 void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic) {
@@ -622,12 +623,13 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
       const SIsland &sIsland = itS->second;
 
       if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
-        reportProblematic(sIsland.representative, 0, 0, 0, toLdr);
+        reportProblematic(sIsland.representative, 0, 0, 0, toLdr, true);
         ++problematic;
         continue;
       }
 
       int mIslandI = 0;
+      bool anyMappingPrinted = false;
       for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
         const MIsland &mIsland = *itM;
 
@@ -654,7 +656,8 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
         // No L-islands => problematic, but still count.
         if(sIsland.mIslands.size() != 1 || mIsland.lIslands > 1) { 
           ++problematic;
-          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, toLdr);
+          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, toLdr, !anyMappingPrinted);
+          anyMappingPrinted = true;
         }
       }
     }

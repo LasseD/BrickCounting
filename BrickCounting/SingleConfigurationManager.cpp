@@ -239,7 +239,7 @@ void SingleConfigurationManager::printManualLDRFiles() const {
     for(unsigned int i = 0; i < combinationSize; ++i)
       size += combination[i].size;
     ss << "manual\\" << size << "\\";
-    encoder.writeFileName(ss, *it);
+    encoder.writeFileName(ss, *it, true);
     h.print(ss.str());    
   }
 }

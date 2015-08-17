@@ -394,7 +394,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 #endif
 }
 
-void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Connection> &l) const {
+void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Connection> &l, bool includeAngles) const {
   Configuration c(fatSccs, l);
   IConnectionPairList icpl;
   for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
@@ -408,7 +408,11 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Con
   ss << "_sccindices";
   for(unsigned int i = 0; i < fatSccSize; ++i)
     ss << "_" << fatSccs[i].index;
-  ss << "_cc" << encoded.first << "_angles";
+  ss << "_cc" << encoded.first;
+
+  if(!includeAngles)
+    return;
+  ss << "_angles";
   for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
     ss << "_" << it->angle.n;
 }
