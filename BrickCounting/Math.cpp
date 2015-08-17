@@ -482,8 +482,8 @@ namespace math {
 
   IntervalList intervalReverse(const IntervalList &l) {
     IntervalList ret;
-    for(long long i = l.size()-1; i >= 0; --i) {
-      ret.push_back(Interval(-l[i].second, -l[i].first));
+    for(IntervalList::const_reverse_iterator it = l.rbegin(); it != l.rend(); ++it) {
+      ret.push_back(Interval(-it->second, -it->first));
     }
     return ret;
   }

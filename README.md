@@ -61,6 +61,6 @@ The following improvements are for finding all models with 3 bricks. Notice that
 | Don't consider connecting brick to be intersectable | - | 62 |
 | Split handling of the SML sets and detect early if a model is impossible | - | 50 |
 | Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | 6 | 11 |
-| Modify the SML-result set to accomodate intervals from TSBs | 2 | - |
-| Run using release-build | 0 | - |
+| Modify the SML-result set to accomodate intervals from TSBs | 2 | 3 |
+| Run using release-build | 0 | 1 |
 

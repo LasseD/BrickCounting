@@ -250,12 +250,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
+      bool noS2 = noS || !c2.isRealizable<-1>(possibleCollisions, sccs[ip2I].size);
+      bool noM2 = noM || !c2.isRealizable< 0>(possibleCollisions, sccs[ip2I].size);
+      bool noL2 = noL || !c2.isRealizable< 1>(possibleCollisions, sccs[ip2I].size);
 
-      noS = noS && c2.isRealizable<-1>(possibleCollisions, sccs[ip2I].size);
-      noM = noM && c2.isRealizable< 0>(possibleCollisions, sccs[ip2I].size);
-      noL = noL && c2.isRealizable< 1>(possibleCollisions, sccs[ip2I].size);
-
-      evalSML(angleI+1, smlI + i, c2, noS, noM, noL);
+      evalSML(angleI+1, smlI + i, c2, noS2, noM2, noL2);
     }
     return;
   }
@@ -498,7 +497,6 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
 }*/
 
 void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr, bool includeMappingFile) const {
-  Configuration c = getConfiguration(p);
   std::vector<Connection> cc = getConfigurationConnections(p);
 
   toLdr.push_back(cc);
@@ -534,7 +532,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   encoder.writeFileName(mappingFileName, cc, false);
   mappingFileName << "_mapping.txt";
   std::ofstream mappingFile;
-  mappingFile.open(mappingFileName.str(), std::ios::out);
+  mappingFile.open(mappingFileName.str().c_str(), std::ios::out);
   mappingFile << numAngles << " ";
   for(unsigned int i = 0; i < numAngles-1; ++i)
     mappingFile << " " << (2*angleSteps[i]+1);
