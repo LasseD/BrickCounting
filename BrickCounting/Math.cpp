@@ -338,11 +338,13 @@ namespace math {
       // Both A and B end after they both have started:
       const double min = MAX(itA->first, itB->first);
       if(itA->second < itB->second) {
-        ret.push_back(Interval(min,itA->second));      
+	if(min < itA->second-EPSILON)
+	  ret.push_back(Interval(min,itA->second));      
         ++itA;
       }
       else {
-        ret.push_back(Interval(min,itB->second));      
+	if(min < itB->second-EPSILON)
+	  ret.push_back(Interval(min,itB->second));      
         ++itB;
       }
     }

@@ -635,10 +635,11 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
 #ifdef _DEBUG
         std::vector<IConnectionPair> ignore;
         if(!c.isRealizable<-1>(ignore)) {
-          LDRPrinterHandler h;
+          reportProblematic(mIsland.representative, 0, 0, 0, toLdr, true);
+          /*LDRPrinterHandler h;
           h.add(new Configuration(c)); // OK Be cause we are about to die.
           h.add(&c);
-          h.print("unrealizable");
+          h.print("unrealizable");*/
           assert(false);
         }
 #endif
