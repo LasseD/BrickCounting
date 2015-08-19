@@ -10,7 +10,7 @@
 class StronglyConnectedConfigurationManager {
 public:
   StronglyConnectedConfigurationManager();
-  void create();
+  void create(int maxSize);
   void createOld();
   void loadAllFromDisk();
 

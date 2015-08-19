@@ -45,14 +45,16 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 
   ss << "manual\\manual_size_" << combinedSize << "_sccsizes";
 
-  std::cout << "ConfigurationManager::runForCombinationType(";
+  std::cout << "Computing all models for combination type ";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
-    std::cout << *it << " ";
+    if(it != combinationType.begin())
+      std::cout << "/";
+    std::cout << *it;
     ss << "_" << *it;
   }
   ss << ".txt";
   os.open(ss.str().c_str(), std::ios::out);
-  std::cout << ") started!" << std::endl;
+  std::cout << "." << std::endl;
 
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
@@ -64,20 +66,28 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   os.flush();
   os.close();
 
-  std::cout << "Current counts: " << std::endl;
-  std::cout << " " << rectilinear << " rectilinear combinations." << std::endl;
-  std::cout << " " << attempts << " attempts." << std::endl;
-  std::cout << " " << nonRectilinearConfigurations << " corner connected SCCs." << std::endl;
-  std::cout << " " << models << " models." << std::endl;
-  std::cout << " " << problematic << " problematic." << std::endl;
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
+
+  std::cout << std::endl;
+  std::cout << "Results for combination type ";
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+    if(it != combinationType.begin())
+      std::cout << "/";
+    std::cout << *it;
+  }
+  std::cout << ":" << std::endl;
+  std::cout << " Attempts:                                 " << attempts << std::endl;
+  std::cout << " Strongly connected configurations (SCCs): " << sccsSize[combinedSize-1] << std::endl;
+  std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
+  std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
+  std::cout << " Models:                                   " << models << std::endl;
+  std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  std::cout << " Program execution time (seconds):         " << seconds << std::endl;
   std::cout << " Boosts performed in AngleMappings:" << std::endl;
   for(int i = 0; i < BOOST_STAGES; ++i) {
     std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
-
-  time(&endTime);
-  double seconds = difftime(endTime,startTime);
-  std::cout << " " << seconds << " seconds." << std::endl;
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {

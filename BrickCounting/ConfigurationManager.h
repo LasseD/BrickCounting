@@ -14,9 +14,9 @@ private:
 
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os);
 
-  void runForCombinationType(const std::vector<int> &combinationType, int combinedSize);
   void runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize);
 public:
+  void runForCombinationType(const std::vector<int> &combinationType, int combinedSize);
   //std::set<StronglyConnectedConfiguration<4> > foundSCCs; // For debugging only!
   //std::set<StronglyConnectedConfiguration<4> > &correct; // For debugging only!
   ConfigurationManager();

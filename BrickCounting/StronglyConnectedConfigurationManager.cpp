@@ -12,7 +12,7 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
   lists[5] = &l6;
 }
 
-void StronglyConnectedConfigurationManager::create() {
+void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
@@ -20,6 +20,7 @@ void StronglyConnectedConfigurationManager::create() {
   writeToFile(0);
 
   l1.printLDRFile();
+  if(maxSccSize <= 1) return;
 
   // 2:
   l2.addAllFor(baseConfiguration);
@@ -29,6 +30,7 @@ void StronglyConnectedConfigurationManager::create() {
 
   l2.printLDRFile();
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 2" << std::endl << std::endl;
+  if(maxSccSize <= 2) return;
 
   // 3:
   l3.addAllFor(l2);
@@ -38,6 +40,7 @@ void StronglyConnectedConfigurationManager::create() {
 
   l3.printLDRFile();
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 3" << std::endl << std::endl;
+  if(maxSccSize <= 3) return;
 
   // 4:
   l4.addAllFor(l3);
@@ -45,11 +48,7 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << l4 << std::endl;
   writeToFile(3);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
-
-#ifdef _DEBUG
-  l5.countAllFor(l4);
-  return;
-#else
+  if(maxSccSize <= 4) return;
 
   // 5:
   l5.addAllFor(l4);
@@ -57,13 +56,13 @@ void StronglyConnectedConfigurationManager::create() {
   std::cout << l5 << std::endl;
   writeToFile(4);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 5" << std::endl << std::endl;
+  if(maxSccSize <= 5) return;
 
   // 6:
   std::cout << "NOW STARTING TO COUNT ALL STRONGLY CONNECTED CONFIGURATIONS OF SIZE 6. RESTART TO SKIP!" << std::endl << std::endl;
   l6.countAllFor(l5);
   l5.s.clear();
   l6.s.clear();
-#endif
 }
 
 void StronglyConnectedConfigurationManager::createOld() {
