@@ -432,7 +432,7 @@ struct TurningSCCInvestigator {
 #ifdef _TRACE
           else {
             std::cout << " NOT REALIZABLE: " << c2 << std::endl;
-            LDRPrinterHandler h;
+            MPDPrinter h;
             h.add(&c2);
             h.print("unrealizable");
           }

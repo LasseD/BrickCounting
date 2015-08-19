@@ -53,9 +53,9 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   angle = math::normalizeAngle(angle);
 }
 
-void Brick::toLDR(std::ofstream &os, int xx, int yy, int ldrColor) const {
-  double x = (this->center.X+xx)*20;
-  double y = (this->center.Y+yy)*20;
+void Brick::toLDR(std::ofstream &os, int ldrColor) const {
+  double x = (this->center.X)*20;
+  double y = (this->center.Y)*20;
   int z = -24*level;
 
   double sina = sin(-angle+M_PI/2);

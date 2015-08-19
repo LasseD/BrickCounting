@@ -3,7 +3,6 @@
 
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
-#include "LDRPrinter.h"
 #include "Math.h"
 
 #include <assert.h>
@@ -29,7 +28,7 @@ Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
 class Brick; // Forward declaration so that << can be used in template methods.
 std::ostream& operator<<(std::ostream &os, const Brick& b);
 
-class Brick : public LDRPrinter {
+class Brick {
 public:
   Point center;
   double angle; // angle 0 = vertical.
@@ -42,7 +41,7 @@ public:
   Brick(double cx, double cy, double a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
   Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv);
 
-  void /*Brick::*/toLDR(std::ofstream &os, int x, int y, int ldrColor) const;
+  void /*Brick::*/toLDR(std::ofstream &os, int ldrColor) const;
 
   RectilinearBrick /*Brick::*/toRectilinearBrick() const;
 

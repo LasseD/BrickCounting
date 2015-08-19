@@ -1,8 +1,6 @@
 #ifndef RECTILINEAR_BRICK_H
 #define RECTILINEAR_BRICK_H
 
-#include "LDRPrinter.h"
-
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
@@ -16,7 +14,7 @@
 // Forward declaration:
 struct ConnectionPoint;
 
-class RectilinearBrick : public LDRPrinter {
+class RectilinearBrick {
 public:
   int8_t x, y;
   uint8_t levelShifted;
@@ -44,7 +42,7 @@ public:
   void serialize(std::ofstream &os) const;
   void deserialize(std::ifstream &is);
 
-  void toLDR(std::ofstream &os, int x, int y, int ldrColor) const;
+  void toLDR(std::ofstream &os, int ldrColor) const;
 
   bool atConnectingLevelOf(const ConnectionPoint &p) const;
   bool blocks(const ConnectionPoint &p) const;

@@ -354,7 +354,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     }
     if(numDisagreements > 24) {
       std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
-      LDRPrinterHandler h, d;
+      MPDPrinter h, d;
 
       std::cout << " Connection points: " << std::endl;
       for(unsigned int i = 0; i <= angleI; ++i) {
@@ -636,7 +636,7 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
         std::vector<IConnectionPair> ignore;
         if(!c.isRealizable<-1>(ignore)) {
           reportProblematic(mIsland.representative, 0, 0, 0, toLdr, true);
-          /*LDRPrinterHandler h;
+          /*MPDPrinter h;
           h.add(new Configuration(c)); // OK Be cause we are about to die.
           h.add(&c);
           h.print("unrealizable");*/

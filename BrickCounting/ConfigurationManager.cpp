@@ -84,10 +84,12 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
+#ifdef _DEBUG
   std::cout << " Boosts performed in AngleMappings:" << std::endl;
   for(int i = 0; i < BOOST_STAGES; ++i) {
     std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
+#endif
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {

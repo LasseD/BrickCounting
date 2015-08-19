@@ -102,9 +102,9 @@ void RectilinearBrick::deserialize(std::ifstream &is) {
   is.read((char*)&levelShifted, 1);
 }
 
-void RectilinearBrick::toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
-  x += this->x;
-  y += this->y;
+void RectilinearBrick::toLDR(std::ofstream &os, int ldrColor) const {
+  int x = this->x;
+  int y = this->y;
 
   x *= 20;
   y *= 20;

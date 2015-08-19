@@ -180,7 +180,7 @@ struct IBrick {
   IBrick(const IBrick &ib) : rb(ib.rb), b(ib.b), bi(ib.bi) {}
 };
 
-struct Configuration : public LDRPrinter {
+struct Configuration : public LDRPrintable {
   //private:
   Brick origBricks[6];
 
@@ -351,12 +351,12 @@ struct Configuration : public LDRPrinter {
     }
   }
 
-  void toLDR(std::ofstream &os, int x, int y, int) const {    
+  void toLDR(std::ofstream &os, int) const {    
     int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, 3, 85, LDR_COLOR_BLACK};
 
     for(int i = 0; i < bricksSize; ++i) {
       const Brick &b = bricks[i].b;
-      b.toLDR(os, x, y, colors[bricks[i].bi.configurationSCCI]);
+      b.toLDR(os, colors[bricks[i].bi.configurationSCCI]);
     }
   }
 

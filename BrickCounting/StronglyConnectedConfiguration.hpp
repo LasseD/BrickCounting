@@ -16,7 +16,7 @@
 #define NO_INDEX ULONG_MAX
 
 template <unsigned int SIZE>
-class StronglyConnectedConfiguration : public LDRPrinter {
+class StronglyConnectedConfiguration : public LDRPrintable {
 public:
   RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
@@ -216,10 +216,10 @@ public:
     return false;
   }
 
-  void toLDR(std::ofstream &os, int x, int y, int ldrColor) const {
+  void toLDR(std::ofstream &os, int ldrColor) const {
     RectilinearBrick b;
     for(int i = 0; i < SIZE; b = otherBricks[i++]) {
-      b.toLDR(os, x, y, ldrColor);
+      b.toLDR(os, ldrColor);
     }
   }
 

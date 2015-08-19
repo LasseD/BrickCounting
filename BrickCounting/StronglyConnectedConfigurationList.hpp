@@ -40,11 +40,11 @@ public:
   }
 
   void printLDRFile(const unsigned long hash, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) {
-    LDRPrinterHandler h;
+    MPDPrinter h;
 
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
-      LDRPrinter const * p = &(*it);
+      LDRPrintable const * p = &(*it);
       h.add(p);
     }
 
@@ -238,11 +238,11 @@ public:
   }
 
   void printLDRFile(bool includeCorners = false) {
-    LDRPrinterHandler h;
+    MPDPrinter h;
 
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
-      LDRPrinter const * p = &(*it);
+      LDRPrintable const * p = &(*it);
       h.add(p);
     }
 

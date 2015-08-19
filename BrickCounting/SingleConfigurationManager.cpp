@@ -201,7 +201,7 @@ void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
     return;
   }
 
-  LDRPrinterHandler h;
+  MPDPrinter h;
 
   for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it)
     h.add(&*it);
@@ -230,7 +230,7 @@ void SingleConfigurationManager::printManualLDRFiles() const {
 
   // Actual printing:
   for(std::vector<std::vector<Connection> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
-    LDRPrinterHandler h;
+    MPDPrinter h;
     Configuration c(combination, *it);    
     h.add(&c);
 
