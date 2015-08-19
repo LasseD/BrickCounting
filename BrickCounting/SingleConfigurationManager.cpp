@@ -203,8 +203,12 @@ void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
 
   MPDPrinter h;
 
-  for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it)
-    h.add(&*it);
+  int j = 0;
+  for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it, ++j) {
+    std::stringstream ss;
+    ss << "configuration_" << j;
+    h.add(ss.str(), &*it);
+  }
 
   std::stringstream ss;
   int size = 0;
@@ -224,22 +228,42 @@ void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
   std::cout << "Printing to " << ss.str() << std::endl;
 }
 
+void SingleConfigurationManager::printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const {
+  MPDPrinter h;  
+  for(std::vector<std::pair<std::string,Configuration> >::const_iterator it = v.begin(); it != v.end(); ++it) {
+    h.add(it->first, &(it->second));
+  }
+  h.print(fileName);    
+}
+
 void SingleConfigurationManager::printManualLDRFiles() const {
   if(manual.size() == 0)
     return;
 
+  int size = 0;
+  for(unsigned int i = 0; i < combinationSize; ++i)
+    size += combination[i].size;
+
+  std::string fileName;
+  bool first = true;
+  std::vector<std::pair<std::string,Configuration> > v;
+
   // Actual printing:
   for(std::vector<std::vector<Connection> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
-    MPDPrinter h;
-    Configuration c(combination, *it);    
-    h.add(&c);
+    Configuration c(combination, *it);
+    std::stringstream ss1, ss2;
+    ss1 << "manual\\" << size << "\\";
+    encoder.writeFileName(ss1, *it, false);
+    encoder.writeFileName(ss2, *it, true);
+    std::string currFileName = ss1.str();
 
-    std::stringstream ss;
-    int size = 0;
-    for(unsigned int i = 0; i < combinationSize; ++i)
-      size += combination[i].size;
-    ss << "manual\\" << size << "\\";
-    encoder.writeFileName(ss, *it, true);
-    h.print(ss.str());    
+    if(!first && fileName != currFileName) {
+      printManualLDRFile(v, fileName);
+      v.clear();
+    }
+    first = false;
+    fileName = currFileName;
+    v.push_back(std::make_pair(ss2.str(), c));
   }
+  printManualLDRFile(v, fileName);
 }

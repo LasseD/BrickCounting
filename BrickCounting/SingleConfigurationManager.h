@@ -47,6 +47,7 @@ public:
   void run();
   void printLDRFile(bool selectNrc) const;
   void printManualLDRFiles() const;
+  void printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const;
   bool isRotationallyMinimal(const IConnectionPairList &l) const;
 
   counter attempts, models, problematic; // rectilinear, nonRectilinearConfigurations, 

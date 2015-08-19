@@ -9,34 +9,19 @@
 #define LDR_COLOR_BLACK 0
 #define LDR_COLOR_BLUE 1
 
-class LDRPrintable; // Forward declaration
-
-class MPDPrinter {
-public:
-  MPDPrinter() {}
-  void print(const std::string &title) const;
-  void add(const LDRPrintable *p);
-
-private:
-  std::vector<const LDRPrintable*> sccs;
-  void printHeader(std::ofstream &os, const std::string &title) const; 
-  void printFooter(std::ofstream &os) const; 
-};
-
 class LDRPrintable {
 public:
   virtual void toLDR(std::ofstream &os, int ldrColor) const = 0;
-//  virtual void ldrName(std::ostream &ss) const = 0;
 };
 
-class MPDPrinterHandler {
+class MPDPrinter {
 public:
-  MPDPrinterHandler() {}
   void print(const std::string &title) const;
-  void add(const LDRPrintable *p);
+  void add(const std::string &ldrName,const LDRPrintable *p);
 
 private:
-  std::vector<const LDRPrintable*> sccs;
+  std::vector<std::pair<std::string,const LDRPrintable*> > sccs;
+
   void printHeader(std::ofstream &os, const std::string &title) const; 
   void printFooter(std::ofstream &os) const; 
 };

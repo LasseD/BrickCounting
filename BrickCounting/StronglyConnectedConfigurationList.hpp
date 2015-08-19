@@ -45,7 +45,9 @@ public:
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
       LDRPrintable const * p = &(*it);
-      h.add(p);
+      std::stringstream ss;
+      ss << "scc_" << i;
+      h.add(ss.str(), p);
     }
 
     std::stringstream ss;
@@ -243,7 +245,9 @@ public:
     typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
       LDRPrintable const * p = &(*it);
-      h.add(p);
+      std::stringstream ss;
+      ss << "scc_" << i;
+      h.add(ss.str(), p);
     }
 
     std::stringstream ss;
