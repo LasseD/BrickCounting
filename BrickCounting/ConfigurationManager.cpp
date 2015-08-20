@@ -130,13 +130,12 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << std::endl;
 }
 
-ConfigurationManager::ConfigurationManager() : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
+ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
   StronglyConnectedConfigurationManager sccMgr;
-  int upTo = 3; // Should be 5. Decreases file loading time - never run for full input in bebug mode!
-  for(int i = 0; i < upTo; ++i) {
+  for(int i = 0; i < maxSccSize; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
   }
 }

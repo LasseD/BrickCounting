@@ -109,11 +109,17 @@ int main(int numArgs, char** argV) {
 
   if(numArgs == 2) {
     int sccSize = argV[1][0]-'0';
+
+    if(!sccFilesExist(sccSize-1)) { // Create SCC data files:
+      StronglyConnectedConfigurationManager mgr;
+      mgr.create(sccSize-1);
+    }
+
     if(sccSize < 3 || sccSize > 6) {
       printUsage();
       return 2;
     }
-    ConfigurationManager mgr;
+    ConfigurationManager mgr(sccSize-1);
     mgr.runForSize(sccSize);
     return 0;
   }
@@ -142,7 +148,7 @@ int main(int numArgs, char** argV) {
   }
 
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
-  ConfigurationManager mgr;
+  ConfigurationManager mgr(maxSccSize);
   mgr.runForCombinationType(combinationType, combinedSize);
   //mgr.test();
   return 0;

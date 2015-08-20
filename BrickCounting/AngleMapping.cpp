@@ -374,9 +374,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
         Configuration c3 = getConfiguration(c, angleI, j);
         bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
         if(realizable != S[j]) {
-          d.add(new Configuration(c3)); // OK Be cause we are about to die.
+          std::stringstream ss;
+          ss << "fail_" << j;
+          d.add(ss.str(), new Configuration(c3)); // OK Be cause we are about to die.
           if(first) {
-            h.add(&c3);
+            h.add("fail", &c3);
             h.print("assertion_fail");
             first = false;
           }
@@ -664,14 +666,14 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
     // Update output:
     if(!allNrcInRange.empty()) {
       if(!rangeIsRect) { // With a rectilinear configuration in the range, NRC should not be counted up.
-        nrcToPrint.push_back(*allNrcInRange.begin());
+        nrcToPrint.push_back(*allNrcInRange.begin()); // Always count one when range isn't rect - that is, can't be assembled as rect.
       }
       if(allNrcInRange.size() > 1) {
         for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
-          modelsToPrint.push_back(*itR);
+          modelsToPrint.push_back(*itR); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
         }
-        models+=allNrcInRange.size();
       }
+      models+=allNrcInRange.size(); // Also includes NRCs not in MPD files - This is the actual number to report!
     }
 
     if(rangeIsRect)
