@@ -142,16 +142,13 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(2);
-  //v.push_back(2);
-  v.push_back(1);
+  v.push_back(4);
   v.push_back(1);
 
   //runForCombinationType(v, 4);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][2]);
-  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[3][18364]);
   v2.push_back(sccs[0][0]);
 
   std::ofstream os;

@@ -103,6 +103,10 @@ int main(int numArgs, char** argV) {
 #endif
   if(numArgs <= 1) {
     printUsage();
+#ifdef _DEBUG
+    ConfigurationManager mgr(4);
+    mgr.test();
+#endif
     return 1;
   }
   ensureFoldersAreCreated();
@@ -150,6 +154,5 @@ int main(int numArgs, char** argV) {
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
   ConfigurationManager mgr(maxSccSize);
   mgr.runForCombinationType(combinationType, combinedSize);
-  //mgr.test();
   return 0;
 }

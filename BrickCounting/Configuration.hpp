@@ -258,6 +258,7 @@ struct Configuration : public LDRPrintable {
         const int8_t levelJ = level + sccBrick.level();
         if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
           ret.push_back(i);
+          //std::cout << "Possible collision: " << i << ": " << b << std::endl;
           break;
         }
       }

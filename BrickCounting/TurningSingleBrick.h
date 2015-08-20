@@ -433,7 +433,7 @@ struct TurningSCCInvestigator {
           else {
             std::cout << " NOT REALIZABLE: " << c2 << std::endl;
             MPDPrinter h;
-            h.add(&c2);
+            h.add("Not realizable", &c2);
             h.print("unrealizable");
           }
 #endif

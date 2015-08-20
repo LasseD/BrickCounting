@@ -15,10 +15,6 @@ void MPDPrinter::print(const std::string &title) const {
   ss << title << ".mpd";
   os.open(ss.str().c_str(), std::ios::out);
 
-
-  // TODO: Print models!
-  //, MODEL_PADDING*x, MODEL_PADDING*y
-
   int columns = (int)sqrt(sccs.size());  
   int x = 0;
   int y = 0;
