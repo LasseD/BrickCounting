@@ -76,9 +76,8 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
       std::cout << "/";
     std::cout << *it;
   }
-  std::cout << ":" << std::endl;
+  std::cout << " (Accumulated totals):" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
-  std::cout << " Strongly connected configurations (SCCs): " << sccsSize[combinedSize-1] << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models:                                   " << models << std::endl;
@@ -90,6 +89,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
 #endif
+  std::cout << std::endl;
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {
@@ -122,7 +122,6 @@ void ConfigurationManager::runForSize(int size) {
   // Output results:
   std::cout << "Results for size " << size << ":" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
-  std::cout << " Strongly connected configurations (SCCs): " << sccsSize[size-1] << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models:                                   " << models << std::endl;

@@ -79,12 +79,16 @@ bool sccFilesExist(int maxSccSize) {
 
 void printUsage() {
     std::cout << "Usage:" << std::endl;
-    std::cout << " Computes all models of a given combination type." << std::endl;
+    std::cout << " Computes all models of a given combination type or size." << std::endl;
     std::cout << " Specify the combination type using input paramenter." << std::endl;
     std::cout << " Examples:" << std::endl;
     std::cout << "  For combination type 3/1 use the parameters 3 1" << std::endl;
     std::cout << "  For combination type 5/1 use the parameters 3 1" << std::endl;
     std::cout << "  For combination type 2/2/1 use the parameters 2 2 1" << std::endl;
+    std::cout << " Alternatively. Specify the size of the combination using a single input parameter. All combination types with the combined size will be computed." << std::endl;
+    std::cout << " Examples:" << std::endl;
+    std::cout << "  For combination of size 3 use the parameter 3" << std::endl;
+    std::cout << "  For combination of size 4 use the parameter 4" << std::endl;
     std::cout << " Limitations:" << std::endl;
     std::cout << "  Max configuration size is 6." << std::endl;
     std::cout << "  Combination types with 4 or more SCCs might use too much memory (and time)." << std::endl;
@@ -97,10 +101,23 @@ int main(int numArgs, char** argV) {
 #ifdef _DEBUG
   std::cout << "DEBUG MODE" << std::endl;
 #endif
-  if(numArgs < 2) {
+  if(numArgs <= 1) {
     printUsage();
     return 1;
   }
+  ensureFoldersAreCreated();
+
+  if(numArgs == 2) {
+    int sccSize = argV[1][0]-'0';
+    if(sccSize < 3 || sccSize > 6) {
+      printUsage();
+      return 2;
+    }
+    ConfigurationManager mgr;
+    mgr.runForSize(sccSize);
+    return 0;
+  }
+
   int combinedSize = 0;
   int maxSccSize = 1;
   std::vector<int> combinationType;
@@ -116,10 +133,9 @@ int main(int numArgs, char** argV) {
   }
   if(combinedSize < 4 || combinedSize > 6) {
     printUsage();
-    return 2;
+    return 3;
   }
 
-  ensureFoldersAreCreated();
   if(!sccFilesExist(maxSccSize)) { // Create SCC data files:
     StronglyConnectedConfigurationManager mgr;
     mgr.create(maxSccSize);
@@ -129,10 +145,5 @@ int main(int numArgs, char** argV) {
   ConfigurationManager mgr;
   mgr.runForCombinationType(combinationType, combinedSize);
   //mgr.test();
-  //mgr.runForSize(3);
-  //mgr.runForSize(4);
-  //mgr.runForSize(5);
-
-  //system("pause");
-  //return 0;
+  return 0;
 }
