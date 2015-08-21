@@ -562,7 +562,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &rect, std::set<uint64_t> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic) {
   time_t startTime, endTime;
   time(&startTime);
 
@@ -593,22 +593,23 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
   std::multimap<Encoding, SIsland> sIslands;
   std::set<Encoding> sIslandKeys;
   findIslands(sIslands, sIslandKeys);
+  if(sIslandKeys.size() == 0)
+    return;
 
   /* Perform analysis:
-  Walk through S. Once a 1 is found in S, expand to whole region and report M and L islands.
-  - If no M island: Report problematic. Don't count.  
+  Walk through islands in S and report M and L islands.
+  - If no M island in an S-island: Report problematic. Don't count.  
   - If more than one M-island, output problematic. Count all islands.
   - For each M island: Walk through island to find L-islands.
-  - If no L-island. Report problematic. Count 1.
-  - If more than one L-island: Report problematic. Still only count 1.
+   -- If no L-island. Report problematic. Count 1.
+   -- If more than one L-island: Report problematic. Still only count 1.
   */
-  if(sIslandKeys.size() == 0) {
-    return;
-  }
+  std::set<uint64_t> newRect;
+  std::set<uint64_t> newNonRect;
 
   for(std::set<Encoding>::const_iterator itKeys = sIslandKeys.begin(); itKeys != sIslandKeys.end(); ++itKeys) {
     Encoding encoding = *itKeys;
-    if(rect.find(encoding) != rect.end() || nonRect.find(encoding) != nonRect.end()) {
+    if(rect.find(encoding.first) != rect.end() || nonRect.find(encoding.first) != nonRect.end()) {
       continue; // Already found!
     }
 
@@ -642,13 +643,10 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
           assert(false);
         }
 #endif
-        if(mIsland.rectilinear) {
-          assert(!rangeIsRect);
+        if(mIsland.rectilinear)
           rangeIsRect = true;
-        }
-        else {
+        else
           allNrcInRange.push_back(c);
-        }
 
         // Multiple M-islands inside => problematic. Count only this M-island.
         // No L-islands => problematic, but still count.
@@ -673,10 +671,21 @@ void AngleMapping::findNewConfigurations(std::set<Encoding> &rect, std::set<Enco
       models+=allNrcInRange.size(); // Also includes NRCs not in MPD files - This is the actual number to report!
     }
 
-    if(rangeIsRect)
-      rect.insert(encoding);
-    else
-      nonRect.insert(encoding);
+    if(rangeIsRect) {
+      if(newRect.find(encoding.first) == newRect.end())
+        newRect.insert(encoding.first);
+    }
+    else {
+      if(newNonRect.find(encoding.first) == newNonRect.end())
+        newNonRect.insert(encoding.first);
+    }
+  }
+
+  for(std::set<uint64_t>::const_iterator it = newRect.begin(); it != newRect.end(); ++it) {
+    rect.insert(*it);
+  }
+  for(std::set<uint64_t>::const_iterator it = newNonRect.begin(); it != newNonRect.end(); ++it) {
+    nonRect.insert(*it);
   }
 
   // Cleanup:

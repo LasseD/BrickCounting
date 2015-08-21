@@ -13,8 +13,8 @@
 
 class SingleConfigurationManager {
 public:
-  std::set<Encoding> foundRectilinearConfigurationsEncoded; // Both with and without cycles
-  std::set<Encoding> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
+  std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
+  std::set<uint64_t> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
 private:
   std::vector<std::vector<Connection> > manual;
   std::vector<Configuration> nrcToPrint; // Used when there are non-rectilinear models, but not multiple non-rectilinear models for a given connection set.
