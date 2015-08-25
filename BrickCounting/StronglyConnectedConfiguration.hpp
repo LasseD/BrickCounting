@@ -423,7 +423,7 @@ public:
           below.insert(tmp[j]);
         }
       }
-    }    
+    }
   }
 
   bool isRotationallyMinimal(const std::vector<ConnectionPoint> &pointsForSccs) const {

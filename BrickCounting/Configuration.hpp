@@ -30,7 +30,7 @@ struct StepAngle {
   short n; // nominator
   unsigned short d; // denominator
 
-  StepAngle() {}
+  StepAngle() : n(0), d(1) {}
   StepAngle(double d) : n((short)math::round(d*10000/MAX_ANGLE_RADIANS)), d(10000) {}
   StepAngle(short n, unsigned short d) : n(n), d(d) {
     assert(d != 0);
@@ -245,7 +245,8 @@ struct Configuration : public LDRPrintable {
     int prevBrickI = connectionPair.P1.first.configurationSCCI;
     const Brick &prevOrigBrick = origBricks[prevBrickI];
     const ConnectionPoint &prevPoint = connectionPair.P1.second;
-    const int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1);
+    const ConnectionPoint &currPoint = connectionPair.P2.second;
+    const int8_t level = prevOrigBrick.level + prevPoint.brick.level() + (prevPoint.above ? 1 : -1) - currPoint.brick.level();
 
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick ib = bricks[i];

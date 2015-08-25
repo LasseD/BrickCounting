@@ -15,6 +15,15 @@ class SingleConfigurationManager {
 public:
   std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
   std::set<uint64_t> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
+
+  //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
+  //std::set<FatSCC> foundSCCs; // For debugging only!
+#ifdef _DEBUG
+  std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!
+#endif
+  //std::map<uint64_t,FatSCC> foundSCCsMap; // For debugging only!
+  //std::set<StronglyConnectedConfiguration<3> > &correct; // For debuggin only!
+
 private:
   std::vector<std::vector<Connection> > manual;
   std::vector<Configuration> nrcToPrint; // Used when there are non-rectilinear models, but not multiple non-rectilinear models for a given connection set.
@@ -25,11 +34,6 @@ private:
   ConfigurationEncoder encoder;
   std::ofstream &os;
   
-  //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
-  //std::set<FatSCC> foundSCCs; // For debugging only!
-  //std::map<uint64_t,FatSCC> foundSCCsMap; // For debugging only!
-  //std::set<StronglyConnectedConfiguration<3> > &correct; // For debuggin only!
-
   // Used only for construction:
   std::set<ConnectionPoint> above[6], below[6]; 
   bool prevMustBeChosen[6];

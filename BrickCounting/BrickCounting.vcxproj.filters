@@ -24,9 +24,6 @@
     <ClInclude Include="Brick.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RectilinearConfiguration.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RectilinearBrick.h">
       <Filter>Header Files</Filter>
     </ClInclude>

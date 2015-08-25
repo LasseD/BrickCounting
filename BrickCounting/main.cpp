@@ -104,7 +104,7 @@ int main(int numArgs, char** argV) {
   if(numArgs <= 1) {
     printUsage();
 #ifdef _DEBUG
-    ConfigurationManager mgr(4);
+    ConfigurationManager mgr(3);
     mgr.test();
 #endif
     return 1;

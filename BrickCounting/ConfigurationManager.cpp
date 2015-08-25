@@ -142,14 +142,14 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(4);
-  v.push_back(1);
+  v.push_back(2);
+  v.push_back(2);
 
-  //runForCombinationType(v, 4);
+  //runForCombinationType(v, 3);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[3][18364]);
-  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[1][1]);
+  v2.push_back(sccs[1][4]);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);

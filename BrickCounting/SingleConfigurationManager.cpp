@@ -69,33 +69,68 @@ bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList
 void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize) {
   if(remainingSize == 0) {
     // First check that we have at least not run this combination before:
+    // If the connections are not even rotationslly minimal, then bail:
     IConnectionPairList list;
     for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
       list.insert(*it);
     if(!isRotationallyMinimal(list))
       return;
 
+    // If we have already investigated the encoding (without cycles), then bail:
     Encoding encoded = encoder.encode(list);
     if(investigatedConnectionPairListsEncoded.find(encoded.first) != investigatedConnectionPairListsEncoded.end())
       return;
-
     investigatedConnectionPairListsEncoded.insert(encoded.first);
-    ++attempts;
 
     // Report status if combination starts with a single brick SCC:
-    
     if(combination[0].size == 1) {
       std::cout << "Single brick string run";
       for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
         std::cout << " " << *it;
       std::cout << std::endl;
-    }//*/
+    }
 
+    ++attempts;
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
+
+    std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
+
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += angleMapping.boosts[i];
     }
+
+#ifdef _DEBUG
+    for(std::set<uint64_t>::const_iterator it = foundRectilinearConfigurationsEncoded.begin(); it != foundRectilinearConfigurationsEncoded.end(); ++it) {
+      if(this->foundRectilinearConfigurationsEncoded.find(*it) != this->foundRectilinearConfigurationsEncoded.end())
+        continue;
+      IConnectionPairList list;
+      encoder.decode(*it, list);
+
+      std::vector<Connection> cs;
+      for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
+        cs.push_back(Connection(*it2, StepAngle()));
+      }
+      Configuration c1(combination, cs);
+      FatSCC min = c1.toMinSCC();
+
+      if(foundSCCs.find(min) != foundSCCs.end()) {
+        std::cout << "Duplicate found (encoding): " << *it << std::endl;
+        std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
+        std::cout << "Duplicate found (config): " << c1 << std::endl;
+        std::cout << "Duplicate found: " << min << std::endl;
+        MPDPrinter h;
+        Configuration cf(min);
+        h.add("duplicate", &cf);
+        h.print("duplicate");
+        assert(false);std::cerr << "DIE X0010" << std::endl;
+        int *die = NULL; die[0] = 42;
+      }
+      foundSCCs.insert(std::make_pair(min,*it));
+      this->foundRectilinearConfigurationsEncoded.insert(*it);
+    }
+#endif
+
     return;
   }
 

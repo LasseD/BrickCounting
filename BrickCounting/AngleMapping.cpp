@@ -429,11 +429,6 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
     MixedPosition rep;
     ufS->getRepresentativeOfUnion(unionI, rep);
 
-#ifdef _DEBUG
-    if(ufS->getRootForPosition(rep) != unionI) {
-      std::cout << ufS->getRootForPosition(rep) <<"!="<< unionI << std::endl;
-    }
-#endif
     assert(ufS->getRootForPosition(rep) == unionI);
 
     Configuration c = getConfiguration(rep);
@@ -636,10 +631,13 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &rect, std::set<uint
         std::vector<IConnectionPair> ignore;
         if(!c.isRealizable<-1>(ignore)) {
           reportProblematic(mIsland.representative, 0, 0, 0, toLdr, true);
-          /*MPDPrinter h;
-          h.add(new Configuration(c)); // OK Be cause we are about to die.
-          h.add(&c);
-          h.print("unrealizable");*/
+          MPDPrinter h;
+          h.add("mIslandFail", &c); // OK Be cause we are about to die.
+          h.print("mIslandFail");
+
+          Configuration cx(sccs[0]);
+          evalSML(0, 0, cx, false, false, false);
+
           assert(false);
         }
 #endif

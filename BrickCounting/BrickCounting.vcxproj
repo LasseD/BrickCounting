@@ -160,7 +160,6 @@
     <ClInclude Include="LDRPrinter.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="RectilinearBrick.h" />
-    <ClInclude Include="RectilinearConfiguration.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="StronglyConnectedConfiguration.hpp" />
