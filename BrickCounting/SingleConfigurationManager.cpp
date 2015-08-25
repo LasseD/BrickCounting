@@ -93,7 +93,9 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
 
+#ifdef _DEBUG
     std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
+#endif
 
     angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
     for(int i = 0; i < BOOST_STAGES; ++i) {
