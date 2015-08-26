@@ -509,6 +509,9 @@ public:
     return otherBricks[i-1];
   }
   bool operator<(const FatSCC &c) const {
+    if(!((index == NO_INDEX) == (c.index == NO_INDEX)))
+      std::cout << "bla";
+    assert((index == NO_INDEX) == (c.index == NO_INDEX));
     if(index == NO_INDEX) { // Proper comparison:
       for(int i = 0; i < size-1; ++i) {
         if(otherBricks[i] != c.otherBricks[i])

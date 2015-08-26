@@ -17,8 +17,10 @@ private:
   void runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize);
 public:
   void runForCombinationType(const std::vector<int> &combinationType, int combinedSize);
-  //std::set<StronglyConnectedConfiguration<4> > foundSCCs; // For debugging only!
-  //std::set<StronglyConnectedConfiguration<4> > &correct; // For debugging only!
+#ifdef _COMPARE_ALGORITHMS
+  std::set<FatSCC> correct; // For debugging only!
+#endif
+
   ConfigurationManager(int maxSccSize);
   void runForSize(int size);
 

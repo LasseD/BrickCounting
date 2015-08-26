@@ -93,7 +93,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
 
-#ifdef _DEBUG
+#ifdef _COMPARE_ALGORITHMS
     std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
 #endif
 
@@ -102,7 +102,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       angleMappingBoosts[i] += angleMapping.boosts[i];
     }
 
-#ifdef _DEBUG
+#ifdef _COMPARE_ALGORITHMS
     for(std::set<uint64_t>::const_iterator it = foundRectilinearConfigurationsEncoded.begin(); it != foundRectilinearConfigurationsEncoded.end(); ++it) {
       if(this->foundRectilinearConfigurationsEncoded.find(*it) != this->foundRectilinearConfigurationsEncoded.end())
         continue;

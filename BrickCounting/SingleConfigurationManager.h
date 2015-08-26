@@ -16,13 +16,9 @@ public:
   std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
   std::set<uint64_t> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
 
-  //std::set<IConnectionPairList> investigatedIConnectionPairLists; // For debugging only!
-  //std::set<FatSCC> foundSCCs; // For debugging only!
-#ifdef _DEBUG
+#ifdef _COMPARE_ALGORITHMS
   std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!
 #endif
-  //std::map<uint64_t,FatSCC> foundSCCsMap; // For debugging only!
-  //std::set<StronglyConnectedConfiguration<3> > &correct; // For debuggin only!
 
 private:
   std::vector<std::vector<Connection> > manual;

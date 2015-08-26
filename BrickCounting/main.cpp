@@ -104,7 +104,11 @@ int main(int numArgs, char** argV) {
   if(numArgs <= 1) {
     printUsage();
 #ifdef _DEBUG
-    ConfigurationManager mgr(3);
+    ConfigurationManager mgr(4);
+    mgr.test();
+#endif
+#ifdef _COMPARE_ALGORITHMS
+    ConfigurationManager mgr(4);
     mgr.test();
 #endif
     return 1;
@@ -112,6 +116,12 @@ int main(int numArgs, char** argV) {
   ensureFoldersAreCreated();
 
   if(numArgs == 2) {
+    if(argV[1][0] == 'P') {
+      StronglyConnectedConfigurationManager sccMgr;
+      sccMgr.createOld();
+      return 9;
+    }
+
     int sccSize = argV[1][0]-'0';
 
     if(!sccFilesExist(sccSize-1)) { // Create SCC data files:

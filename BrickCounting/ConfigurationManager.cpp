@@ -19,6 +19,20 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += mgr.angleMappingBoosts[i];
     }
+#ifdef _COMPARE_ALGORITHMS
+    std::cout << "Removing " << mgr.foundSCCs.size() << " from " << correct.size() << std::endl;
+    for(std::map<FatSCC,uint64_t>::const_iterator it = mgr.foundSCCs.begin(); it != mgr.foundSCCs.end(); ++it) {
+      const FatSCC &scc = it->first;
+      if(correct.find(scc) == correct.end()) {
+        std::cout << "Incorrectly found: " << scc << std::endl;
+        MPDPrinter h;
+        h.add("IncorrectlyFound", new Configuration(scc)); // new OK as we are done.
+        h.print("IncorrectlyFound");
+      }
+      assert(correct.find(scc) != correct.end());
+      correct.erase(scc);
+    }
+#endif
 
     return;
   }
@@ -83,11 +97,12 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
-#ifdef _DEBUG
+#ifdef _COMPARE_ALGORITHMS
   std::cout << " Boosts performed in AngleMappings:" << std::endl;
   for(int i = 0; i < BOOST_STAGES; ++i) {
     std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
+  std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
 #endif
   std::cout << std::endl;
 }
@@ -127,6 +142,25 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
+#ifdef _DEBUG
+  std::cout << " Boosts performed in AngleMappings:" << std::endl;
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
+  }
+#endif
+#ifdef _COMPARE_ALGORITHMS
+  std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
+  // Print unseen:
+  MPDPrinter d;
+  int j = 0;
+  for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+    std::stringstream ss;
+    ss << "missing_" << j++;
+    d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+  }
+  d.print("missing");
+#endif
+
   std::cout << std::endl;
 }
 
@@ -136,11 +170,41 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
   }
   StronglyConnectedConfigurationManager sccMgr;
   for(int i = 0; i < maxSccSize; ++i) {
-    sccs[i] = sccMgr.loadFromFile(i, sccsSize[i]);
+    sccs[i] = sccMgr.loadFromFile(i, sccsSize[i], false);
   }
+#ifdef _COMPARE_ALGORITHMS
+  unsigned long correctSccsSize;;
+  FatSCC* correctSccs = sccMgr.loadFromFile(maxSccSize-1, correctSccsSize, true);
+  for(unsigned long i = 0; i < correctSccsSize; ++i) {
+    FatSCC scc(correctSccs[i]);
+    scc.index = NO_INDEX;
+    scc = scc.rotateToMin();
+    assert(correct.find(scc) == correct.end());
+    correct.insert(scc);
+  }
+  // remove all SCCs:
+  for(unsigned long i = 0; i < sccsSize[maxSccSize-1]; ++i) {
+    FatSCC scc(sccs[maxSccSize-1][i]);
+    scc.index = NO_INDEX;
+    scc = scc.rotateToMin();
+    if(correct.find(scc) == correct.end()) {
+      std::cout << "Incorrectly removed: " << scc << std::endl;
+      MPDPrinter h;
+      h.add("IncorrectlyRemoved", new Configuration(scc)); // new OK as we are done.
+      h.print("IncorrectlyRemoved");
+    }
+    assert(correct.find(scc) != correct.end());
+    correct.erase(scc);
+  }
+  std::cout << "RCs to be found: " << correct.size() << std::endl;
+  delete[] correctSccs;
+#endif
 }
 
 void ConfigurationManager::test() {
+  runForSize(4);
+
+/*
   std::vector<int> v;
   v.push_back(2);
   v.push_back(2);

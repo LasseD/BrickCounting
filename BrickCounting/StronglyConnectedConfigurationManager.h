@@ -16,7 +16,7 @@ public:
 
   void **lists;  
 
-  FatSCC* loadFromFile(int i, unsigned long &size) const;
+  FatSCC* loadFromFile(int i, unsigned long &size, bool oldSccFile) const;
 
 private:
   StronglyConnectedConfigurationList<1> l1;

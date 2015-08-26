@@ -66,8 +66,6 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
 }
 
 void StronglyConnectedConfigurationManager::createOld() {
-  // First. Ensure output folder exists:
-
   // 1:
   StronglyConnectedConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
@@ -144,10 +142,14 @@ void StronglyConnectedConfigurationManager::writeToFile(int i, bool old) {
   os.close();
 }
 
-FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long &size) const {
+FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long &size, bool oldSccFile) const {
   std::ifstream is;
   std::stringstream ss;
-  ss << "scc\\" << (i+1) << ".dat";
+  if(oldSccFile)
+    ss << "old_rc\\";
+  else
+    ss << "scc\\";
+  ss << (i+1) << ".dat";
   is.open(ss.str().c_str(), std::ios::binary | std::ios::in);
   std::cout << "Reading file with strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
 
