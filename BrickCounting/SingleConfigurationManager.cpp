@@ -189,8 +189,7 @@ void SingleConfigurationManager::run() {
   run(l, abovePool, belowPool, remaining, remainingSize);
   // Print:
   printManualLDRFiles();
-  printLDRFile(true);
-  printLDRFile(false);
+  printLDRFile();
   time(&endTime);
   double seconds = difftime(endTime,startTime);
 #ifdef _TRACE
@@ -218,17 +217,14 @@ void SingleConfigurationManager::run() {
   //#endif
 }
 
-void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
-  const std::vector<Configuration> &v = selectNrc ? nrcToPrint : modelsToPrint;
-
-  if(v.size() == 0) {
+void SingleConfigurationManager::printLDRFile() const {
+  if(modelsToPrint.empty())
     return;
-  }
 
   MPDPrinter h;
 
   int j = 0;
-  for(std::vector<Configuration>::const_iterator it = v.begin(); it != v.end(); ++it, ++j) {
+  for(std::vector<Configuration>::const_iterator it = modelsToPrint.begin(); it != modelsToPrint.end(); ++it, ++j) {
     std::stringstream ss;
     ss << "configuration_" << j;
     h.add(ss.str(), &*it);
@@ -238,11 +234,7 @@ void SingleConfigurationManager::printLDRFile(bool selectNrc) const {
   int size = 0;
   for(unsigned int i = 0; i < combinationSize; ++i)
     size += combination[i].size;
-  if(selectNrc)
-    ss << "nrc\\";
-  else
-    ss << "models\\";
-  ss << size << "\\size_" << size << "_sccsizes";
+  ss << "models\\" << size << "\\size_" << size << "_sccsizes";
   for(unsigned int i = 0; i < combinationSize; ++i)
     ss << "_" << combination[i].size;
   ss << "_sccindices";

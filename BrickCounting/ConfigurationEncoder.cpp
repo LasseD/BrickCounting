@@ -90,7 +90,7 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
   // Set up permutations and rotations:
   int perm[6];
   perm[baseIndex] = 0;
-  bool rotated[6] = {true,true,true,true,true,true};
+  bool rotated[6] = {false,false,false,false,false,false};
   if(rotate) {
     rotateSCC(baseIndex, connectionPoints, connectionMaps);
     rotated[baseIndex] = true;
