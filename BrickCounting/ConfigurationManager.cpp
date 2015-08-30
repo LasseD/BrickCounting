@@ -12,8 +12,7 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     mgr.run();
 
     attempts+=mgr.attempts;
-    rectilinear+=mgr.foundRectilinearConfigurationsEncoded.size();
-    nonRectilinearConfigurations+=mgr.foundNonRectilinearConfigurationsEncoded.size();
+    rectilinear+=mgr.rectilinear;
     models+=mgr.models;
     problematic+=mgr.problematic;
     for(int i = 0; i < BOOST_STAGES; ++i) {
@@ -25,9 +24,17 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
       const FatSCC &scc = it->first;
       if(correct.find(scc) == correct.end()) {
         std::cout << "Incorrectly found: " << scc << std::endl;
-        MPDPrinter h;
+        MPDPrinter h, d;
         h.add("IncorrectlyFound", new Configuration(scc)); // new OK as we are done.
         h.print("IncorrectlyFound");
+
+        for(std::map<FatSCC,uint64_t>::const_iterator it2 = mgr.foundSCCs.begin(); it2 != mgr.foundSCCs.end(); ++it2) {
+          const FatSCC &scc2 = it2->first;
+          std::stringstream ss;
+          ss << "all" << it2->second;
+          d.add(ss.str(), new Configuration(scc2)); // new OK as we are done.
+        }
+        d.print("AllInIncorrectBatch");
       }
       assert(correct.find(scc) != correct.end());
       correct.erase(scc);
@@ -93,7 +100,6 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " (Accumulated totals):" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
@@ -138,7 +144,6 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << "Results for size " << size << ":" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  std::cout << " Non-rectilinear corner connected SCCs:    " << nonRectilinearConfigurations << std::endl;
   std::cout << " Models:                                   " << models << std::endl;
   std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
@@ -164,7 +169,7 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << std::endl;
 }
 
-ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectilinear(0), nonRectilinearConfigurations(0), models(0), problematic(0) {
+ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectilinear(0), models(0), problematic(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -202,19 +207,56 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 }
 
 void ConfigurationManager::test() {
-  runForSize(4);
+  //runForSize(4);
 
-/*
   std::vector<int> v;
-  v.push_back(2);
-  v.push_back(2);
+  v.push_back(1);
+  v.push_back(1);
+  v.push_back(1);
+  v.push_back(1);
 
   //runForCombinationType(v, 3);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][1]);
-  v2.push_back(sccs[1][4]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+  ConfigurationEncoder encoder(v2);
 
+  uint64_t encoded1 = 1082724547;
+  uint64_t encoded2 = 1111896211;
+  IConnectionPairList list1, list2;
+  encoder.decode(encoded1, list1);
+  encoder.decode(encoded2, list2);
+
+  std::cout << "1082724547: " << std::endl;
+  std::vector<Connection> cs1, cs2;
+  for(std::set<IConnectionPair>::const_iterator it2 = list1.begin(); it2 != list1.end(); ++it2) {
+    cs1.push_back(Connection(*it2, StepAngle()));
+    std::cout << *it2 << std::endl;
+  }
+  std::cout << "1111896211: " << std::endl;
+  for(std::set<IConnectionPair>::const_iterator it2 = list2.begin(); it2 != list2.end(); ++it2) {
+    cs2.push_back(Connection(*it2, StepAngle()));
+    std::cout << *it2 << std::endl;
+  }
+  Configuration c1(&(v2[0]), cs1);
+  Configuration c2(&(v2[0]), cs2);
+  FatSCC min = c1.toMinSCC();
+
+  std::vector<IConnectionPair> found1, found2;
+  c1.isRealizable<-1>(found1);
+  uint64_t encoding1 = encoder.encode(found1);
+  c2.isRealizable<-1>(found2);
+  uint64_t encoding2 = encoder.encode(found2);
+
+  MPDPrinter h;
+  Configuration cf(min);
+  h.add("abe1", &cf);
+  h.print("abe1");
+
+  /*
   std::ofstream os;
   os.open("temp.txt", std::ios::out);
   runForCombination(v2, v, -1, os);//*/

@@ -15,10 +15,6 @@ void ensureFoldersAreCreated() {
 #ifdef _WIN32
   CreateDirectory(L"scc", NULL);
   CreateDirectory(L"scc\\6", NULL); // For hash lists.
-  CreateDirectory(L"nrc", NULL);
-  CreateDirectory(L"nrc\\4", NULL);
-  CreateDirectory(L"nrc\\5", NULL);
-  CreateDirectory(L"nrc\\6", NULL);
   CreateDirectory(L"models", NULL);
   CreateDirectory(L"models\\4", NULL);
   CreateDirectory(L"models\\5", NULL);
@@ -32,10 +28,6 @@ void ensureFoldersAreCreated() {
   // G++:
   CreateDirectory("scc", NULL);
   CreateDirectory("scc\\6", NULL);
-  CreateDirectory("nrc", NULL);
-  CreateDirectory("nrc\\4", NULL);
-  CreateDirectory("nrc\\5", NULL);
-  CreateDirectory("nrc\\6", NULL);
   CreateDirectory("models", NULL);
   CreateDirectory("models\\4", NULL);
   CreateDirectory("models\\5", NULL);
@@ -104,12 +96,13 @@ int main(int numArgs, char** argV) {
   if(numArgs <= 1) {
     printUsage();
 #ifdef _DEBUG
-    ConfigurationManager mgr(4);
+    ConfigurationManager mgr(1);
     mgr.test();
-#endif
+#else
 #ifdef _COMPARE_ALGORITHMS
     ConfigurationManager mgr(4);
     mgr.test();
+#endif
 #endif
     return 1;
   }
@@ -133,7 +126,7 @@ int main(int numArgs, char** argV) {
       printUsage();
       return 2;
     }
-    ConfigurationManager mgr(sccSize-1);
+    ConfigurationManager mgr(sccSize);
     mgr.runForSize(sccSize);
     return 0;
   }

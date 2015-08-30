@@ -322,7 +322,7 @@ public:
         minLv = it->level;
     }
     for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
-      it->level-=minLv;
+      it->level-=minLv; // OK because v is not used by reference.
     }
 
     // Turn into RectilinearBricks and find min:
@@ -335,7 +335,7 @@ public:
       rbricks.push_back(rb);
     }
 
-    // Turn 90 degrees if min is vertical:
+    // Turn 90 degrees if min is horixzontal:
     if(min.horizontal()) {
       for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
         int8_t oldX = it->x;
@@ -447,52 +447,6 @@ public:
     return true;
   }
 
-  void getRotationalInformation(const std::vector<ConnectionPoint> &pointsForSccs, bool &minimal, bool &rotSym) const {
-    minimal = true;
-    if(!isRotationallySymmetric) {
-      rotSym = false;
-      return;
-    }
-    std::vector<ConnectionPoint> rotatedPoints;
-    for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
-      ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
-      rotatedPoints.push_back(rotatedPoint);
-    }
-    std::sort(rotatedPoints.begin(), rotatedPoints.end());
-    rotSym = true;
-
-    for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
-      if(*it2 < *it1) {
-        rotSym = false;
-        minimal = false;
-      }
-      if(*it1 < *it2) {
-        rotSym = false;
-      }
-    }
-  }
-
-  bool isRotationallyIdentical(const std::vector<ConnectionPoint> &pointsForSccs) const {
-    if(!isRotationallySymmetric)
-      return false; // not applicaple.
-    std::vector<ConnectionPoint> rotatedPoints;
-    for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
-      ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
-      rotatedPoints.push_back(rotatedPoint);
-    }
-    std::sort(rotatedPoints.begin(), rotatedPoints.end());
-
-    for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
-      if(*it2 < *it1) {
-        return false;
-      }
-      if(*it1 < *it2) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   bool isRotationallyMinimal(const ConnectionPoint &p) const {
     if(!isRotationallySymmetric)
       return true; // not applicaple.
@@ -509,8 +463,6 @@ public:
     return otherBricks[i-1];
   }
   bool operator<(const FatSCC &c) const {
-    if(!((index == NO_INDEX) == (c.index == NO_INDEX)))
-      std::cout << "bla";
     assert((index == NO_INDEX) == (c.index == NO_INDEX));
     if(index == NO_INDEX) { // Proper comparison:
       for(int i = 0; i < size-1; ++i) {

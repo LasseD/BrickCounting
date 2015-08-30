@@ -6,7 +6,8 @@
 #include <algorithm>
 #include <time.h>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), problematic(0) {
+SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : 
+    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), problematic(0), rectilinear(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -23,7 +24,7 @@ SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC>
 
     // Get all above and below:
     combination[i].getConnectionPoints(above[i], below[i]);
-  }  
+  }
 }
 
 void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConnectionPoint> &oldPool, const std::vector<IConnectionPoint>::const_iterator &itIgnoreFromOld, const std::set<ConnectionPoint> &newElements, unsigned long newSCCI, int newConfigurationSCCI) {
@@ -77,10 +78,10 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       return;
 
     // If we have already investigated the encoding (without cycles), then bail:
-    Encoding encoded = encoder.encode(list);
-    if(investigatedConnectionPairListsEncoded.find(encoded.first) != investigatedConnectionPairListsEncoded.end())
+    uint64_t encoded = encoder.encode(list);
+    if(investigatedConnectionPairListsEncoded.find(encoded) != investigatedConnectionPairListsEncoded.end())
       return;
-    investigatedConnectionPairListsEncoded.insert(encoded.first);
+    investigatedConnectionPairListsEncoded.insert(encoded);
 
     // Report status if combination starts with a single brick SCC:
     if(combination[0].size == 1) {
@@ -93,33 +94,21 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
 
-#ifdef _COMPARE_ALGORITHMS
-    std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
-#endif
-
-    angleMapping.findNewConfigurations(foundRectilinearConfigurationsEncoded, foundNonRectilinearConfigurationsEncoded, manual, nrcToPrint, modelsToPrint, models, problematic);
+    std::vector<std::pair<Configuration,uint64_t> > newRectilinear;
+    angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear);
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += angleMapping.boosts[i];
     }
+    rectilinear += newRectilinear.size();
 
 #ifdef _COMPARE_ALGORITHMS
-    for(std::set<uint64_t>::const_iterator it = foundRectilinearConfigurationsEncoded.begin(); it != foundRectilinearConfigurationsEncoded.end(); ++it) {
-      if(this->foundRectilinearConfigurationsEncoded.find(*it) != this->foundRectilinearConfigurationsEncoded.end())
-        continue;
-      IConnectionPairList list;
-      encoder.decode(*it, list);
-
-      std::vector<Connection> cs;
-      for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
-        cs.push_back(Connection(*it2, StepAngle()));
-      }
-      Configuration c1(combination, cs);
-      FatSCC min = c1.toMinSCC();
+    for(std::vector<std::pair<Configuration,uint64_t> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+      FatSCC min = it->first.toMinSCC();
 
       if(foundSCCs.find(min) != foundSCCs.end()) {
-        std::cout << "Duplicate found (encoding): " << *it << std::endl;
+        std::cout << "Duplicate found (encoding): " << it->second << std::endl;
         std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
-        std::cout << "Duplicate found (config): " << c1 << std::endl;
+        std::cout << "Duplicate found (config): " << it->first << std::endl;
         std::cout << "Duplicate found: " << min << std::endl;
         MPDPrinter h;
         Configuration cf(min);
@@ -128,8 +117,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         assert(false);std::cerr << "DIE X0010" << std::endl;
         int *die = NULL; die[0] = 42;
       }
-      foundSCCs.insert(std::make_pair(min,*it));
-      this->foundRectilinearConfigurationsEncoded.insert(*it);
+      foundSCCs.insert(std::make_pair(min,it->second));
     }
 #endif
 
@@ -208,8 +196,7 @@ void SingleConfigurationManager::run() {
 #ifdef _TRACE
   std::cout << "SingleConfigurationManager::run() INTERNAL RESULTS: " << std::endl;
   std::cout << " investigatedConnectionPairListsEncoded: " << investigatedConnectionPairListsEncoded.size() << std::endl;
-  std::cout << " foundRectilinearConfigurationsEncoded: " << foundRectilinearConfigurationsEncoded.size() << std::endl;
-  std::cout << " foundNonRectilinearConfigurations: " << foundNonRectilinearConfigurationsEncoded.size() << std::endl;
+  std::cout << " foundRectilinearConfigurationsEncoded: " << rectilinear << std::endl;
   std::cout << " models found: " << models << std::endl;
 
   // Print boost in debug!

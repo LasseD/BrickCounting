@@ -61,13 +61,13 @@ public:
   1) For all possible angles: Comput S,M,L.
   2) Combine regions in S,M,L in order to determine new models.
   */
-  void findNewConfigurations(std::set<uint64_t> &rect, std::set<uint64_t> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic);
+  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,uint64_t> > &newRectilinear);
 
 private:
   void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr, bool includeMappingFile) const;
   //void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
-  void findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys);
+  void findIslands(std::vector<SIsland> &sIslands);
   //void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
   //Configuration getConfiguration(const Position &p) const;
@@ -78,14 +78,14 @@ private:
 
 struct MIsland {
   int lIslands;
-  bool rectilinear;
+  bool isRectilinear;
   unsigned int sizeRep;
   MixedPosition representative;
 
   MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
-    rectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
+    isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
     // Add all L-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
@@ -97,26 +97,31 @@ struct MIsland {
     }
   }
   MIsland() {}
-  MIsland(const MIsland &l) : lIslands(l.lIslands), rectilinear(l.rectilinear), sizeRep(l.sizeRep), representative(l.representative) {}
+  MIsland(const MIsland &l) : lIslands(l.lIslands), isRectilinear(l.isRectilinear), sizeRep(l.sizeRep), representative(l.representative) {}
 };
 struct SIsland {
   std::vector<MIsland> mIslands;
   unsigned int sizeRep;
   MixedPosition representative;
+  uint64_t encoding;
+  bool isRectilinear, isCyclic;
 
-  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : sizeRep(a->numAngles), representative(p) {
+  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, uint64_t encoding, bool isCyclic) : sizeRep(a->numAngles), representative(p), encoding(encoding), isRectilinear(false), isCyclic(isCyclic) {
     // Add all M-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
       a->ufM->getRepresentativeOfUnion(unionI, rep);
       if(a->ufS->getRootForPosition(rep) == unionFindIndex) {
-        mIslands.push_back(MIsland(a, unionI, rep));      
+        MIsland mIsland(a, unionI, rep);
+        mIslands.push_back(mIsland);
+        if(mIsland.isRectilinear)
+          isRectilinear = true;
       }
     }
   }
   SIsland() {}
-  SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep), representative(l.representative) {}
+  SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep), representative(l.representative), encoding(l.encoding), isRectilinear(l.isRectilinear), isCyclic(l.isCyclic) {}
 };
 
 #endif // ANGLEMAPPING_H

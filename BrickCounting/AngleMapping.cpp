@@ -422,7 +422,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   ++boosts[3];
 }
 
-void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::set<Encoding> &keys) {
+void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
   // Add all S-islands:
   for(std::vector<uint32_t>::const_iterator it = ufS->rootsBegin(); it != ufS->rootsEnd(); ++it) {
     const uint32_t unionI = *it;
@@ -434,10 +434,9 @@ void AngleMapping::findIslands(std::multimap<Encoding, SIsland> &sIslands, std::
     Configuration c = getConfiguration(rep);
     std::vector<IConnectionPair> found;
     c.isRealizable<-1>(found);
-    Encoding encoding = encoder.encode(found);
-    sIslands.insert(std::make_pair(encoding, SIsland(this, unionI, rep)));
-    if(keys.find(encoding) == keys.end())
-      keys.insert(encoding);
+    bool isCyclic = found.size() > numAngles;
+    uint64_t encoding = encoder.encode(found);
+    sIslands.push_back(SIsland(this, unionI, rep, encoding, isCyclic));
   }
 }
 
@@ -557,7 +556,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &rect, std::set<uint64_t> &nonRect, std::vector<std::vector<Connection> > &toLdr, std::vector<Configuration> &nrcToPrint, std::vector<Configuration> &modelsToPrint, counter &models, counter &problematic) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,uint64_t> > &newRectilinear) {
   time_t startTime, endTime;
   time(&startTime);
 
@@ -585,10 +584,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &rect, std::set<uint
   ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL);
 
   // Find islands:
-  std::multimap<Encoding, SIsland> sIslands;
-  std::set<Encoding> sIslandKeys;
-  findIslands(sIslands, sIslandKeys);
-  if(sIslandKeys.size() == 0)
+  std::vector<SIsland> sIslands;
+  findIslands(sIslands);
+  if(sIslands.empty())
     return;
 
   /* Perform analysis:
@@ -599,91 +597,77 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &rect, std::set<uint
    -- If no L-island. Report problematic. Count 1.
    -- If more than one L-island: Report problematic. Still only count 1.
   */
-  std::set<uint64_t> newRect;
-  std::set<uint64_t> newNonRect;
+  std::set<uint64_t> newNonCyclic;
+  std::set<uint64_t> newCyclic;
+  std::vector<Configuration> nrcs;
 
-  for(std::set<Encoding>::const_iterator itKeys = sIslandKeys.begin(); itKeys != sIslandKeys.end(); ++itKeys) {
-    Encoding encoding = *itKeys;
-    if(rect.find(encoding.first) != rect.end() || nonRect.find(encoding.first) != nonRect.end()) {
-      continue; // Already found!
-    }
-
-    std::pair<std::multimap<Encoding, SIsland>::const_iterator,std::multimap<Encoding, SIsland>::const_iterator> r = sIslands.equal_range(encoding);
-    bool rangeIsRect = false;
-    std::vector<Configuration> allNrcInRange;
-
-    for(std::multimap<Encoding, SIsland>::const_iterator itS = r.first; itS != r.second; ++itS) {
-      const SIsland &sIsland = itS->second;
-
-      if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
-        reportProblematic(sIsland.representative, 0, 0, 0, toLdr, true);
-        ++problematic;
-        continue;
-      }
-
-      int mIslandI = 0;
-      bool anyMappingPrinted = false;
-      for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
-        const MIsland &mIsland = *itM;
-
-        Configuration c = getConfiguration(mIsland.representative);
+  for(std::vector<SIsland>::const_iterator it = sIslands.begin(); it != sIslands.end(); ++it) {
+    const SIsland &sIsland = *it;
+    uint64_t encoding = it->encoding;
 #ifdef _DEBUG
-        std::vector<IConnectionPair> ignore;
-        if(!c.isRealizable<-1>(ignore)) {
-          reportProblematic(mIsland.representative, 0, 0, 0, toLdr, true);
-          MPDPrinter h;
-          h.add("mIslandFail", &c); // OK Be cause we are about to die.
-          h.print("mIslandFail");
-
-          Configuration cx(sccs[0]);
-          evalSML(0, 0, cx, false, false, false);
-
-          assert(false);
-        }
+    if(!sIsland.isCyclic && nonCyclic.find(encoding) != nonCyclic.end()) {
+      assert(false); // Should never have been called - was handled earlier!
+    }
 #endif
-        if(mIsland.rectilinear)
-          rangeIsRect = true;
-        else
-          allNrcInRange.push_back(c);
+    if(sIsland.isCyclic && cyclic.find(encoding) != cyclic.end())
+      continue; // Already found. This can happen when there are cycles.
 
-        // Multiple M-islands inside => problematic. Count only this M-island.
-        // No L-islands => problematic, but still count.
-        if(sIsland.mIslands.size() != 1 || mIsland.lIslands > 1) { 
-          ++problematic;
-          reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, toLdr, !anyMappingPrinted);
-          anyMappingPrinted = true;
-        }
+    if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
+      reportProblematic(sIsland.representative, 0, 0, 0, manual, true);
+      continue;
+    }
+
+    int mIslandI = 0;
+    bool anyMappingPrinted = false;
+    for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
+      const MIsland &mIsland = *itM;
+
+      Configuration c = getConfiguration(mIsland.representative);
+#ifdef _DEBUG
+      std::vector<IConnectionPair> ignore;
+      if(!c.isRealizable<-1>(ignore)) {
+        reportProblematic(mIsland.representative, 0, 0, 0, manual, true);
+        MPDPrinter h;
+        h.add("mIslandFail", &c); // OK Be cause we are about to die.
+        h.print("mIslandFail");
+
+        Configuration cx(sccs[0]);
+        evalSML(0, 0, cx, false, false, false);
+
+        assert(false);
+      }
+#endif
+      if(!mIsland.isRectilinear) {
+        ++models; // cound all non-rectilinear as models.
+        modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
+      }
+      else {
+        newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), encoding));
+      }
+
+      // Multiple M-islands inside => problematic. Count only this M-island.
+      // No L-islands => problematic, but still count.
+      if(sIsland.mIslands.size() != 1 || mIsland.lIslands > 1) { 
+        reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
+        anyMappingPrinted = true;
       }
     }
 
-    // Update output:
-    if(!allNrcInRange.empty()) {
-      if(!rangeIsRect) { // With a rectilinear configuration in the range, NRC should not be counted up.
-        nrcToPrint.push_back(*allNrcInRange.begin()); // Always count one when range isn't rect - that is, can't be assembled as rect.
-      }
-      if(allNrcInRange.size() > 1) {
-        for(std::vector<Configuration>::const_iterator itR = allNrcInRange.begin(); itR != allNrcInRange.end(); ++itR) {
-          modelsToPrint.push_back(*itR); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
-        }
-      }
-      models+=allNrcInRange.size(); // Also includes NRCs not in MPD files - This is the actual number to report!
-    }
-
-    if(rangeIsRect) {
-      if(newRect.find(encoding.first) == newRect.end())
-        newRect.insert(encoding.first);
+    if(sIsland.isCyclic) {
+      if(newCyclic.find(encoding) == newCyclic.end())
+        newCyclic.insert(encoding);
     }
     else {
-      if(newNonRect.find(encoding.first) == newNonRect.end())
-        newNonRect.insert(encoding.first);
+      if(newNonCyclic.find(encoding) == newNonCyclic.end())
+        newNonCyclic.insert(encoding);
     }
   }
 
-  for(std::set<uint64_t>::const_iterator it = newRect.begin(); it != newRect.end(); ++it) {
-    rect.insert(*it);
+  for(std::set<uint64_t>::const_iterator it = newCyclic.begin(); it != newCyclic.end(); ++it) {
+    cyclic.insert(*it);
   }
-  for(std::set<uint64_t>::const_iterator it = newNonRect.begin(); it != newNonRect.end(); ++it) {
-    nonRect.insert(*it);
+  for(std::set<uint64_t>::const_iterator it = newNonCyclic.begin(); it != newNonCyclic.end(); ++it) {
+    nonCyclic.insert(*it);
   }
 
   // Cleanup:

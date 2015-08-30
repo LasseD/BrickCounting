@@ -13,8 +13,7 @@
 
 class SingleConfigurationManager {
 public:
-  std::set<uint64_t> foundRectilinearConfigurationsEncoded; // Both with and without cycles
-  std::set<uint64_t> foundNonRectilinearConfigurationsEncoded; // Both with and without cycles
+  std::set<uint64_t> cyclicConfigurations, nonCyclicConfigurations;
 
 #ifdef _COMPARE_ALGORITHMS
   std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!
@@ -50,7 +49,7 @@ public:
   void printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const;
   bool isRotationallyMinimal(const IConnectionPairList &l) const;
 
-  counter attempts, models, problematic; // rectilinear, nonRectilinearConfigurations, 
+  counter attempts, models, problematic, rectilinear;//, nonRectilinearConfigurations, 
   counter angleMappingBoosts[BOOST_STAGES];
 };
 
