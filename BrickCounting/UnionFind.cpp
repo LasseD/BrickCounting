@@ -209,7 +209,7 @@ namespace UnionFind {
         return ufs->getMinInUnion(firstUnion + index);
       }
     }
-    assert(false);std::cerr << "DIE X001" << std::endl;
+    assert(false);std::cerr << "DIE X007" << std::endl;
     int *die = NULL; die[0] = 42;
     return 0;
   }

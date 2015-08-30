@@ -431,12 +431,7 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
 
     assert(ufS->getRootForPosition(rep) == unionI);
 
-    Configuration c = getConfiguration(rep);
-    std::vector<IConnectionPair> found;
-    c.isRealizable<-1>(found);
-    bool isCyclic = found.size() > numAngles;
-    uint64_t encoding = encoder.encode(found);
-    sIslands.push_back(SIsland(this, unionI, rep, encoding, isCyclic));
+    sIslands.push_back(SIsland(this, unionI, rep));
   }
 }
 
@@ -489,10 +484,10 @@ void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::s
   findExtremeConfigurations(0, p, true, rect, nonRect, toLdr);
 }*/
 
-void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr, bool includeMappingFile) const {
+void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const {
   std::vector<Connection> cc = getConfigurationConnections(p);
 
-  toLdr.push_back(cc);
+  manual.push_back(cc);
   // Report
   os << " Configuration requires manual verification!" <<std::endl;
 
@@ -556,7 +551,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,uint64_t> > &newRectilinear) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
   time_t startTime, endTime;
   time(&startTime);
 
@@ -603,15 +598,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
 
   for(std::vector<SIsland>::const_iterator it = sIslands.begin(); it != sIslands.end(); ++it) {
     const SIsland &sIsland = *it;
-    uint64_t encoding = it->encoding;
-#ifdef _DEBUG
-    if(!sIsland.isCyclic && nonCyclic.find(encoding) != nonCyclic.end()) {
-      assert(false); // Should never have been called - was handled earlier!
-    }
-#endif
-    if(sIsland.isCyclic && cyclic.find(encoding) != cyclic.end())
-      continue; // Already found. This can happen when there are cycles.
-
     if(sIsland.mIslands.size() == 0) { // No M-islands inside => problematic. No count.
       reportProblematic(sIsland.representative, 0, 0, 0, manual, true);
       continue;
@@ -621,6 +607,10 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
     bool anyMappingPrinted = false;
     for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
       const MIsland &mIsland = *itM;
+
+      uint64_t encoding = mIsland.encoding;
+      if(mIsland.isCyclic && cyclic.find(encoding) != cyclic.end())
+        continue; // Already found. This can happen when there are cycles.
 
       Configuration c = getConfiguration(mIsland.representative);
 #ifdef _DEBUG
@@ -642,7 +632,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
       }
       else {
-        newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), encoding));
+        newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));
       }
 
       // Multiple M-islands inside => problematic. Count only this M-island.
@@ -651,15 +641,16 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
         anyMappingPrinted = true;
       }
-    }
 
-    if(sIsland.isCyclic) {
-      if(newCyclic.find(encoding) == newCyclic.end())
-        newCyclic.insert(encoding);
-    }
-    else {
-      if(newNonCyclic.find(encoding) == newNonCyclic.end())
-        newNonCyclic.insert(encoding);
+      if(mIsland.isCyclic) {
+        if(newCyclic.find(encoding) == newCyclic.end())
+          newCyclic.insert(encoding);
+      }
+      else {
+        if(newNonCyclic.find(encoding) == newNonCyclic.end())
+          newNonCyclic.insert(encoding);
+      }
+
     }
   }
 

@@ -7,7 +7,7 @@
 #include <time.h>
 
 SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : 
-    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), problematic(0), rectilinear(0) {
+    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), rectilinear(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -94,7 +94,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     ++attempts;
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
 
-    std::vector<std::pair<Configuration,uint64_t> > newRectilinear;
+    std::vector<std::pair<Configuration,MIsland> > newRectilinear;
     angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear);
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += angleMapping.boosts[i];
@@ -102,14 +102,23 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     rectilinear += newRectilinear.size();
 
 #ifdef _COMPARE_ALGORITHMS
-    for(std::vector<std::pair<Configuration,uint64_t> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+    for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
       FatSCC min = it->first.toMinSCC();
 
       if(foundSCCs.find(min) != foundSCCs.end()) {
-        std::cout << "Duplicate found (encoding): " << it->second << std::endl;
+        std::cout << "Duplicate found (encoding): " << it->second.encoding << std::endl;
         std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
         std::cout << "Duplicate found (config): " << it->first << std::endl;
         std::cout << "Duplicate found: " << min << std::endl;
+        std::cout << "Island info:" << std::endl;
+        std::cout << " rectilinear: " << it->second.isRectilinear << std::endl;
+        std::cout << " |rep|: " << it->second.sizeRep << std::endl;
+        std::cout << " rep: " << std::endl;
+        for(unsigned int i = 0; i < it->second.sizeRep; ++i)
+          std::cout << "  " << it->second.representative.p[i] << std::endl;
+        std::cout << "  " << it->second.representative.lastAngle << std::endl;
+        std::cout << "Connections: " << list << std::endl;
+
         MPDPrinter h;
         Configuration cf(min);
         h.add("duplicate", &cf);
@@ -117,7 +126,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         assert(false);std::cerr << "DIE X0010" << std::endl;
         int *die = NULL; die[0] = 42;
       }
-      foundSCCs.insert(std::make_pair(min,it->second));
+      foundSCCs.insert(std::make_pair(min,it->second.encoding));
     }
 #endif
 

@@ -97,8 +97,8 @@ int main(int numArgs, char** argV) {
     printUsage();
 #ifdef _DEBUG
     ConfigurationManager mgr(4);
-    mgr.runForSize(4);
-    //mgr.test();
+    //mgr.runForSize(4);
+    mgr.test();
 #else
 #ifdef _COMPARE_ALGORITHMS
     ConfigurationManager mgr(4);

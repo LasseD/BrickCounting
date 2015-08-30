@@ -14,7 +14,7 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     attempts+=mgr.attempts;
     rectilinear+=mgr.rectilinear;
     models+=mgr.models;
-    problematic+=mgr.problematic;
+    problematic+=mgr.manual.size();
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += mgr.angleMappingBoosts[i];
     }

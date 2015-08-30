@@ -17,6 +17,7 @@
 typedef unsigned long long counter;
 
 struct SIsland; // forward declaration.
+struct MIsland; // forward declaration.
 
 namespace math {
   void intervalToArray(const IntervalList &l, bool *array, unsigned int sizeArray);
@@ -61,28 +62,29 @@ public:
   1) For all possible angles: Comput S,M,L.
   2) Combine regions in S,M,L in order to determine new models.
   */
-  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,uint64_t> > &newRectilinear);
+  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
+  Configuration getConfiguration(const MixedPosition &p) const;
 
 private:
-  void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &toLdr, bool includeMappingFile) const;
+  void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const;
   //void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
   void findIslands(std::vector<SIsland> &sIslands);
   //void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
   //Configuration getConfiguration(const Position &p) const;
-  Configuration getConfiguration(const MixedPosition &p) const;
   Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
   std::vector<Connection> getConfigurationConnections(const MixedPosition &p) const;
 };
 
 struct MIsland {
   int lIslands;
-  bool isRectilinear;
+  bool isRectilinear, isCyclic;
   unsigned int sizeRep;
   MixedPosition representative;
+  uint64_t encoding;
 
-  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : lIslands(0), sizeRep(a->numAngles), representative(p) {
+  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, uint64_t encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
     isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
@@ -97,31 +99,34 @@ struct MIsland {
     }
   }
   MIsland() {}
-  MIsland(const MIsland &l) : lIslands(l.lIslands), isRectilinear(l.isRectilinear), sizeRep(l.sizeRep), representative(l.representative) {}
+  MIsland(const MIsland &l) : lIslands(l.lIslands), isRectilinear(l.isRectilinear), isCyclic(l.isCyclic), sizeRep(l.sizeRep), representative(l.representative), encoding(l.encoding) {}
 };
 struct SIsland {
   std::vector<MIsland> mIslands;
   unsigned int sizeRep;
   MixedPosition representative;
-  uint64_t encoding;
-  bool isRectilinear, isCyclic;
 
-  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, uint64_t encoding, bool isCyclic) : sizeRep(a->numAngles), representative(p), encoding(encoding), isRectilinear(false), isCyclic(isCyclic) {
+  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : sizeRep(a->numAngles), representative(p) {
     // Add all M-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
       a->ufM->getRepresentativeOfUnion(unionI, rep);
+
+      Configuration c = a->getConfiguration(rep);
+      std::vector<IConnectionPair> found;
+      c.isRealizable<-1>(found);
+      bool isCyclic = found.size() > a->numAngles;
+      uint64_t encoding = a->encoder.encode(found);
+
       if(a->ufS->getRootForPosition(rep) == unionFindIndex) {
-        MIsland mIsland(a, unionI, rep);
+        MIsland mIsland(a, unionI, rep, encoding, isCyclic);
         mIslands.push_back(mIsland);
-        if(mIsland.isRectilinear)
-          isRectilinear = true;
       }
     }
   }
   SIsland() {}
-  SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep), representative(l.representative), encoding(l.encoding), isRectilinear(l.isRectilinear), isCyclic(l.isCyclic) {}
+  SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep), representative(l.representative) {}
 };
 
 #endif // ANGLEMAPPING_H
