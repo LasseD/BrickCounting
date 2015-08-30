@@ -90,8 +90,10 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
   // Set up permutations and rotations:
   int perm[6];
   perm[baseIndex] = 0;
+  bool rotated[6] = {true,true,true,true,true,true};
   if(rotate) {
     rotateSCC(baseIndex, connectionPoints, connectionMaps);
+    rotated[baseIndex] = true;
   }
   // DuplicateMappingCounter to allow incrementing after mapping duplicates:
   unsigned int duplicateMappingCounters[6];
@@ -152,6 +154,7 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
       // Check if rotation necessary!
       if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
         rotateSCC(fatSccI2, connectionPoints, connectionMaps);
+        rotated[fatSccI2] = true;
         // Update already extracted connection data:
         p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
         ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
@@ -167,6 +170,12 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
       // If same as prev SCC, minimize index (add final index to perm):
       unsigned int mappedI = duplicateMapping[fatSccI2];
       perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
+    }
+  }
+
+  for(unsigned int i = 0; i < fatSccSize; ++i) {
+    if(rotated[i]) {
+      rotateSCC(i, connectionPoints, connectionMaps);
     }
   }
 
@@ -277,16 +286,6 @@ uint64_t ConfigurationEncoder::encode(const IConnectionPairList &list) const {
       if(encoded2 < minEncoded)
         minEncoded = encoded2;
     }
-#ifdef _DEBUG
-    else if(fatSccs[i].isRotationallySymmetric) {
-      uint64_t encoded2 = encode(i, true, connectionPoints, connectionMaps);
-      if(encoded2 < minEncoded) {
-        std::cout << "FAIL! Init=" << i << ": " << minEncoded << "->" << encoded << std::endl;
-        assert(false);
-      }
-    }
-#endif
-
   }
   return minEncoded;
 }

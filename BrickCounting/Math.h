@@ -9,8 +9,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-#define _TRACE 1
-//#define _COMPARE_ALGORITHMS 1
+//#define _TRACE 1
+#define _COMPARE_ALGORITHMS 1
 
 // Ensure cross platform compatibility of std::min:
 #define MIN(a,b) ((a) < (b) ? (a) : (b))

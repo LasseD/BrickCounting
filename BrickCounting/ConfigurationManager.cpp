@@ -248,8 +248,10 @@ void ConfigurationManager::test() {
   std::vector<IConnectionPair> found1, found2;
   c1.isRealizable<-1>(found1);
   uint64_t encoding1 = encoder.encode(found1);
+  std::cout << "Encoding 1: " << encoding1 << std::endl;
   c2.isRealizable<-1>(found2);
   uint64_t encoding2 = encoder.encode(found2);
+  std::cout << "Encoding 2: " << encoding2 << std::endl;
 
   MPDPrinter h;
   Configuration cf(min);
