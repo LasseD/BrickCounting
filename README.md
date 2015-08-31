@@ -38,29 +38,3 @@ We seek to find the number of ways six bricks can be connected when not restrict
 The current number of models are found by constructing configurations where SCCs are connected at extreme angles. Notice that for a given set of SCCs there can be many models (and many RCs). As an example. The following image shows how three specific SCCs can be combined into 14 different models.
 
 ![3 SCCs becoming 14 models](http://c-mt.dk/counting/images/variousmodelsexamplesmall.png "These three SCCs can be combined into 14 different models")
-
-## Current optimization progress
-
-The times (in seconds) of this section are measured by finding models with the program running in debug mode. "i7" and "i5" refer to test machines. "i7" is a Lenovo Thinkpad T440p from 2014 while "i5" is a Sony Vaio VPCEB4X1E from 2011 running in low performance power saving mode. 
-
-Different tests are used to give insight into the performance improvements of the various optimizations.
-
-### Test with 3 bricks
-
-![Configuration consisting of 3 bricks](http://c-mt.dk/counting/images/test3brickssmall.png "An example of how to connect 3 bricks at the corners")
-
-The following improvements are for finding all models with 3 bricks. Notice that no models are actually found in this test.
-
-| Optimization           | i7    | i5  |
-|:-----------------------|------:|----:|
-| None | 180 | - |
-| Replacing diagonal union-find merging with angle locking | 153 | 212 |
-| Compute indices for SML-mapping dynamically | - | 202 |
-| Compute configuration for SML-mapping dynamically | - | 199 |
-| Precompute bricks that might intersect SML-mapping | - | 96 |
-| Don't consider connecting brick to be intersectable | - | 62 |
-| Split handling of the SML sets and detect early if a model is impossible | - | 50 |
-| Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | 6 | 11 |
-| Modify the SML-result set to accomodate intervals from TSBs | 2 | 3 |
-| Run using release-build | 0 | 1 |
-

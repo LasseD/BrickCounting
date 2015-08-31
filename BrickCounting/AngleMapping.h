@@ -101,6 +101,19 @@ struct MIsland {
   MIsland() {}
   MIsland(const MIsland &l) : lIslands(l.lIslands), isRectilinear(l.isRectilinear), isCyclic(l.isCyclic), sizeRep(l.sizeRep), representative(l.representative), encoding(l.encoding) {}
 };
+inline std::ostream& operator<<(std::ostream &os, const MIsland& m) {
+  os << "M-Island[encoding=" << m.encoding << ",|l-islands|=" << m.lIslands << ",representative=";
+  for(unsigned int i = 0; i < m.sizeRep-1; ++i)
+    os << m.representative.p[i] << "/";
+  os << m.representative.lastAngle;
+  if(m.isCyclic)
+    os << ",cyclic";
+  if(m.isRectilinear)
+    os << ",rectlinear";
+  os << "]";
+  return os;
+}
+
 struct SIsland {
   std::vector<MIsland> mIslands;
   unsigned int sizeRep;
@@ -128,5 +141,16 @@ struct SIsland {
   SIsland() {}
   SIsland(const SIsland &l) : mIslands(l.mIslands), sizeRep(l.sizeRep), representative(l.representative) {}
 };
+inline std::ostream& operator<<(std::ostream &os, const SIsland& s) {
+  os << "S-Island[representative=";
+  for(unsigned int i = 0; i < s.sizeRep-1; ++i)
+    os << s.representative.p[i] << "/";
+  os << s.representative.lastAngle;
+  os << ",M-islands:" << std::endl;
+  for(std::vector<MIsland>::const_iterator it = s.mIslands.begin(); it != s.mIslands.end(); ++it)
+    os << " " << *it << std::endl;
+  os << "]";
+  return os;
+}
 
 #endif // ANGLEMAPPING_H

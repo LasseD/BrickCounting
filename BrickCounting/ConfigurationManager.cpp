@@ -227,6 +227,7 @@ void ConfigurationManager::test() {
   uint64_t encoded1 = 1082724547;
   uint64_t encoded2 = 1111896211;
   IConnectionPairList list1, list2;
+  std::vector<IConnectionPair> list1x, list2x;
   encoder.decode(encoded1, list1);
   encoder.decode(encoded2, list2);
 
@@ -234,11 +235,13 @@ void ConfigurationManager::test() {
   std::vector<Connection> cs1, cs2;
   for(std::set<IConnectionPair>::const_iterator it2 = list1.begin(); it2 != list1.end(); ++it2) {
     cs1.push_back(Connection(*it2, StepAngle()));
+    list1x.push_back(*it2);
     std::cout << *it2 << std::endl;
   }
   std::cout << "1111896211: " << std::endl;
   for(std::set<IConnectionPair>::const_iterator it2 = list2.begin(); it2 != list2.end(); ++it2) {
     cs2.push_back(Connection(*it2, StepAngle()));
+    list2x.push_back(*it2);
     std::cout << *it2 << std::endl;
   }
   Configuration c1(&(v2[0]), cs1);
@@ -253,14 +256,19 @@ void ConfigurationManager::test() {
   uint64_t encoding2 = encoder.encode(found2);
   std::cout << "Encoding 2: " << encoding2 << std::endl;
 
+  std::ofstream os;
+  os.open("temp.txt", std::ios::out);
+  std::vector<IConnectionPoint> pool;
+  SingleConfigurationManager singleMgr(v2, os);
+  singleMgr.run(list1x, pool, pool, NULL, 0);
+  singleMgr.run(list2x, pool, pool, NULL, 0);
+
   MPDPrinter h;
   Configuration cf(min);
   h.add("abe1", &cf);
   h.print("abe1");
 
   /*
-  std::ofstream os;
-  os.open("temp.txt", std::ios::out);
   runForCombination(v2, v, -1, os);//*/
   /*
   SingleConfigurationManager sm(v2, os);
