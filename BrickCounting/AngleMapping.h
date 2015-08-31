@@ -28,7 +28,7 @@ Mapping angles (See README):
 Size 0 => Granularity 0 - 0 => 1 step.
 Size 1 => Granularity -203 - 203 => 407 steps.
 Size 2 => Granularity -370 - 370 => 741 steps.
-Size 2 => Granularity -538 - 538 => 1076 steps.
+Size 3 => Granularity -538 - 538 => 1077 steps.
 */
 class AngleMapping {
 public:

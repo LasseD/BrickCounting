@@ -67,7 +67,6 @@ namespace UnionFind {
       handled[i] = false;
     minInUnions = new uint32_t[numUnions];
 
-    //std::cout << "Start root finding" << std::endl;
     for(uint32_t i = 0; i < numUnions; ++i) {
       // Handle union with representative "i"
       if(handled[i])
@@ -75,31 +74,27 @@ namespace UnionFind {
       minInUnions[i] = i;
       handled[i] = true;
       roots.push_back(i);
-      //std::cout << " Root " << i;
-      int rootSize = 0;
 
       std::stack<uint32_t> s;
-      for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it)
+      for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it) {
         s.push(*it);
+	handled[*it] = true;
+      }
 
       while(!s.empty()) {
-        ++rootSize;
         uint32_t top = s.top();
         assert(top < numUnions);
         s.pop();
-        if(handled[top])
-          continue;
         minInUnions[top] = i;
-        handled[top] = true;
 
         for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
-          if(!handled[*it])
+          if(!handled[*it]) {
             s.push(*it);
+	    handled[*it] = true;
+	  }
         }
       }
-      //std::cout << " of size " << rootSize << std::endl;
     }
-    //std::cout << "Done root finding" << std::endl;
 
     delete[] handled;
     delete[] joins;
@@ -215,6 +210,7 @@ namespace UnionFind {
         return ufs->getMinInUnion(firstUnion + index);
       }
     }
+    
     assert(false);std::cerr << "DIE X007" << std::endl;
     int *die = NULL; die[0] = 42;
     return 0;

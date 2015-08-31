@@ -4,7 +4,7 @@
 #include "Math.h"
 #include "Brick.h"
 #include "Configuration.hpp"
-#include "UnionFind.h"
+#include "UnionFind.h" // TODO: Necessary?
 #include <vector>
 
 typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.

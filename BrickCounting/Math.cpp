@@ -508,6 +508,7 @@ namespace math {
   IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(4+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
+    std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
   }
   IntervalListVector::~IntervalListVector() {
     delete[] intervals;
@@ -515,7 +516,10 @@ namespace math {
   }
   void IntervalListVector::insert(uint32_t location, const IntervalList &intervalList) {
     assert(location < indicatorSize);
-    assert(intervalsI + intervalList.size() < intervalsSize);
+    if(intervalsI + intervalList.size() > intervalsSize) {
+      assert(false);std::cerr << "DIE X017: " << intervalsI <<"+"<< intervalList.size() <<">"<< intervalsSize << std::endl;
+      int *die = NULL; die[0] = 42;      
+    }
     indicators[location].first = intervalsI;
     indicators[location].second = (unsigned short)intervalList.size();;
     for(IntervalList::const_iterator it = intervalList.begin(); it != intervalList.end(); ++it)
