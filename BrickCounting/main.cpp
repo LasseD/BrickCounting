@@ -156,7 +156,7 @@ int main(int numArgs, char** argV) {
   }
 
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
-  ConfigurationManager mgr(maxSccSize);
+  ConfigurationManager mgr(combinedSize);
   mgr.runForCombinationType(combinationType, combinedSize);
   return 0;
 }

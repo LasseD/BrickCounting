@@ -96,7 +96,7 @@ public:
   }
 
   bool /*Brick::*/outerStudIntersectsStudAtOrigin() const;
-  bool /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &angle) const;
+  bool /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &outStudAngle, double &outStudDist) const;
 
   /*
     Returns the intersection between a rectangle defined by four points and a circle cutout (between minAngle and maxAngle).

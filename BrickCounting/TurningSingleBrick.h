@@ -140,15 +140,20 @@ public:
       return;
 
     // Add intervals for studs:
-    double studAngle;
-    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, interval.P1, interval.P2, studAngle);
+    double studAngle, studDist;
+    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, interval.P1, interval.P2, studAngle, studDist);
     if(!anyStudAngles)
       return;
 #ifdef _TRACE
     std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, interval) << std::endl;
 #endif
     double studAngleTransformed = math::angleToOriginalInterval(studAngle, interval);
-    clicks.push_back(ClickInfo(studAngleTransformed, radius));
+
+    const double b = radius;
+    const double c = studDist;
+    double A = acos((b*b+c*c-SNAP_DISTANCE*SNAP_DISTANCE)/(2*b*c)); // Cosine rule
+
+    clicks.push_back(ClickInfo(studAngleTransformed, A));
     return;
   }
 };
@@ -410,18 +415,12 @@ struct TurningSCCInvestigator {
 #ifdef _TRACE
           std::cout << " Checking click, angle=" << it2->first << ", dist=" << it2->second << std::endl;
 #endif
-          if(it2->second <= SNAP_DISTANCE) {
-#ifdef _TRACE
-            std::cout << "  Ignoring local (dist < " << SNAP_DISTANCE << ")" << std::endl;
-#endif
-            continue; // Clicking locally at all angles - do nothing.
-          }
           Configuration c2(baseConfiguration);
           StepAngle stepAngle(it2->first);
           Connection connection(connectionPair, stepAngle);
           c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
           if(c2.isRealizable<ADD_XY>(possibleCollisions, scc.size)) {
-            double angleOfSnapRadius = atan(SNAP_DISTANCE/it2->second)/2;
+            const double angleOfSnapRadius = it2->second;
 #ifdef _TRACE
             std::cout << "  Adding stud interval " << Interval(it2->first-angleOfSnapRadius, it2->first+angleOfSnapRadius) << std::endl;
 #endif

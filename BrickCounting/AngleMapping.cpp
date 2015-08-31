@@ -349,7 +349,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
         ++numDisagreements;
       }
     }
-    if(numDisagreements > 24) {
+    if(numDisagreements > 6) {
       std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
       MPDPrinter h, d;
 

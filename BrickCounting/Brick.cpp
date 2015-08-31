@@ -179,7 +179,7 @@ bool Brick::outerStudIntersectsStudAtOrigin() const {
   return false;
 }
 
-bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &angle) const {
+bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &outStudAngle, double &outStudDist) const {
   Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
 
@@ -199,7 +199,8 @@ bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, do
       return false;
     }
     foundAny = true;
-    angle = studAngle;
+    outStudAngle = studAngle;
+    outStudDist = studDist;
   }
   return foundAny;
 }
