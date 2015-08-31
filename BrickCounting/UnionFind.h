@@ -7,7 +7,6 @@
 #include "Math.h"
 
 #define MAX_DIMENSIONS 5
-#define MAX_UNIONS 100
 
 struct MixedPosition {
   unsigned short p[MAX_DIMENSIONS-1];

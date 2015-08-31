@@ -24,9 +24,8 @@ namespace UnionFind {
   void UnionFindStructure::join(uint32_t a, uint32_t b) {
     assert(!flattened);
     if(joins[a].find(b) == joins[a].end()) {
+      assert(joins[b].find(a) == joins[b].end());
       joins[a].insert(b);
-    }
-    if(joins[b].find(a) == joins[b].end()) {
       joins[b].insert(a);
     }
   }
@@ -68,18 +67,23 @@ namespace UnionFind {
       handled[i] = false;
     minInUnions = new uint32_t[numUnions];
 
+    std::cout << "Start root finding" << std::endl;
     for(uint32_t i = 0; i < numUnions; ++i) {
       // Handle union with representative "i"
       if(handled[i])
         continue;
       minInUnions[i] = i;
+      handled[i] = true;
       roots.push_back(i);
+      std::cout << " Root " << i;
+      int rootSize = 0;
 
       std::stack<uint32_t> s;
       for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it)
         s.push(*it);
 
       while(!s.empty()) {
+        ++rootSize;
         uint32_t top = s.top();
         assert(top < numUnions);
         s.pop();
@@ -93,7 +97,9 @@ namespace UnionFind {
             s.push(*it);
         }
       }
+      std::cout << " of size " << rootSize << std::endl;
     }
+    std::cout << "Done root finding" << std::endl;
 
     delete[] handled;
     delete[] joins;
@@ -163,14 +169,14 @@ namespace UnionFind {
       }
       return;
     }
-    position.p[positionI] = 0;
+    position.p[numStepDimensions] = 0;
 
     uint32_t positionIndex = indexOf(position);
     IntervalList l1;
     M.get(positionIndex, l1);
     if(l1.empty())
       return;
-    uint32_t unionStart1 = intervalIndicatorToUnion[positionIndex];
+    const uint32_t unionStart1 = intervalIndicatorToUnion[positionIndex];
 
     // Run and join for each lower dimension:
     for(unsigned int i = 0; i < numStepDimensions; ++i) {
@@ -185,7 +191,7 @@ namespace UnionFind {
       M.get(neighbourPositionIndex, l2);
       if(l2.empty())
         continue;
-      uint32_t unionStart2 = intervalIndicatorToUnion[neighbourPositionIndex];
+      const uint32_t unionStart2 = intervalIndicatorToUnion[neighbourPositionIndex];
 
       ufs->join(l1, l2, unionStart1, unionStart2);
     }
