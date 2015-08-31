@@ -432,7 +432,7 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     assert(ufS->getRootForPosition(rep) == unionI);
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
-    std::cout << sIsland << std::endl;
+    //std::cout << sIsland << std::endl;
   }
 }
 

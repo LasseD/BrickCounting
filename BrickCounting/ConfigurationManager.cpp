@@ -207,6 +207,21 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 }
 
 void ConfigurationManager::test() {
+  std::vector<int> v;
+  v.push_back(2);
+  v.push_back(1);
+  v.push_back(1);
+
+  std::vector<FatSCC> v2;
+  v2.push_back(sccs[1][18]);
+  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[0][0]);
+
+  std::ofstream os;
+  os.open("temp.txt", std::ios::out);
+  runForCombination(v2, v, -1, os);//*/
+  /*
+
   //runForSize(4);
 
   std::vector<int> v;

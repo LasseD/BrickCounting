@@ -136,7 +136,7 @@ public:
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
     ret = math::intervalsToOriginalInterval(ret, interval);
 
-    if(!allowClick || radius < EPSILON)
+    if(!allowClick || radius <= SNAP_DISTANCE)
       return;
 
     // Add intervals for studs:

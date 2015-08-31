@@ -67,7 +67,7 @@ namespace UnionFind {
       handled[i] = false;
     minInUnions = new uint32_t[numUnions];
 
-    std::cout << "Start root finding" << std::endl;
+    //std::cout << "Start root finding" << std::endl;
     for(uint32_t i = 0; i < numUnions; ++i) {
       // Handle union with representative "i"
       if(handled[i])
@@ -75,7 +75,7 @@ namespace UnionFind {
       minInUnions[i] = i;
       handled[i] = true;
       roots.push_back(i);
-      std::cout << " Root " << i;
+      //std::cout << " Root " << i;
       int rootSize = 0;
 
       std::stack<uint32_t> s;
@@ -97,9 +97,9 @@ namespace UnionFind {
             s.push(*it);
         }
       }
-      std::cout << " of size " << rootSize << std::endl;
+      //std::cout << " of size " << rootSize << std::endl;
     }
-    std::cout << "Done root finding" << std::endl;
+    //std::cout << "Done root finding" << std::endl;
 
     delete[] handled;
     delete[] joins;
