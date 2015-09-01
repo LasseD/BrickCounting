@@ -136,8 +136,15 @@ public:
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
     ret = math::intervalsToOriginalInterval(ret, interval);
 
-    if(!allowClick || radius <= SNAP_DISTANCE)
+    if(!allowClick || radius <= SNAP_DISTANCE) {
+#ifdef _TRACE
+      if(!allowClick)
+        std::cout << "  Clicking skipped" << std::endl;
+      if(radius <= SNAP_DISTANCE)
+        std::cout << "  Click skipped because " << radius << " <= " << SNAP_DISTANCE << std::endl;
+#endif
       return;
+    }
 
     // Add intervals for studs:
     double studAngle, studDist;

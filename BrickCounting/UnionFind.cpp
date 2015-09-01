@@ -101,6 +101,11 @@ namespace UnionFind {
     flattened = true;
   }
 
+  IntervalUnionFind::IntervalUnionFind() : M(*new math::IntervalListVector(0, 0)) {
+    assert(false);std::cerr << "DIE DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
+    int *die = NULL; die[0] = 42;
+  }
+
   /*
     unsigned int numStepDimensions;
     unsigned short dimensionSizes[MAX_DIMENSIONS-1]; // "-1" because last dimension is not a step dimension.

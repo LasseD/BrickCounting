@@ -505,10 +505,19 @@ namespace math {
     return ret;
   }
 
+  IntervalListVector::IntervalListVector() : intervalsSize(0), indicatorSize(0) {
+    assert(false);std::cerr << "DIE DEFAULT CONSTRUCTOR FOR IntervalListVector SHOULD NEVER BE CALLED" << std::endl;
+    int *die = NULL; die[0] = 42;
+  }
+
   IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(4+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
+#ifdef _DEBUG
     std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
+    for(unsigned int i = 0; i < indicatorSize; ++i)
+      indicators[i] = IntervalIndicator(9999, 9999);
+#endif
   }
   IntervalListVector::~IntervalListVector() {
     delete[] intervals;
@@ -550,6 +559,16 @@ namespace math {
   }
   uint32_t IntervalListVector::intervalSizeForIndicator(uint32_t i) const {
     return indicators[i].second;
+  }
+  void IntervalListVector::validateAllIntervalsSet() const {
+#ifdef _DEBUG
+    for(unsigned int i = 0; i < indicatorSize; ++i) {
+      if(indicators[i] == IntervalIndicator(9999, 9999)) {
+        std::cerr << "Indicator not set at position " << i << std::endl;
+        assert(false);
+      }
+    }
+#endif
   }
 }
 

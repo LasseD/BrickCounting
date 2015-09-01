@@ -349,7 +349,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
         ++numDisagreements;
       }
     }
-    if(numDisagreements > 6) {
+    if(numDisagreements > 22) {
       std::cout << "Assertion error on S vs allowableAnglesForBricks." << std::endl;	 
       MPDPrinter h, d;
 
@@ -432,7 +432,7 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     assert(ufS->getRootForPosition(rep) == unionI);
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
-    //std::cout << sIsland << std::endl;
+    std::cout << sIsland << std::endl;
   }
 }
 
@@ -569,6 +569,11 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   // Evaluate SML:
   Configuration c(sccs[0]);
   evalSML(0, 0, c, false, false, false);
+#ifdef _DEBUG
+  SS->validateAllIntervalsSet();
+  MM->validateAllIntervalsSet();
+  LL->validateAllIntervalsSet();
+#endif
 
   // Evaluate union-find:
   unsigned short sizes[MAX_DIMENSIONS-1];

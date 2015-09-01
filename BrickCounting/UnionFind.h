@@ -49,6 +49,7 @@ namespace UnionFind {
     void buildIntervalIndicatorToUnion();
     void buildUnions(unsigned int positionI, MixedPosition &position);
     uint32_t indexOf(const MixedPosition &position) const;
+    IntervalUnionFind();
   public:
     IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M);
     ~IntervalUnionFind();

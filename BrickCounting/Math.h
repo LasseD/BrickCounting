@@ -82,6 +82,7 @@ namespace math {
     IntervalIndicator *indicators;
     const uint32_t intervalsSize, indicatorSize;
     uint32_t intervalsI;
+    IntervalListVector();
   public:
     IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor);
     ~IntervalListVector();
@@ -92,6 +93,7 @@ namespace math {
     uint32_t sizeIndicator() const;
     uint32_t sizeNonEmptyIntervals() const;
     uint32_t intervalSizeForIndicator(uint32_t i) const;
+    void validateAllIntervalsSet() const;
   };
 }
 

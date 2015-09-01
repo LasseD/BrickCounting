@@ -196,6 +196,9 @@ bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, do
       continue;
     }
     if(foundAny) {
+#ifdef _TRACE
+      std::cout << " More than one click! Skip!" << std::endl;
+#endif
       return false;
     }
     foundAny = true;
