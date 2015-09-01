@@ -78,7 +78,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       return;
 
     // If we have already investigated the encoding (without cycles), then bail:
-    uint64_t encoded = encoder.encode(list);
+    uint64_t encoded = encoder.encode(list).first;
     if(investigatedConnectionPairListsEncoded.find(encoded) != investigatedConnectionPairListsEncoded.end())
       return;
     investigatedConnectionPairListsEncoded.insert(encoded);
@@ -101,12 +101,25 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     }
     rectilinear += newRectilinear.size();
 
+#ifdef _DEBUG
+    MPDPrinter h;
+    for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+      const Configuration &c = it->first;
+      std::stringstream ss;
+      ss << "rc_" << it->second.encoding.first;
+      h.add(ss.str(), new Configuration(c)); // OK Be cause we are debugging.
+    }
+    std::stringstream ss;
+    ss << "rc\\rectilinear_configurations_" << encoded;
+    h.print(ss.str());
+#endif
+
 #ifdef _COMPARE_ALGORITHMS
     for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
       FatSCC min = it->first.toMinSCC();
 
       if(foundSCCs.find(min) != foundSCCs.end()) {
-        std::cout << "Duplicate found (encoding): " << it->second.encoding << std::endl;
+        std::cout << "Duplicate found (encoding): " << it->second.encoding.first << std::endl;
         std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
         std::cout << "Duplicate found (config): " << it->first << std::endl;
         std::cout << "Duplicate found: " << min << std::endl;
@@ -126,7 +139,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         assert(false);std::cerr << "DIE X0010" << std::endl;
         int *die = NULL; die[0] = 42;
       }
-      foundSCCs.insert(std::make_pair(min,it->second.encoding));
+      foundSCCs.insert(std::make_pair(min,it->second.encoding.first));
     }
 #endif
 

@@ -213,15 +213,36 @@ void ConfigurationManager::test() {
   v.push_back(1);
 
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][11]);
+  v2.push_back(sccs[1][18]);
   v2.push_back(sccs[0][0]);
   v2.push_back(sccs[0][0]);
+  ConfigurationEncoder encoder(v2);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);
-  runForCombination(v2, v, -1, os);
 
+  uint64_t encoded = 33632322;
+  IConnectionPairList list;
+  std::vector<IConnectionPair> listx;
+  encoder.decode(encoded, list);
 
+  std::vector<Connection> cs;
+  for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
+    cs.push_back(Connection(*it2, StepAngle()));
+    listx.push_back(*it2);
+    std::cout << *it2 << std::endl;
+  }
+  Configuration c(&(v2[0]), cs);
+  FatSCC min = c.toMinSCC();
+
+  MPDPrinter h;
+  Configuration cf(min);
+  h.add("banana", &cf);
+  h.print("banana");
+
+  std::vector<IConnectionPoint> pool;
+  SingleConfigurationManager singleMgr(v2, os);
+  singleMgr.run(listx, pool, pool, NULL, 0);
 
   /*
   //runForSize(4);

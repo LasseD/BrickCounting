@@ -62,7 +62,7 @@ public:
   1) For all possible angles: Comput S,M,L.
   2) Combine regions in S,M,L in order to determine new models.
   */
-  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
+  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
   Configuration getConfiguration(const MixedPosition &p) const;
 
 private:
@@ -82,9 +82,9 @@ struct MIsland {
   bool isRectilinear, isCyclic;
   unsigned int sizeRep;
   MixedPosition representative;
-  uint64_t encoding;
+  Encoding encoding;
 
-  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, uint64_t encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
+  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
     isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
@@ -102,14 +102,14 @@ struct MIsland {
   MIsland(const MIsland &l) : lIslands(l.lIslands), isRectilinear(l.isRectilinear), isCyclic(l.isCyclic), sizeRep(l.sizeRep), representative(l.representative), encoding(l.encoding) {}
 };
 inline std::ostream& operator<<(std::ostream &os, const MIsland& m) {
-  os << "M-Island[encoding=" << m.encoding << ",|l-islands|=" << m.lIslands << ",representative=";
+  os << "M-Island[encoding=" << m.encoding.first << "/" << m.encoding.second << ",|l-islands|=" << m.lIslands << ",representative=";
   for(unsigned int i = 0; i < m.sizeRep-1; ++i)
     os << m.representative.p[i] << "/";
   os << m.representative.lastAngle;
   if(m.isCyclic)
     os << ",cyclic";
   if(m.isRectilinear)
-    os << ",rectlinear";
+    os << ",rectilinear";
   os << "]";
   return os;
 }
@@ -130,7 +130,7 @@ struct SIsland {
       std::vector<IConnectionPair> found;
       c.isRealizable<-1>(found);
       bool isCyclic = found.size() > a->numAngles;
-      uint64_t encoding = a->encoder.encode(found);
+      Encoding encoding = a->encoder.encode(found);
 
       if(a->ufS->getRootForPosition(rep) == unionFindIndex) {
         MIsland mIsland(a, unionI, rep, encoding, isCyclic);

@@ -13,7 +13,8 @@
 
 class SingleConfigurationManager {
 public:
-  std::set<uint64_t> cyclicConfigurations, nonCyclicConfigurations;
+  std::set<uint64_t> nonCyclicConfigurations;
+  std::set<Encoding> cyclicConfigurations;
 
 #ifdef _COMPARE_ALGORITHMS
   std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!

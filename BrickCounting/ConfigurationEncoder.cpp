@@ -86,7 +86,7 @@ When encoding:
 - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
 - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
 */
-uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
+Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
   // Set up permutations and rotations:
   int perm[6];
   perm[baseIndex] = 0;
@@ -123,8 +123,12 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
 
   // Compute connections to encode + encodedI on sccs:
   bool unencoded[6] = {true,true,true,true,true,true};
+  bool unusedConnections[36];
+  for(int i = 0; i < 36; ++i)
+    unusedConnections[i] = true;
   unencoded[baseIndex] = false;
-  std::vector<IConnectionPair> connectionsToEncode; // to output in first component
+  std::vector<IConnectionPair> requiredConnectionsToEncode; // to output in first component
+  std::vector<IConnectionPair> additionalConnectionsToEncode; // to output in second component
   std::queue<unsigned int> queue; // SCC ready to be visited.
   queue.push(baseIndex);
 
@@ -142,34 +146,38 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
         std::swap(connection.P1, connection.P2); // swap so first connection point is the current scc.
       IConnectionPoint &ip2 = connection.P2;
       unsigned int fatSccI2 = ip2.first.configurationSCCI;
-      if(!unencoded[fatSccI2]) 
-        continue;
       ConnectionPoint &p2 = ip2.second;
 #ifdef _TRACE
       std::cout << " IConnectionPair: " << connection.P2 << ", " << ip2 << std::endl;
       std::cout << " Connecting to configuration scc " << fatSccI2 << std::endl;
 #endif
       
-      // Connection to new scc found!
-      // Check if rotation necessary!
-      if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
-        rotateSCC(fatSccI2, connectionPoints, connectionMaps);
-        rotated[fatSccI2] = true;
-        // Update already extracted connection data:
-        p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
-        ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
-      }
+      if(unencoded[fatSccI2]) {
+	// Connection to new scc found!
+	// Check if rotation necessary!
+	if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
+	  rotateSCC(fatSccI2, connectionPoints, connectionMaps);
+	  rotated[fatSccI2] = true;
+	  // Update already extracted connection data:
+	  p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
+	  ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
+	}
 #ifdef _TRACE
-      std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
+	std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
 #endif
+	requiredConnectionsToEncode.push_back(connection);
+	queue.push(fatSccI2);
+	unencoded[fatSccI2] = false;
 
-      connectionsToEncode.push_back(connection);
-      queue.push(fatSccI2);
-      unencoded[fatSccI2] = false;
-
-      // If same as prev SCC, minimize index (add final index to perm):
-      unsigned int mappedI = duplicateMapping[fatSccI2];
-      perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
+	// If same as prev SCC, minimize index (add final index to perm):
+	unsigned int mappedI = duplicateMapping[fatSccI2];
+	perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
+      }
+      else if(unusedConnections[fatSccI*6+fatSccI2]) {
+	// redundant connection:
+        additionalConnectionsToEncode.push_back(connection);
+      }
+      unusedConnections[fatSccI*6+fatSccI2] = unusedConnections[fatSccI2*6+fatSccI] = false;
     }
   }
 
@@ -179,7 +187,9 @@ uint64_t ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
     }
   }
 
-  return encodeList(connectionsToEncode, perm);
+  uint64_t encodedFirstComponent = encodeList(requiredConnectionsToEncode, perm);
+  uint64_t encodedSecondComponent = encodeList(additionalConnectionsToEncode, perm);
+  return Encoding(encodedFirstComponent, encodedSecondComponent);
 }
 
 uint64_t ConfigurationEncoder::encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const {
@@ -243,7 +253,7 @@ Additions:
 - If multiple min(size,diskI): Try all min.
 - If min is rotationally symmetric, try turned 180.    
 */
-uint64_t ConfigurationEncoder::encode(const IConnectionPairList &list) const {
+Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
 #ifdef _TRACE
   std::cout << " INIT encode(" << list << ")" << std::endl;
 #endif
@@ -272,22 +282,27 @@ uint64_t ConfigurationEncoder::encode(const IConnectionPairList &list) const {
   for(unsigned int i = 0; i < fatSccSize; ++i)
     std::sort(connectionPoints[i].begin(), connectionPoints[i].end());
 
-  uint64_t minEncoded = 0xFFFFFFFFFFFFFFFF;
+  Encoding minEncoded(0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF);
   for(unsigned int i = 0; i < fatSccSize; ++i) {
     if(!(fatSccs[i] == fatSccs[0]))
       break; // TODO: Continue for size 5!
     // Only run if connections are minimal:
-    uint64_t encoded = encode(i, false, connectionPoints, connectionMaps);
+    Encoding encoded = encode(i, false, connectionPoints, connectionMaps);
     if(encoded < minEncoded)
       minEncoded = encoded;
     // Rotate and run again if necessary:
     if(fatSccs[i].isRotationallySymmetric) {
-      uint64_t encoded2 = encode(i, true, connectionPoints, connectionMaps);
+      Encoding encoded2 = encode(i, true, connectionPoints, connectionMaps);
       if(encoded2 < minEncoded)
         minEncoded = encoded2;
     }
   }
   return minEncoded;
+}
+
+void ConfigurationEncoder::decode(Encoding encoded, IConnectionPairList &list) const {
+  decode(encoded.first, list);
+  decode(encoded.second, list);
 }
 
 void ConfigurationEncoder::decode(uint64_t encoded, IConnectionPairList &list) const {
@@ -343,13 +358,14 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
   std::cout << " min1: " << min1 << std::endl;
 #endif
 
-  uint64_t encoded = encode(list1);
+  Encoding encoded = encode(list1);
 #ifdef _TRACE
-  std::cout << " encoded: " << encoded << std::endl;
+  std::cout << " encoded: " << encoded.first << std::endl;
 #endif
-  IConnectionPairList list2;
-  decode(encoded, list2);
-  assert(list1.size() >= list2.size());
+  IConnectionPairList list2, list3;
+  decode(encoded.first, list2);
+  decode(encoded.second, list3);
+  assert(list1.size() == list2.size() + list3.size());
 #ifdef _TRACE
   std::cout << " decoded: " << list2 << std::endl;
 #endif
@@ -378,7 +394,7 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Con
   for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
     icpl.insert(*it);
   
-  uint64_t encoded = encode(icpl);
+  Encoding encoded = encode(icpl);
 
   ss << "size" << c.bricksSize << "_sccs" << fatSccSize << "_sccsizes";  
   for(unsigned int i = 0; i < fatSccSize; ++i)
@@ -386,7 +402,7 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Con
   ss << "_sccindices";
   for(unsigned int i = 0; i < fatSccSize; ++i)
     ss << "_" << fatSccs[i].index;
-  ss << "_cc" << encoded;
+  ss << "_cc" << encoded.first;
 
   if(!includeAngles)
     return;

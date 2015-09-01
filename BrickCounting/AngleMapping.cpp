@@ -432,7 +432,7 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     assert(ufS->getRootForPosition(rep) == unionI);
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
-    std::cout << sIsland << std::endl;
+    //std::cout << sIsland << std::endl;
   }
 }
 
@@ -552,7 +552,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<uint64_t> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
   time_t startTime, endTime;
   time(&startTime);
 
@@ -599,7 +599,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
    -- If more than one L-island: Report problematic. Still only count 1.
   */
   std::set<uint64_t> newNonCyclic;
-  std::set<uint64_t> newCyclic;
+  std::set<Encoding> newCyclic;
   std::vector<Configuration> nrcs;
 
   for(std::vector<SIsland>::const_iterator it = sIslands.begin(); it != sIslands.end(); ++it) {
@@ -614,7 +614,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
     for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
       const MIsland &mIsland = *itM;
 
-      uint64_t encoding = mIsland.encoding;
+      Encoding encoding = mIsland.encoding;
       if(mIsland.isCyclic && cyclic.find(encoding) != cyclic.end())
         continue; // Already found. This can happen when there are cycles.
 
@@ -653,14 +653,13 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
           newCyclic.insert(encoding);
       }
       else {
-        if(newNonCyclic.find(encoding) == newNonCyclic.end())
-          newNonCyclic.insert(encoding);
+        if(newNonCyclic.find(encoding.first) == newNonCyclic.end())
+          newNonCyclic.insert(encoding.first);
       }
-
     }
   }
 
-  for(std::set<uint64_t>::const_iterator it = newCyclic.begin(); it != newCyclic.end(); ++it) {
+  for(std::set<Encoding>::const_iterator it = newCyclic.begin(); it != newCyclic.end(); ++it) {
     cyclic.insert(*it);
   }
   for(std::set<uint64_t>::const_iterator it = newNonCyclic.begin(); it != newNonCyclic.end(); ++it) {
