@@ -71,6 +71,7 @@ public:
       otherBricks[i] = c.otherBricks[i];
     }
   }
+
   /*
   Constructor for constructing a scc from a smaller scc c and a brick b.
   Assumptions about the input: b does not intersect c. b and c are strongly connected.
@@ -279,6 +280,15 @@ public:
     }
   }
 };
+
+/*
+template <>
+class StronglyConnectedConfiguration<1> : public LDRPrintable {
+public:
+  void serialize(std::ofstream &os) const;
+  void deserialize(std::ifstream &is);
+  void toLDR(std::ofstream &os, int ldrColor) const;
+};*/
 
 template <unsigned int SIZE>
 std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfiguration<SIZE>& c)

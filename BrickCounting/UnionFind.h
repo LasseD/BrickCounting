@@ -43,13 +43,14 @@ namespace UnionFind {
 
     UnionFindStructure *ufs;
     uint32_t *intervalIndicatorToUnion, unionI;
-    std::pair<uint32_t,unsigned int> *unionToInterval;
+    std::pair<uint32_t,unsigned short> *unionToInterval;
     const math::IntervalListVector &M; // ref only, no ownership.
 
     void buildIntervalIndicatorToUnion();
     void buildUnions(unsigned int positionI, MixedPosition &position);
     uint32_t indexOf(const MixedPosition &position) const;
-    IntervalUnionFind();
+    IntervalUnionFind(); // Unused
+    IntervalUnionFind& operator=(const IntervalUnionFind &); // Unused
   public:
     IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M);
     ~IntervalUnionFind();

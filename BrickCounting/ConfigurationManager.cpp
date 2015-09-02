@@ -207,44 +207,6 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 }
 
 void ConfigurationManager::test() {
-  std::vector<int> v;
-  v.push_back(2);
-  v.push_back(1);
-  v.push_back(1);
-
-  std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][18]);
-  v2.push_back(sccs[0][0]);
-  v2.push_back(sccs[0][0]);
-  ConfigurationEncoder encoder(v2);
-
-  std::ofstream os;
-  os.open("temp.txt", std::ios::out);
-
-  uint64_t encoded = 33632322;
-  IConnectionPairList list;
-  std::vector<IConnectionPair> listx;
-  encoder.decode(encoded, list);
-
-  std::vector<Connection> cs;
-  for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
-    cs.push_back(Connection(*it2, StepAngle()));
-    listx.push_back(*it2);
-    std::cout << *it2 << std::endl;
-  }
-  Configuration c(&(v2[0]), cs);
-  FatSCC min = c.toMinSCC();
-
-  MPDPrinter h;
-  Configuration cf(min);
-  h.add("banana", &cf);
-  h.print("banana");
-
-  std::vector<IConnectionPoint> pool;
-  SingleConfigurationManager singleMgr(v2, os);
-  singleMgr.run(listx, pool, pool, NULL, 0);
-
-  /*
   //runForSize(4);
 
   std::vector<int> v;
@@ -288,10 +250,10 @@ void ConfigurationManager::test() {
 
   std::vector<IConnectionPair> found1, found2;
   c1.isRealizable<-1>(found1);
-  uint64_t encoding1 = encoder.encode(found1);
+  uint64_t encoding1 = encoder.encode(found1).first;
   std::cout << "Encoding 1: " << encoding1 << std::endl;
   c2.isRealizable<-1>(found2);
-  uint64_t encoding2 = encoder.encode(found2);
+  uint64_t encoding2 = encoder.encode(found2).first;
   std::cout << "Encoding 2: " << encoding2 << std::endl;
 
   std::ofstream os;

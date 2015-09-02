@@ -509,6 +509,9 @@ namespace math {
     assert(false);std::cerr << "DIE DEFAULT CONSTRUCTOR FOR IntervalListVector SHOULD NEVER BE CALLED" << std::endl;
     int *die = NULL; die[0] = 42;
   }
+  IntervalListVector& IntervalListVector::operator=(const IntervalListVector &) {
+    return *(new IntervalListVector()); // FAILS ON PURPOSE
+  }
 
   IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(4+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize];
@@ -525,12 +528,13 @@ namespace math {
   }
   void IntervalListVector::insert(uint32_t location, const IntervalList &intervalList) {
     assert(location < indicatorSize);
+    assert(intervalList.size() < 20);
     if(intervalsI + intervalList.size() > intervalsSize) {
       assert(false);std::cerr << "DIE X017: " << intervalsI <<"+"<< intervalList.size() <<">"<< intervalsSize << std::endl;
-      int *die = NULL; die[0] = 42;      
+      int *die = NULL; die[0] = 42;
     }
     indicators[location].first = intervalsI;
-    indicators[location].second = (unsigned short)intervalList.size();;
+    indicators[location].second = (unsigned short)intervalList.size();
     for(IntervalList::const_iterator it = intervalList.begin(); it != intervalList.end(); ++it)
       intervals[intervalsI++] = *it;
   }
@@ -543,10 +547,12 @@ namespace math {
   void IntervalListVector::get(uint32_t location, IntervalList &intervalList) const {
     assert(location < indicatorSize);
     uint32_t intervalsI = indicators[location].first;
+    assert(intervalsI < intervalsSize);
+    assert(intervalsI+indicators[location].second < intervalsSize);
     for(unsigned short i = 0; i < indicators[location].second; ++i)
       intervalList.push_back(intervals[intervalsI+i]);
   }
-  Interval IntervalListVector::get(uint32_t location, unsigned int intervalIndex) const {
+  Interval IntervalListVector::get(uint32_t location, unsigned short intervalIndex) const {
     assert(location < indicatorSize);
     uint32_t intervalsI = indicators[location].first;
     return intervals[intervalsI+intervalIndex];
@@ -557,18 +563,36 @@ namespace math {
   uint32_t IntervalListVector::sizeNonEmptyIntervals() const {
     return intervalsI;
   }
-  uint32_t IntervalListVector::intervalSizeForIndicator(uint32_t i) const {
+  unsigned short IntervalListVector::intervalSizeForIndicator(uint32_t i) const {
+    assert(i < indicatorSize);
     return indicators[i].second;
   }
   void IntervalListVector::validateAllIntervalsSet() const {
-#ifdef _DEBUG
     for(unsigned int i = 0; i < indicatorSize; ++i) {
       if(indicators[i] == IntervalIndicator(9999, 9999)) {
         std::cerr << "Indicator not set at position " << i << std::endl;
         assert(false);
       }
+      IntervalList list;
+      get(i, list);
+      if(list.empty())
+        continue;
+      Interval prev = *list.begin();
+      for(IntervalList::const_iterator it = list.begin(); it != list.end(); ++it) {
+        const Interval &interval = *it;
+        if(-0.7 > interval.first || interval.first > 0.7 || -0.7 > interval.second || interval.second > 0.7 || interval.first > interval.second) {
+          std::cerr << "Invalid interval: " << interval << std::endl;
+          assert(false);
+        }
+        if(it != list.begin()) {
+          if(prev.second > interval.first) {
+            std::cerr << "Invalid interval overlap. Prev: " << prev << ", current: " << interval << std::endl;
+            assert(false);
+          }
+        }
+        prev = interval;
+      }
     }
-#endif
   }
 }
 

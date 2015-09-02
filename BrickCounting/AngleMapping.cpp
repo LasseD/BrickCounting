@@ -110,7 +110,7 @@ void AngleMapping::setupAngleTypes() {
     int angleI = i/2;
     int sccI = points[i].first.configurationSCCI;
     if(fatSccConnectionCounts[sccI] == 1)
-      angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
+      angleTypes[angleI] = MIN(angleTypes[angleI], MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]));
   }
   // Reduce graph by merging leaves into parents:
   for(unsigned int i = 0; i < numAngles+1; ++i) {
@@ -128,7 +128,7 @@ void AngleMapping::setupAngleTypes() {
     int angleI = i/2;
     int sccI = points[i].first.configurationSCCI;
     if(fatSccConnectionCounts[sccI] == 1)
-      angleTypes[angleI] = MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]);
+      angleTypes[angleI] = MIN(angleTypes[angleI], MIN(fatSccSizes[sccI], numBricks-fatSccSizes[sccI]));
   }
 
   // Finally. Set angle types of locked connections to type 0:
@@ -214,7 +214,7 @@ std::vector<Connection> AngleMapping::getConfigurationConnections(const MixedPos
   for(unsigned int i = 0; i < numAngles-1; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
     const IConnectionPoint &ip2 = points[2*i+1];
-    const StepAngle angle((short)p.p[i]-(short)angleSteps[i], angleSteps[i]);
+    const StepAngle angle((short)p.p[i]-(short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
     res.push_back(Connection(ip1, ip2, angle));
   }
 
@@ -337,7 +337,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
     SS->insert(smlI, l);
     
-#ifdef _DEBUG
+#ifdef _RM_DEBUG
     const unsigned short steps = 2*angleSteps[angleI]+1;
     bool *S = new bool[steps];
     math::intervalToArray(l, S, steps);
@@ -407,7 +407,6 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     }
     delete[] S;
 #endif
-//*/
   }
   if(!mDone) {
     IntervalList l;
@@ -432,7 +431,26 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     assert(ufS->getRootForPosition(rep) == unionI);
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
-    //std::cout << sIsland << std::endl;
+    std::cout << sIsland << std::endl;
+
+    // TODO: FIXME: DEBUGGING BELOW:
+    MPDPrinter h;
+    int mIslandI = 0;
+    for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {
+      const MIsland &mIsland = *itM;
+
+      Configuration c = getConfiguration(mIsland.representative);
+      std::stringstream ss;
+      ss << "fail_" << mIslandI << "_" << mIsland << "_";
+      std::vector<Connection> cc = getConfigurationConnections(mIsland.representative);
+      encoder.writeFileName(ss, cc, false);
+      h.add(ss.str(), new Configuration(c)); // OK Be cause we are about to die.
+    }
+    std::stringstream ss;
+    ss << "S-Island_";
+    std::vector<Connection> cc = getConfigurationConnections(sIsland.representative);
+    encoder.writeFileName(ss, cc, true);
+    h.print(ss.str());
   }
 }
 

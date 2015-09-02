@@ -1,5 +1,5 @@
-#ifndef CONFIGURATION_ENCODER_HPP
-#define CONFIGURATION_ENCODER_HPP
+#ifndef CONFIGURATION_ENCODER_H
+#define CONFIGURATION_ENCODER_H
 
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
@@ -75,4 +75,4 @@ private:
   uint64_t encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const;
 };
 
-#endif // CONFIGURATION_ENCODER_HPP
+#endif // CONFIGURATION_ENCODER_H

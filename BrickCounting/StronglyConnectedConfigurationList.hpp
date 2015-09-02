@@ -266,4 +266,4 @@ std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfigurationL
   return os;
 };
 
-#endif
+#endif // STRONGLY_CONNECTED_CONFIGURATION_LIST_HPP

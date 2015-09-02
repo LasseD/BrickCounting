@@ -82,17 +82,18 @@ namespace math {
     IntervalIndicator *indicators;
     const uint32_t intervalsSize, indicatorSize;
     uint32_t intervalsI;
-    IntervalListVector();
+    IntervalListVector(); // Unused
+    IntervalListVector& operator=(const IntervalListVector &); // Unused
   public:
     IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor);
     ~IntervalListVector();
     void insert(uint32_t location, const IntervalList &intervalList);
     void insertEmpty(uint32_t location);
     void get(uint32_t location, IntervalList &intervalList) const;
-    Interval get(uint32_t location, unsigned int intervalIndex) const;
+    Interval get(uint32_t location, unsigned short intervalIndex) const;
     uint32_t sizeIndicator() const;
     uint32_t sizeNonEmptyIntervals() const;
-    uint32_t intervalSizeForIndicator(uint32_t i) const;
+    unsigned short intervalSizeForIndicator(uint32_t i) const;
     void validateAllIntervalsSet() const;
   };
 }

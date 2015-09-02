@@ -78,7 +78,7 @@ namespace UnionFind {
       std::stack<uint32_t> s;
       for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it) {
         s.push(*it);
-	handled[*it] = true;
+        handled[*it] = true;
       }
 
       while(!s.empty()) {
@@ -90,8 +90,8 @@ namespace UnionFind {
         for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
           if(!handled[*it]) {
             s.push(*it);
-	    handled[*it] = true;
-	  }
+            handled[*it] = true;
+          }
         }
       }
     }
@@ -102,18 +102,13 @@ namespace UnionFind {
   }
 
   IntervalUnionFind::IntervalUnionFind() : M(*new math::IntervalListVector(0, 0)) {
-    assert(false);std::cerr << "DIE DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
+    assert(false);std::cerr << "DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
     int *die = NULL; die[0] = 42;
   }
+  IntervalUnionFind& IntervalUnionFind::operator=(const IntervalUnionFind &) {
+    return *(new IntervalUnionFind());
+  }
 
-  /*
-    unsigned int numStepDimensions;
-    unsigned short dimensionSizes[MAX_DIMENSIONS-1]; // "-1" because last dimension is not a step dimension.
-    UnionFindStructure *ufs;
-    uint32_t *intervalIndicatorToUnion;
-    std::pair<uint32_t,unsigned int> *unionToInterval;
-    const math::IntervalListVector &M; // ref only, no ownership.
-  */
   IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M) : numStepDimensions(numDimensions-1), unionI(0), M(M) {
     time_t startTime, endTime;
     time(&startTime);
@@ -147,14 +142,16 @@ namespace UnionFind {
   }
   void IntervalUnionFind::buildIntervalIndicatorToUnion() {
     intervalIndicatorToUnion = new uint32_t[M.sizeIndicator()];
-    unionToInterval = new std::pair<uint32_t,unsigned int>[M.sizeNonEmptyIntervals()];
+    unionToInterval = new std::pair<uint32_t,unsigned short>[M.sizeNonEmptyIntervals()];
 
     for(uint32_t i = 0; i < M.sizeIndicator(); ++i) {
-      uint32_t intervalSize = M.intervalSizeForIndicator(i);
+      unsigned short intervalSize = M.intervalSizeForIndicator(i);
       if(intervalSize == 0)
         continue;
       intervalIndicatorToUnion[i] = unionI;
-      for(uint32_t j = 0; j < intervalSize; ++j) {
+      assert(unionI + intervalSize <= M.sizeNonEmptyIntervals());
+
+      for(unsigned short j = 0; j < intervalSize; ++j) {
         unionToInterval[unionI+j].first = i;
         unionToInterval[unionI+j].second = j;
       }
@@ -169,7 +166,6 @@ namespace UnionFind {
       }
       return;
     }
-    position.p[numStepDimensions] = 0;
 
     uint32_t positionIndex = indexOf(position);
     IntervalList l1;
@@ -196,12 +192,22 @@ namespace UnionFind {
       ufs->join(l1, l2, unionStart1, unionStart2);
     }
   }
+
   uint32_t IntervalUnionFind::indexOf(const MixedPosition &position) const {
     uint32_t index = numStepDimensions == 0 ? 0 : position.p[0];
     for(unsigned int i = 1; i < numStepDimensions; ++i)
       index = (index * dimensionSizes[i]) + position.p[i];
+
+#ifdef _DEBUG
+    MixedPosition rep;
+    getRepresentativeOfUnion(index, rep);
+    for(unsigned int i = 1; i < numStepDimensions; ++i)
+      assert(rep.p[i] == position.p[i]);
+#endif
+
     return index;
   }
+
   uint32_t IntervalUnionFind::getRootForPosition(const MixedPosition rep) const {
     uint32_t indicatorIndex = indexOf(rep);
     assert(indicatorIndex < M.sizeIndicator());
@@ -220,9 +226,10 @@ namespace UnionFind {
     int *die = NULL; die[0] = 42;
     return 0;
   }
+
   void IntervalUnionFind::getRepresentativeOfUnion(unsigned int unionI, MixedPosition &rep) const {
     assert(unionI < M.sizeNonEmptyIntervals());
-    std::pair<uint32_t,unsigned int> intervalInfo = unionToInterval[unionI];
+    std::pair<uint32_t,unsigned short> intervalInfo = unionToInterval[unionI];
 
     // Construct position from interval index:
     uint32_t encodedPosition = intervalInfo.first;

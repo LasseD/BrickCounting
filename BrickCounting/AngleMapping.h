@@ -85,9 +85,10 @@ struct MIsland {
   Encoding encoding;
 
   MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
+    assert(unionFindIndex == a->ufM->getRootForPosition(p));
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
-    isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == a->ufM->getRootForPosition(p);
+    isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == unionFindIndex;
     // Add all L-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
@@ -120,6 +121,7 @@ struct SIsland {
   MixedPosition representative;
 
   SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : sizeRep(a->numAngles), representative(p) {
+    assert(unionFindIndex == a->ufS->getRootForPosition(p));
     // Add all M-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
       const uint32_t unionI = *it;
