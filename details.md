@@ -26,7 +26,7 @@ sin(A/2)*d < 0.1/2 => A < asin(1/20/d)*2
 - Size 3: Max distance: d=sqrt(28^2+76^2)=80.99mm. Max angle: a<asin(1/20/d)*2=0.00123466207 radians. Steps: A/a < 538 => 2*538+1=1077 steps in total.
 
 
-## Current optimization progress
+## Optimizations
 
 The times (in seconds) of this section are measured by finding models with the program running in debug mode. "i7" and "i5" refer to test machines. "i7" is a Lenovo Thinkpad T440p from 2014 while "i5" is a Sony Vaio VPCEB4X1E from 2011 running in low performance power saving mode. 
 
@@ -50,3 +50,7 @@ The following improvements are for finding all models with 3 bricks. Notice that
 | Special handling for models with turning single brick SCCs (TSB) at the end of model: Speed up when angle is free | 6 | 11 |
 | Modify the SML-result set to accomodate intervals from TSBs | 2 | 3 |
 | Run using release-build | 0 | 1 |
+
+## Further details
+
+To be added.

@@ -203,7 +203,7 @@ namespace UnionFind {
     for(unsigned int i = 1; i < numStepDimensions; ++i)
       index = (index * dimensionSizes[i]) + position.p[i];
 
-//#ifdef _DEBUG
+#ifdef _DEBUG
     if(intervalIndicatorToUnion[index] == 0) return index;
     MixedPosition rep;
     getRepresentativeOfUnion(intervalIndicatorToUnion[index], rep);
@@ -225,7 +225,7 @@ namespace UnionFind {
       }
       assert(rep.p[i] == position.p[i]);
     }
-//#endif
+#endif
 
     return index;
   }

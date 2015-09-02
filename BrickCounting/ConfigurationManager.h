@@ -25,6 +25,7 @@ public:
   void runForSize(int size);
 
   void test();
+  void printResults(const std::vector<int> &combinationType, double seconds) const;
 };
 
 #endif // CONFIGURATION_MANAGER_H

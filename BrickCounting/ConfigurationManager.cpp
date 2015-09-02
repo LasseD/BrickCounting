@@ -77,6 +77,13 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   os.open(ss.str().c_str(), std::ios::out);
   std::cout << "." << std::endl;
 
+  // Store counters:
+  counter storeAttempts = attempts;
+  counter storeRectilinear = rectilinear;
+  counter storeModels = models;
+  counter storeProblematic = problematic;
+  attempts = rectilinear = models = problematic = 0;
+
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
     std::vector<FatSCC> v;
@@ -89,6 +96,8 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);
+
+  printResults(combinationType, seconds);  
 
   std::cout << std::endl;
   std::cout << "Results for combination type ";
@@ -111,6 +120,12 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
 #endif
   std::cout << std::endl;
+
+  // Restore counters
+  attempts+=storeAttempts;
+  rectilinear+=storeRectilinear;
+  models+=storeModels;
+  problematic+=storeProblematic;
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {
@@ -139,6 +154,10 @@ void ConfigurationManager::runForSize(int size) {
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);
+
+  std::vector<int> fakeCombination;
+  fakeCombination.push_back(size);
+  printResults(fakeCombination, seconds);
 
   // Output results:
   std::cout << "Results for size " << size << ":" << std::endl;
@@ -288,4 +307,28 @@ void ConfigurationManager::test() {
   pairs.push_back(IConnectionPair(icp3,icp4));
 
   sm.run(pairs, pools, pools, NULL, 0);//*/
+}
+
+void ConfigurationManager::printResults(const std::vector<int> &combinationType, double seconds) const {
+  std::stringstream ssFileName;
+  ssFileName << "results";
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+    ssFileName << "_" << *it;
+  }
+  ssFileName << ".txt";
+  std::ofstream ss;
+  ss.open(ssFileName.str().c_str(), std::ios::out);
+
+  ss << "Results for combination type";
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+    ss << " " << *it;
+  }
+  ss << ":" << std::endl;
+  ss << " Attempts:                                 " << attempts << std::endl;
+  ss << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
+  ss << " Models:                                   " << models << std::endl;
+  ss << " Models requiring manual confirmation:     " << problematic << std::endl;
+  ss << " Program execution time (seconds):         " << seconds << std::endl;
+  ss.flush();
+  ss.close();  
 }

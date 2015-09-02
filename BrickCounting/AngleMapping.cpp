@@ -431,8 +431,9 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     assert(ufS->getRootForPosition(rep) == unionI);
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
-    std::cout << sIsland << std::endl;
 
+#ifdef _DEBUG
+    std::cout << sIsland << std::endl;
     // TODO: FIXME: DEBUGGING BELOW:
     MPDPrinter h;
     int mIslandI = 0;
@@ -451,6 +452,7 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     std::vector<Connection> cc = getConfigurationConnections(sIsland.representative);
     encoder.writeFileName(ss, cc, true);
     h.print(ss.str());
+#endif
   }
 }
 
@@ -661,7 +663,8 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
 
       // Multiple M-islands inside => problematic. Count only this M-island.
       // No L-islands => problematic, but still count.
-      if(sIsland.mIslands.size() != 1 || mIsland.lIslands > 1) { 
+      if(sIsland.mIslands.size() != 1 || (numAngles != 1 && mIsland.lIslands != 1) || (numAngles == 1 && mIsland.lIslands > 1) ) {
+	--models; // Don't count anything problematic.
         reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
         anyMappingPrinted = true;
       }
