@@ -7,14 +7,8 @@
 #include "Brick.h"
 
 namespace UnionFind {
-  /*
-  uint32_t numUnions;
-  bool flattened;
-  std::set<uint32_t> *joins; // When join(a,b), a<b, b is inserted into joins[a].
-  uint32_t *minInUnions; // After flattening: Each index references min element in union. Might be element itself!
-  */
   UnionFindStructure::UnionFindStructure(uint32_t numUnions) : numUnions(numUnions), flattened(false) {
-    joins = new std::set<uint32_t>[numUnions];
+    joins = new std::vector<uint32_t>[numUnions];
   }
   UnionFindStructure::~UnionFindStructure() {
     assert(flattened);
@@ -23,16 +17,14 @@ namespace UnionFind {
 
   void UnionFindStructure::join(uint32_t a, uint32_t b) {
     assert(!flattened);
-    if(joins[a].find(b) == joins[a].end()) {
-      assert(joins[b].find(a) == joins[b].end());
-      joins[a].insert(b);
-      joins[b].insert(a);
-    }
+    joins[a].push_back(b);
+    joins[b].push_back(a);
   }
+
   void UnionFindStructure::join(const IntervalList &l1, const IntervalList &l2, uint32_t union1, uint32_t union2) {
     IntervalList::const_iterator it1 = l1.begin();
     IntervalList::const_iterator it2 = l2.begin();
-    
+
     while(it1 != l1.end() && it2 != l2.end()) {
       if(it2->second < it1->first) {
         ++it2;
@@ -55,11 +47,13 @@ namespace UnionFind {
       }
     }
   }
+
   uint32_t UnionFindStructure::getMinInUnion(uint32_t a) const {
     assert(flattened);
     assert(a < numUnions);
     return minInUnions[a];
   }
+
   void UnionFindStructure::flatten() {
     assert(!flattened);
     bool *handled = new bool[numUnions];
@@ -76,7 +70,7 @@ namespace UnionFind {
       roots.push_back(i);
 
       std::stack<uint32_t> s;
-      for(std::set<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it) {
+      for(std::vector<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it) {
         s.push(*it);
         handled[*it] = true;
       }
@@ -87,7 +81,7 @@ namespace UnionFind {
         s.pop();
         minInUnions[top] = i;
 
-        for(std::set<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
+        for(std::vector<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
           if(!handled[*it]) {
             s.push(*it);
             handled[*it] = true;
@@ -105,6 +99,7 @@ namespace UnionFind {
     assert(false);std::cerr << "DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
     int *die = NULL; die[0] = 42;
   }
+
   IntervalUnionFind& IntervalUnionFind::operator=(const IntervalUnionFind &) {
     return *(new IntervalUnionFind());
   }
@@ -163,6 +158,7 @@ namespace UnionFind {
       unionI += intervalSize;
     }
   }
+
   void IntervalUnionFind::buildUnions(unsigned int positionI, MixedPosition &position) {
     if(positionI < numStepDimensions) {
       for(unsigned short i = 0; i < dimensionSizes[positionI]; ++i) {
@@ -266,11 +262,13 @@ namespace UnionFind {
     Interval interval = M.get(intervalInfo.first, intervalInfo.second);
     rep.lastAngle = (interval.first + interval.second)/2;
   }
+
   std::vector<uint32_t>::const_iterator IntervalUnionFind::rootsBegin() const {
     std::vector<uint32_t>::const_iterator ret = ufs->roots.begin();
     ++ret;
     return ret;
   }
+
   std::vector<uint32_t>::const_iterator IntervalUnionFind::rootsEnd() const {
     return ufs->roots.end();
   }

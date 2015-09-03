@@ -23,7 +23,7 @@ namespace UnionFind {
   struct UnionFindStructure {
     uint32_t numUnions;
     bool flattened;
-    std::set<uint32_t> *joins; // When join(a,b), b is inserted into joins[a] and a into joins[b].
+    std::vector<uint32_t> *joins; // When join(a,b), b is inserted into joins[a] and a into joins[b].
     uint32_t *minInUnions; // After flattening: Each index references min element in union.
     std::vector<uint32_t> roots; // all distinct minInUnions-indices.
 

@@ -306,7 +306,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
   const IConnectionPair icp(ip1,ip2);
   TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
-
+  /*
   // First check quick clear:
   if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
     IntervalList full;
@@ -329,15 +329,16 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   if(sDone && mDone && lDone) {
     ++boosts[2];
     return;
-  }
+  }*/
 
   // Check using TSB:
   if(!sDone) {
     IntervalList l;
     tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
     SS->insert(smlI, l);
-    
+
 #ifdef _RM_DEBUG
+    //std::cout << smlI << ": " << l << std::endl;
     const unsigned short steps = 2*angleSteps[angleI]+1;
     bool *S = new bool[steps];
     math::intervalToArray(l, S, steps);

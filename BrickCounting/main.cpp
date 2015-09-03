@@ -96,10 +96,8 @@ int main(int numArgs, char** argV) {
   if(numArgs <= 1) {
     printUsage();
 #ifdef _DEBUG
-    ConfigurationManager mgr(3);
-    mgr.runForSize(3);
-    //ConfigurationManager mgr(4);
-    //mgr.test();
+    ConfigurationManager mgr(4);
+    mgr.test();
 #else
 #ifdef _COMPARE_ALGORITHMS
     ConfigurationManager mgr(4);

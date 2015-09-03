@@ -229,20 +229,41 @@ void ConfigurationManager::test() {
   //runForSize(4);
 
   std::vector<int> v;
-  v.push_back(1);
-  v.push_back(1);
+  v.push_back(2);
   v.push_back(1);
   v.push_back(1);
 
   //runForCombinationType(v, 3);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[0][0]);
-  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[1][3]);
   v2.push_back(sccs[0][0]);
   v2.push_back(sccs[0][0]);
   ConfigurationEncoder encoder(v2);
 
+  std::ofstream os;
+  os.open("temp.txt", std::ios::out);
+  runForCombination(v2, v, -1, os);//*/
+  /*
+  std::vector<IConnectionPair> pairs;
+  RectilinearBrick b0;
+  RectilinearBrick &b1 = sccs[1][3].otherBricks[0];
+
+  IConnectionPoint icp1(BrickIdentifier(3,1,0),ConnectionPoint(NW,b1,false,1));
+  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,true ,0));
+  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NE,b0,false,0));
+  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,true ,0));
+
+  pairs.push_back(IConnectionPair(icp1,icp2));
+  pairs.push_back(IConnectionPair(icp3,icp4));
+
+  SingleConfigurationManager sm(v2, os);
+  std::vector<IConnectionPoint> pools;
+  sm.run(pairs, pools, pools, NULL, 0);
+
+
+
+  /*
   uint64_t encoded1 = 1082724547;
   uint64_t encoded2 = 1111896211;
   IConnectionPairList list1, list2;
