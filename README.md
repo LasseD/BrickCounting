@@ -26,13 +26,15 @@ We seek to find the number of ways six bricks can be connected when using all po
 
 ## Findings
 
-In this section we present our findings. This is a work in progress, so the results are still incomplete. The first table shows the current totals. The numbers marked with an asterix (*) are not final. 
+This is a work in progress, so the results are still incomplete. The table shows the current totals. The numbers marked with an asterix (*) are not final. 
 
 |  Bricks    | 1 |  2 |     3 |       4 |          5 |           6 | 
 |:----------:|--:|---:|------:|--------:|-----------:|------------:|
 | **SCC**    | 1 | 20 | 1.004 |  58.862 |  3.817.291 | 261.534.637 |
 | **RC**     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| **Models** | 0 |  0 |     0 |  *1.038 |   *116.998 | *19.701.710 |
+| **Models** | 0 |  0 |     0 |  *1.054 |   *116.998 | *19.701.710 |
+
+Please refer to [Findings](http://c-mt.dk/counting/findings.php) for a breakdown of the current findings.
 
 ## Examples
 
