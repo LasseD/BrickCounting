@@ -9,6 +9,9 @@ namespace math {
   bool eqEpsilon(double a, double b) {
     return a >= b-EPSILON && a <= b+EPSILON;
   }
+  bool eqEpsilon(const Point &p1, const Point &p2) {
+    return eqEpsilon(p1.X,p2.X) && eqEpsilon(p1.Y,p2.Y);
+  }
   double round(double number) {
     return number < 0.0 ? ceil(number - 0.5) : floor(number + 0.5);
   }
@@ -69,6 +72,21 @@ namespace math {
     if(ai2 > M_PI)
       ai2-=2*M_PI;
     return true;
+  }
+
+  bool circleCutoutIntersectsLineSegment(double r, const RadianInterval &circleInterval, const LineSegment &l) {
+    Point i1, i2;
+    int intersections = math::findCircleLineIntersections(r, l, i1, i2);
+    if(intersections == 0)
+      return false;
+    // Return true if one of the intersections is between minAngle and maxAngle:
+    if(math::betweenEndPointsOfLineSegmentEpsilon(l.P1, i1, l.P2) && math::inRadianInterval(math::angleOfPoint(i1), circleInterval)) {
+      return true;
+    }
+    if(math::betweenEndPointsOfLineSegmentEpsilon(l.P1, i2, l.P2) && math::inRadianInterval(math::angleOfPoint(i2), circleInterval)) {
+      return true;
+    }
+    return false;
   }
 
   // From http://mathworld.wolfram.com/Circle-LineIntersection.html
@@ -149,6 +167,10 @@ namespace math {
   bool between(double a, double b, double c) {
     return (a <= b && b <= c) || (a >= b && b >= c);
   }
+  bool betweenEpsilon(double a, double b, double c) {
+    return (a-EPSILON <= b && b <= c+EPSILON) || (a+EPSILON >= b && b >= c-EPSILON);
+  }
+
   bool inRadianInterval(double a, const RadianInterval &interval) {
     const double &from = interval.P1;
     const double &to = interval.P2;
@@ -164,8 +186,8 @@ namespace math {
     }
     return from <= a && a <= to;
   }
-  bool between(const Point &a, const Point &b, const Point &c) {
-    return between(a.X, b.X, c.X) && between(a.Y, b.Y, c.Y);
+  bool betweenEndPointsOfLineSegmentEpsilon(const Point &a, const Point &b, const Point &c) {
+    return betweenEpsilon(a.X, b.X, c.X) && betweenEpsilon(a.Y, b.Y, c.Y);
   }
   double angleOfPoint(const Point &p) {
     return atan2(p.Y,p.X);
@@ -318,6 +340,13 @@ namespace math {
       return it->first <= d;
     }
     return false;
+  }
+
+  bool isFullInterval(const IntervalList &a, double min, double max) {
+    if(a.size() != 1)
+      return false;
+    const Interval &interval = *a.begin();
+    return eqEpsilon(interval.first, min) && eqEpsilon(interval.second, max);
   }
 
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b) {
@@ -517,7 +546,7 @@ namespace math {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
 #ifdef _DEBUG
-    std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
+    //std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
     for(unsigned int i = 0; i < indicatorSize; ++i)
       indicators[i] = IntervalIndicator(9999, 9999);
 #endif

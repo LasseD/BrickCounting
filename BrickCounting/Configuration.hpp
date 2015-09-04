@@ -354,7 +354,7 @@ struct Configuration : public LDRPrintable {
   }
 
   void toLDR(std::ofstream &os, int) const {    
-    int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, 3, 85, LDR_COLOR_BLACK};
+    int colors[6] = {LDR_COLOR_RED, LDR_COLOR_YELLOW, LDR_COLOR_BLUE, LDR_COLOR_GREEN, LDR_COLOR_ORANGE, LDR_COLOR_PURPLE};
 
     for(int i = 0; i < bricksSize; ++i) {
       const Brick &b = bricks[i].b;

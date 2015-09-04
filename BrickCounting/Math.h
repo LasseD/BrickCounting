@@ -35,6 +35,7 @@ std::ostream& operator<<(std::ostream &os, const LineSegment& l);
 
 namespace math {
   bool eqEpsilon(double a, double b);
+  bool eqEpsilon(const Point &p1, const Point &p2);
   double round(double number);
   int signum(double d);
   double abs(double d);
@@ -43,8 +44,9 @@ namespace math {
   double distSq(const Point &p1, const Point &p2);
   double dist(const Point &p1, const Point &p2);
   bool between(double a, double b, double c);
+  bool betweenEpsilon(double a, double b, double c);
   bool inRadianInterval(double a, const RadianInterval &interval);
-  bool between(const Point &a, const Point &b, const Point &c);
+  bool betweenEndPointsOfLineSegmentEpsilon(const Point &a, const Point &b, const Point &c);
   double angleOfPoint(const Point &p);
   /*
     Normalize an angle to the interval [-PI;PI[ in radians.
@@ -53,6 +55,7 @@ namespace math {
 
   bool intervalEquals(const IntervalList &a, const IntervalList &b);
   bool intervalContains(const IntervalList &a, double d);
+  bool isFullInterval(const IntervalList &a, double min, double max);
   IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
   IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b);
   IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax);
@@ -69,6 +72,8 @@ namespace math {
 
   int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2);
   bool findCircleLineIntersections(double r, const LineSegment &l, double &ai1, double &ai2);
+  bool circleCutoutIntersectsLineSegment(double r, const RadianInterval &circleInterval, const LineSegment &l);
+
   /*
     The half plane is divided by the line 
    */

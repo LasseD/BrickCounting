@@ -306,9 +306,24 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
   const IConnectionPair icp(ip1,ip2);
   TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
-  /*
+  
   // First check quick clear:
   if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
+#ifdef _DEBUG
+    // Check that algorithms agree:
+    IntervalList l;
+    tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
+    if(!math::isFullInterval(l,-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS)) {
+      MPDPrinter h;
+      Configuration c3 = getConfiguration(c, angleI, angleSteps[angleI]);
+      h.add("isClearFail", &c3);
+      h.print("isClearFail");
+
+      tsbInvestigator.isClear<-1>(possibleCollisions);
+      assert(false);
+    }
+    assert(math::isFullInterval(l,-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+#endif
     IntervalList full;
     full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
     SS->insert(smlI, full);
@@ -329,7 +344,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   if(sDone && mDone && lDone) {
     ++boosts[2];
     return;
-  }*/
+  }
 
   // Check using TSB:
   if(!sDone) {
@@ -433,8 +448,10 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     SIsland sIsland(this, unionI, rep);
     sIslands.push_back(sIsland);
 
-#ifdef _DEBUG
+#ifdef _TRACE
     std::cout << sIsland << std::endl;
+#endif
+#ifdef _RM_DEBUG
     // TODO: FIXME: DEBUGGING BELOW:
     MPDPrinter h;
     int mIslandI = 0;

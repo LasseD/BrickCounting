@@ -8,6 +8,9 @@
 #define LDR_COLOR_YELLOW 14
 #define LDR_COLOR_BLACK 0
 #define LDR_COLOR_BLUE 1
+#define LDR_COLOR_GREEN 2
+#define LDR_COLOR_ORANGE 25
+#define LDR_COLOR_PURPLE 22
 
 class LDRPrintable {
 public:

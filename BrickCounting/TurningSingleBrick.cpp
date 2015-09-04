@@ -45,18 +45,7 @@ MovingStud::MovingStud(double radius, double min, double max) : radius(radius), 
 A fan intersects a line segment if the segment intersects the circle between minAngle and maxAngle
 */
 bool Fan::intersectsLineSegment(const LineSegment &l) const {
-  Point i1, i2;
-  int intersections = math::findCircleLineIntersections(radius-EPSILON, l, i1, i2);
-  if(intersections == 0)
-    return false;
-  // Return true if one of the intersections is between minAngle and maxAngle:
-  if(math::between(l.P1, i1, l.P2) && math::inRadianInterval(math::angleOfPoint(i1), interval)) {
-    return true;
-  }
-  if(math::between(l.P1, i2, l.P2) && math::inRadianInterval(math::angleOfPoint(i2), interval)) {
-    return true;
-  }
-  return false;
+  return math::circleCutoutIntersectsLineSegment(radius, interval, l);
 }
 
 /*
@@ -75,12 +64,14 @@ std::ostream& operator<<(std::ostream &os, const Fan& f) {
 
 /*
 A tract intersects a line segment if both end points of the line segment lie inside the tract, or if the line segment intersects either the inner or outer tract wall.
+Line segment l = P1,P2.
 */
 bool MovingStud::tractIntersectsLineSegment(const LineSegment &l) const {
   const double normP1 = math::norm(l.P1);
   const double normP2 = math::norm(l.P2);
   const double innerWallRadius = radius - STUD_RADIUS;
   const double outerWallRadius = radius + STUD_RADIUS;
+
   bool endPointsBetweenWalls = (innerWallRadius <= normP1 && normP1 <= outerWallRadius) &&
                                (innerWallRadius <= normP2 && normP2 <= outerWallRadius);
   bool endPointsInside = endPointsBetweenWalls && (math::inRadianInterval(math::angleOfPoint(l.P1), interval) || 
