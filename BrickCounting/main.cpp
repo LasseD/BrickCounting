@@ -126,7 +126,12 @@ int main(int numArgs, char** argV) {
       printUsage();
       return 2;
     }
+
+#ifdef _COMPARE_ALGORITHMS
     ConfigurationManager mgr(sccSize);
+#else
+    ConfigurationManager mgr(sccSize-1);
+#endif
     mgr.runForSize(sccSize);
     return 0;
   }
@@ -155,7 +160,11 @@ int main(int numArgs, char** argV) {
   }
 
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
+#ifdef _COMPARE_ALGORITHMS
   ConfigurationManager mgr(combinedSize);
+#else
+  ConfigurationManager mgr(maxSccSize);
+#endif
   mgr.runForCombinationType(combinationType, combinedSize);
   return 0;
 }

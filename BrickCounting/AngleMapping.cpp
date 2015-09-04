@@ -44,6 +44,7 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
   }
 
   setupAngleTypes();
+  int numFreeAngles = 0;
   // Set up angle steps:
   for(i = 0; i < numAngles; ++i) {
     switch(angleTypes[i]) {
@@ -52,15 +53,19 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
       break;
     case 1:
       angleSteps[i] = STEPS_1;
+      ++numFreeAngles;
       break;
     case 2:
       angleSteps[i] = STEPS_2;
+      ++numFreeAngles;
       break;
     case 3:
       angleSteps[i] = STEPS_3;
+      ++numFreeAngles;
       break;
     }
   }
+  singleFreeAngle = numFreeAngles == 1;
 
   // sizeMappings:
   sizeMappings = 1;
@@ -250,9 +255,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
-      bool noS2 = noS || !c2.isRealizable<-1>(possibleCollisions, sccs[ip2I].size);
-      bool noM2 = noM || !c2.isRealizable< 0>(possibleCollisions, sccs[ip2I].size);
-      bool noL2 = noL || !c2.isRealizable< 1>(possibleCollisions, sccs[ip2I].size);
+      bool noS2 = noS || !(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
+      bool noM2 = noM || !c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size);
+      bool noL2 = noL || !(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
 
       evalSML(angleI+1, smlI + i, c2, noS2, noM2, noL2);
     }
@@ -283,7 +288,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     full.push_back(Interval(-EPSILON,EPSILON));
 
     if(!sDone) {
-      if(c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size))
+      if(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size))
         SS->insert(smlI, full);
       else
         SS->insertEmpty(smlI);
@@ -295,7 +300,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
         MM->insertEmpty(smlI);
     }
     if(!lDone) {
-      if(c2.isRealizable<1>(possibleCollisions, sccs[numAngles].size))
+      if(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size))
         LL->insert(smlI, full);
       else
         LL->insertEmpty(smlI);
@@ -308,18 +313,18 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
   
   // First check quick clear:
-  if(!sDone && tsbInvestigator.isClear<-1>(possibleCollisions)) {
+  if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
 #ifdef _DEBUG
     // Check that algorithms agree:
     IntervalList l;
-    tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
+    tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
     if(!math::isFullInterval(l,-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS)) {
       MPDPrinter h;
       Configuration c3 = getConfiguration(c, angleI, angleSteps[angleI]);
       h.add("isClearFail", &c3);
       h.print("isClearFail");
 
-      tsbInvestigator.isClear<-1>(possibleCollisions);
+      tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions);
       assert(false);
     }
     assert(math::isFullInterval(l,-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
@@ -335,7 +340,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     MM->insert(smlI, full);
     mDone = true;
   }
-  if(!lDone && tsbInvestigator.isClear<1>(possibleCollisions)) {
+  if(!lDone && (singleFreeAngle ? tsbInvestigator.isClear<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
     IntervalList full;
     full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
     LL->insert(smlI, full);
@@ -349,7 +354,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   // Check using TSB:
   if(!sDone) {
     IntervalList l;
-    tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
+    if(singleFreeAngle)
+      tsbInvestigator.allowableAnglesForBricks<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
+    else
+      tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
     SS->insert(smlI, l);
 
 #ifdef _RM_DEBUG
@@ -361,7 +369,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     int numDisagreements = 0;
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
-      if(S[i] != c2.isRealizable<-1>(possibleCollisions, sccs[numAngles].size)) {
+      if(S[i] != c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size)) {
         ++numDisagreements;
       }
     }
@@ -385,7 +393,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
       bool first = true;
       for(unsigned short j = 0; j < steps; ++j) {
         Configuration c3 = getConfiguration(c, angleI, j);
-        bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size);
         if(realizable != S[j]) {
           std::stringstream ss;
           ss << "fail_" << j;
@@ -404,7 +412,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
       std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
       for(unsigned short j = 0; j < steps; ++j) {
         Configuration c3 = getConfiguration(c, angleI, j);
-        bool realizable = c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
+        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size);
         if(realizable != S[j]) {
           if(first) {
             std::cout << "Configuration of first disagreement: " << c3 << std::endl;
@@ -414,10 +422,6 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
           std::cout << " Angle step: " << j << ", radians: " << angle.toRadians() << (realizable ? ", IsRealizable OK, intervals not." : ", Intervals OK, isRealizable not") << std::endl;
         }
       }
-      Configuration c3 = getConfiguration(c, angleI, 0);
-      c3.isRealizable<-1>(possibleCollisions, sccs[numAngles].size);
-      l.clear();
-      tsbInvestigator.allowableAnglesForBricks<-1>(possibleCollisions, l);
       assert(false);std::cerr << "DIE X003" << std::endl;
       int *die = NULL; die[0] = 42;
     }
@@ -431,7 +435,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   }
   if(!lDone) {
     IntervalList l;
-    tsbInvestigator.allowableAnglesForBricks<1>(possibleCollisions, l);
+    if(singleFreeAngle)
+      tsbInvestigator.allowableAnglesForBricks<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
+    else
+      tsbInvestigator.allowableAnglesForBricks<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
     LL->insert(smlI, l);
   }
   ++boosts[3];
@@ -657,20 +664,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         continue; // Already found. This can happen when there are cycles.
 
       Configuration c = getConfiguration(mIsland.representative);
-#ifdef _DEBUG
-      std::vector<IConnectionPair> ignore;
-      if(!c.isRealizable<-1>(ignore)) {
-        reportProblematic(mIsland.representative, 0, 0, 0, manual, true);
-        MPDPrinter h;
-        h.add("mIslandFail", &c); // OK Be cause we are about to die.
-        h.print("mIslandFail");
-
-        Configuration cx(sccs[0]);
-        evalSML(0, 0, cx, false, false, false);
-
-        assert(false);
-      }
-#endif
       if(!mIsland.isRectilinear) {
         ++models; // cound all non-rectilinear as models.
         modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
@@ -682,7 +675,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       // Multiple M-islands inside => problematic. Count only this M-island.
       // No L-islands => problematic, but still count.
       if(sIsland.mIslands.size() != 1 || (numAngles != 1 && mIsland.lIslands != 1) || (numAngles == 1 && mIsland.lIslands > 1) ) {
-	--models; // Don't count anything problematic.
+        --models; // Don't count anything problematic.
         reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
         anyMappingPrinted = true;
       }

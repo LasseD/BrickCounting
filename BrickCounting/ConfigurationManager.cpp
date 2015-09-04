@@ -289,10 +289,10 @@ void ConfigurationManager::test() {
   FatSCC min = c1.toMinSCC();
 
   std::vector<IConnectionPair> found1, found2;
-  c1.isRealizable<-1>(found1);
+  c1.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found1);
   uint64_t encoding1 = encoder.encode(found1).first;
   std::cout << "Encoding 1: " << encoding1 << std::endl;
-  c2.isRealizable<-1>(found2);
+  c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found2);
   uint64_t encoding2 = encoder.encode(found2).first;
   std::cout << "Encoding 2: " << encoding2 << std::endl;
 

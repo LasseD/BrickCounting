@@ -46,6 +46,7 @@ public:
   MixedPosition rectilinearPosition;
   counter boosts[BOOST_STAGES];
 private:
+  bool singleFreeAngle;
   std::ofstream &os;
 
 public:
@@ -130,7 +131,7 @@ struct SIsland {
 
       Configuration c = a->getConfiguration(rep);
       std::vector<IConnectionPair> found;
-      c.isRealizable<-1>(found);
+      c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
       bool isCyclic = found.size() > a->numAngles;
       Encoding encoding = a->encoder.encode(found);
 
