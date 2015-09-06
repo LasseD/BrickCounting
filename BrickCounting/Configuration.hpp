@@ -31,7 +31,7 @@ struct StepAngle {
   unsigned short d; // denominator
 
   StepAngle() : n(0), d(1) {}
-  StepAngle(double d) : n((short)math::round(d*10000/MAX_ANGLE_RADIANS)), d(10000) {}
+  StepAngle(double n) : n((short)math::round(n*10000/MAX_ANGLE_RADIANS)), d(10000) {}
   StepAngle(short n, unsigned short d) : n(n), d(d) {
     assert(d != 0);
     assert(-d <= n);
@@ -85,21 +85,9 @@ struct Connection {
   StepAngle angle;
   IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
   Connection(){}
-  Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) {
-    if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      assert(false);std::cerr << "DIE X687464" << std::endl;
-      int *die = NULL; die[0] = 42;
-      std::swap(p1, p2);
-    }
-  }
+  Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) { }
   Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
-  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) {
-    if(p1.first.configurationSCCI > p2.first.configurationSCCI) {
-      assert(false);std::cerr << "DIE X687463" << std::endl;
-      int *die = NULL; die[0] = 42;
-      std::swap(this->p1, this->p2);
-    }  
-  } 
+  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) { } 
   double angleToRadians() const {
     return angle.toRadians();
   }

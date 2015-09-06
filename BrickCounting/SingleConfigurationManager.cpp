@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <time.h>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os) : 
-    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), rectilinear(0) {
+SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly) : 
+    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), rectilinear(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -27,7 +27,8 @@ SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC>
   }
 }
 
-void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConnectionPoint> &oldPool, const std::vector<IConnectionPoint>::const_iterator &itIgnoreFromOld, const std::set<ConnectionPoint> &newElements, unsigned long newSCCI, int newConfigurationSCCI) {
+void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConnectionPoint> &oldPool, const std::vector<IConnectionPoint>::const_iterator &itIgnoreFromOld, 
+                const std::set<ConnectionPoint> &newElements, unsigned long newSCCI, int newConfigurationSCCI) {
   for(std::vector<IConnectionPoint>::const_iterator it = oldPool.begin(); it != oldPool.end(); ++it) {
     if(it != itIgnoreFromOld)
       newPool.push_back(*it);
@@ -49,7 +50,7 @@ void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConne
 
 bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList &l) const {
   // Find out if IConnectionPairList created on rotated SCC is "smaller":
-  // Step one: Divide COnnectionPoints for the SCCs:
+  // Step one: Divide ConnectionPoints for the SCCs:
   std::vector<ConnectionPoint> pointsForSccs[6];
   for(std::set<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it) {
     const IConnectionPoint &cp1 = it->first;
@@ -92,56 +93,61 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     }
 
     ++attempts;
-    AngleMapping angleMapping(combination, combinationSize, l, encoder, os);
+    AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
 
-    std::vector<std::pair<Configuration,MIsland> > newRectilinear;
-    angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear);
-    for(int i = 0; i < BOOST_STAGES; ++i) {
-      angleMappingBoosts[i] += angleMapping.boosts[i];
-    }
-    rectilinear += newRectilinear.size();
+    if(!findExtremeAnglesOnly) {
+      std::vector<std::pair<Configuration,MIsland> > newRectilinear;
+      angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear);
+      for(int i = 0; i < BOOST_STAGES; ++i) {
+        angleMappingBoosts[i] += angleMapping.boosts[i];
+      }
+      rectilinear += newRectilinear.size();
 
 #ifdef _DEBUG
-    MPDPrinter h;
-    for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
-      const Configuration &c = it->first;
+      MPDPrinter h;
+      for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+        const Configuration &c = it->first;
+        std::stringstream ss;
+        ss << "rc_" << it->second.encoding.first;
+        h.add(ss.str(), new Configuration(c)); // OK Be cause we are debugging.
+      }
       std::stringstream ss;
-      ss << "rc_" << it->second.encoding.first;
-      h.add(ss.str(), new Configuration(c)); // OK Be cause we are debugging.
-    }
-    std::stringstream ss;
-    ss << "rc\\rectilinear_configurations_" << encoded;
-    h.print(ss.str());
+      ss << "rc\\rectilinear_configurations_" << encoded;
+      h.print(ss.str());
 #endif
 
 #ifdef _COMPARE_ALGORITHMS
-    for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
-      FatSCC min = it->first.toMinSCC();
+      for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+        FatSCC min = it->first.toMinSCC();
 
-      if(foundSCCs.find(min) != foundSCCs.end()) {
-        std::cout << "Duplicate found (encoding): " << it->second.encoding.first << std::endl;
-        std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
-        std::cout << "Duplicate found (config): " << it->first << std::endl;
-        std::cout << "Duplicate found: " << min << std::endl;
-        std::cout << "Island info:" << std::endl;
-        std::cout << " rectilinear: " << it->second.isRectilinear << std::endl;
-        std::cout << " |rep|: " << it->second.sizeRep << std::endl;
-        std::cout << " rep: " << std::endl;
-        for(unsigned int i = 0; i < it->second.sizeRep; ++i)
-          std::cout << "  " << it->second.representative.p[i] << std::endl;
-        std::cout << "  " << it->second.representative.lastAngle << std::endl;
-        std::cout << "Connections: " << list << std::endl;
+        if(foundSCCs.find(min) != foundSCCs.end()) {
+          std::cout << "Duplicate found (encoding): " << it->second.encoding.first << std::endl;
+          std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
+          std::cout << "Duplicate found (config): " << it->first << std::endl;
+          std::cout << "Duplicate found: " << min << std::endl;
+          std::cout << "Island info:" << std::endl;
+          std::cout << " rectilinear: " << it->second.isRectilinear << std::endl;
+          std::cout << " |rep|: " << it->second.sizeRep << std::endl;
+          std::cout << " rep: " << std::endl;
+          for(unsigned int i = 0; i < it->second.sizeRep; ++i)
+            std::cout << "  " << it->second.representative.p[i] << std::endl;
+          std::cout << "  " << it->second.representative.lastAngle << std::endl;
+          std::cout << "Connections: " << list << std::endl;
 
-        MPDPrinter h;
-        Configuration cf(min);
-        h.add("duplicate", &cf);
-        h.print("duplicate");
-        assert(false);std::cerr << "DIE X0010" << std::endl;
-        int *die = NULL; die[0] = 42;
+          MPDPrinter h;
+          Configuration cf(min);
+          h.add("duplicate", &cf);
+          h.print("duplicate");
+          assert(false);std::cerr << "DIE X0010" << std::endl;
+          int *die = NULL; die[0] = 42;
+        }
+        foundSCCs.insert(std::make_pair(min,it->second.encoding.first));
       }
-      foundSCCs.insert(std::make_pair(min,it->second.encoding.first));
-    }
 #endif
+    }
+    else {
+      angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, models, rectilinear);
+    }
 
     return;
   }

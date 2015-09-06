@@ -140,7 +140,7 @@ Point Brick::getStudPosition(ConnectionPointType type) const {
   case NE: dx = HALF_STUD_DISTANCE; dy = STUD_AND_A_HALF_DISTANCE; break;
   case SE: dx = HALF_STUD_DISTANCE; dy = -STUD_AND_A_HALF_DISTANCE; break;
   case SW: dx = -HALF_STUD_DISTANCE; dy = -STUD_AND_A_HALF_DISTANCE; break;
-  default: dx = 0; dy = 0; std::cout << "ARRR!" << std::endl; break;
+  default: assert(false);std::cerr << "ConnectionPointTypeEnum" << std::endl;int *die = NULL; die[0] = 42;dx = 0; dy = 0;
   }
   double dx2 = dx*cosa - dy*sina;
   double dy2 = dx*sina + dy*cosa;

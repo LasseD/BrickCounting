@@ -8,7 +8,7 @@
 
 void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os) {
   if(combination.size() == combinationType.size()) {
-    SingleConfigurationManager mgr(combination, os);
+    SingleConfigurationManager mgr(combination, os, findExtremeAnglesOnly);
     mgr.run();
 
     attempts+=mgr.attempts;
@@ -109,8 +109,13 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " (Accumulated totals):" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  std::cout << " Models:                                   " << models << std::endl;
-  std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  if(findExtremeAnglesOnly) {
+    std::cout << " NRCs:                                     " << models << std::endl;
+  }
+  else {
+    std::cout << " Models:                                   " << models << std::endl;
+    std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  }
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
 #ifdef _COMPARE_ALGORITHMS
   std::cout << " Boosts performed in AngleMappings:" << std::endl;
@@ -163,8 +168,13 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << "Results for size " << size << ":" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  std::cout << " Models:                                   " << models << std::endl;
-  std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  if(findExtremeAnglesOnly) {
+    std::cout << " NRCs:                                     " << models << std::endl;
+  }
+  else {
+    std::cout << " Models:                                   " << models << std::endl;
+    std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  }
   std::cout << " Program execution time (seconds):         " << seconds << std::endl;
 #ifdef _DEBUG
   std::cout << " Boosts performed in AngleMappings:" << std::endl;
@@ -188,7 +198,7 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << std::endl;
 }
 
-ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectilinear(0), models(0), problematic(0) {
+ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAnglesOnly) : attempts(0), rectilinear(0), models(0), problematic(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -226,18 +236,16 @@ ConfigurationManager::ConfigurationManager(int maxSccSize) : attempts(0), rectil
 }
 
 void ConfigurationManager::test() {
-  //runForSize(4);
-
   std::vector<int> v;
   v.push_back(2);
-  v.push_back(1);
+  v.push_back(2);
   v.push_back(1);
 
-  //runForCombinationType(v, 3);
+  //runForCombinationType(v, 5);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][3]);
-  v2.push_back(sccs[0][0]);
+  v2.push_back(sccs[1][0]);
+  v2.push_back(sccs[1][0]);
   v2.push_back(sccs[0][0]);
   ConfigurationEncoder encoder(v2);
 
@@ -340,15 +348,22 @@ void ConfigurationManager::printResults(const std::vector<int> &combinationType,
   std::ofstream ss;
   ss.open(ssFileName.str().c_str(), std::ios::out);
 
-  ss << "Results for combination type";
+  ss << "Results for combination type ";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
-    ss << " " << *it;
+    if(it != combinationType.begin())
+      ss << "/";
+    ss << *it;
   }
   ss << ":" << std::endl;
   ss << " Attempts:                                 " << attempts << std::endl;
   ss << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  ss << " Models:                                   " << models << std::endl;
-  ss << " Models requiring manual confirmation:     " << problematic << std::endl;
+  if(findExtremeAnglesOnly) {
+    ss << " NRCs:                                     " << models << std::endl;
+  }
+  else {
+    ss << " Models:                                   " << models << std::endl;
+    ss << " Models requiring manual confirmation:     " << problematic << std::endl;
+  }
   ss << " Program execution time (seconds):         " << seconds << std::endl;
   ss.flush();
   ss.close();  

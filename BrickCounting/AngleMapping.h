@@ -46,15 +46,15 @@ public:
   MixedPosition rectilinearPosition;
   counter boosts[BOOST_STAGES];
 private:
-  bool singleFreeAngle;
+  bool singleFreeAngle, findExtremeAnglesOnly;
   std::ofstream &os;
 
 public:
-  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os);
+  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly);
   AngleMapping& operator=(const AngleMapping &tmp) {
     assert(false); // Assignment operator should not be used.
     std::vector<IConnectionPair> cs;
-    AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os);
+    AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os, false);
     return *ret;
   }
   ~AngleMapping();
@@ -64,16 +64,16 @@ public:
   2) Combine regions in S,M,L in order to determine new models.
   */
   void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
+  void findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect);
   Configuration getConfiguration(const MixedPosition &p) const;
 
 private:
   void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const;
-  //void findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
+  void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
   void findIslands(std::vector<SIsland> &sIslands);
-  //void findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr);
   void setupAngleTypes();
-  //Configuration getConfiguration(const Position &p) const;
+  Configuration getConfiguration(const Configuration &baseConfiguration, double lastAngle) const;
   Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
   std::vector<Connection> getConfigurationConnections(const MixedPosition &p) const;
 };

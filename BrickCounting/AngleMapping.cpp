@@ -24,7 +24,8 @@ namespace math {
   }
 }
 
-AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os) : numAngles(numScc-1), numBricks(0), encoder(encoder), os(os) {
+AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
+    numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly) {
   // Boosts:
   for(int i = 0; i < BOOST_STAGES; ++i)
     boosts[i] = 0;
@@ -67,6 +68,9 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
   }
   singleFreeAngle = numFreeAngles == 1;
 
+  if(findExtremeAnglesOnly)
+    return; // no setup of smappings.
+
   // sizeMappings:
   sizeMappings = 1;
   for(i = 0; i < numAngles-1; ++i) {
@@ -83,6 +87,8 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
 }
 
 AngleMapping::~AngleMapping() {
+  if(findExtremeAnglesOnly)
+    return; // no setup of smappings.
   delete SS;
   delete MM;
   delete LL;
@@ -166,20 +172,6 @@ void AngleMapping::setupAngleTypes() {
   }
 }
 
-/*
-Configuration AngleMapping::getConfiguration(const Position &p) const {
-  Configuration c(sccs[0]);
-  for(unsigned int i = 0; i < numAngles; ++i) {
-    const IConnectionPoint &ip1 = points[2*i];
-    const IConnectionPoint &ip2 = points[2*i+1];
-    const StepAngle angle((short)p.p[i]-(short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
-    const Connection cc(ip1, ip2, angle);
-    assert(ip2.P1.configurationSCCI != 0);
-    c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
-  }
-  return c;
-}*/
-
 Configuration AngleMapping::getConfiguration(const MixedPosition &p) const {
   Configuration c(sccs[0]);
   for(unsigned int i = 0; i < numAngles-1; ++i) {
@@ -207,6 +199,19 @@ Configuration AngleMapping::getConfiguration(const Configuration &baseConfigurat
   const IConnectionPoint &ip1 = points[2*angleI];
   const IConnectionPoint &ip2 = points[2*angleI+1];
   const StepAngle angle((short)angleStep-(short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
+  const Connection cc(ip1, ip2, angle);
+  assert(ip2.P1.configurationSCCI != 0);
+  c.add(sccs[ip2.P1.configurationSCCI], ip2.first.configurationSCCI, cc);
+
+  return c;
+}
+
+Configuration AngleMapping::getConfiguration(const Configuration &baseConfiguration, double lastAngle) const {
+  Configuration c(baseConfiguration);
+
+  const IConnectionPoint &ip1 = points[2*(numAngles-1)];
+  const IConnectionPoint &ip2 = points[2*(numAngles-1)+1];
+  const StepAngle angle(lastAngle);
   const Connection cc(ip1, ip2, angle);
   assert(ip2.P1.configurationSCCI != 0);
   c.add(sccs[ip2.P1.configurationSCCI], ip2.first.configurationSCCI, cc);
@@ -481,55 +486,6 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
   }
 }
 
-/*
-void AngleMapping::findExtremeConfigurations(unsigned int angleI, Position &p, bool allZero, std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr) {
-  if(angleI < numAngles) {
-    p.p[angleI] = 0;
-    findExtremeConfigurations(angleI+1, p, false, rect, nonRect, toLdr);
-
-    p.p[angleI] = 2*angleSteps[angleI];
-    findExtremeConfigurations(angleI+1, p, false, rect, nonRect, toLdr);
-
-    // Also try no angle - just in case:
-    p.p[angleI] = angleSteps[angleI]-1;
-    findExtremeConfigurations(angleI+1, p, allZero, rect, nonRect, toLdr);
-
-    return;
-  }
-  if(allZero)
-    return;
-
-  Configuration c = getConfiguration(p);
-  std::vector<IConnectionPair> found;
-  if(!c.isRealizable<0>(found))
-    return; // Not possible to build.
-  Encoding encoded = encoder.encode(found);
-  if(rect.find(encoded) != rect.end())
-    return; // Already known as rect.
-  if(nonRect.find(encoded) != nonRect.end())
-    return; // Already known as nonRect.
-  nonRect.insert(encoded);
-  if(found.size() != numAngles)
-    toLdr.push_back(getConfigurationConnections(p)); // cyclic!
-}
-
-void AngleMapping::findNewExtremeConfigurations(std::set<Encoding> &rect, std::set<Encoding> &nonRect, std::vector<std::vector<Connection> > &toLdr) {
-  Position p;
-  p.init();
-
-  //Initially try rectilinear:
-  Configuration rectilinear = getConfiguration(p);
-  std::vector<IConnectionPair> found; // Currently ignored.
-  if(rectilinear.isRealizable<0>(found)) { // Rectilinear:
-    assert(found.size() >= numAngles);
-    Encoding encoded = encoder.encode(found);
-    if(rect.find(encoded) == rect.end()) {
-      rect.insert(encoded);
-    }
-  }
-  findExtremeConfigurations(0, p, true, rect, nonRect, toLdr);
-}*/
-
 void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const {
   std::vector<Connection> cc = getConfigurationConnections(p);
 
@@ -597,7 +553,159 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
+void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect) {
+  // Find possible collisions:
+  const IConnectionPoint &ip1 = points[2*angleI];
+  const IConnectionPoint &ip2 = points[2*angleI+1];
+  unsigned int ip2I = ip2.first.configurationSCCI;
+  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2));
+
+  // Recursion:
+  if(angleI+1 < numAngles) {
+    Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
+    if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+      evalExtremeConfigurations(angleI+1, c2, rectilinear, nonCyclic, cyclic, models, rect);
+
+    if(angleSteps[angleI] != 0) {
+      for(short i = 0; i <= 1; ++i) {
+        c2 = getConfiguration(c, angleI, 2*i*angleSteps[angleI]);
+        if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+          evalExtremeConfigurations(angleI+1, c2, false, nonCyclic, cyclic, models, rect);
+      }
+    }
+    return;
+  }
+
+  // End of recursion:
+  assert(angleI == numAngles-1);
+  const IConnectionPair icp(ip1,ip2);
+  TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
+  
+  // Speed up for noSML:
+  if(angleTypes[angleI] == 0) {
+    Configuration c2 = getConfiguration(c, angleI, 0);
+
+    if(!c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+      return;
+
+    std::vector<IConnectionPair> found;
+    c2.isRealizable<0>(found);
+    Encoding encoding = encoder.encode(found);
+    bool isCyclic = found.size() > numAngles;
+    if(isCyclic) {
+      if(cyclic.find(encoding) == cyclic.end()) {
+        cyclic.insert(encoding);
+        if(rectilinear)
+          ++rect;
+        else
+          ++models;
+      }
+    }
+    else {
+      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
+        nonCyclic.insert(encoding.first);
+        if(rectilinear)
+          ++rect;
+        else
+          ++models;
+      }
+    }
+
+    return;
+  }
+
+  // First check quick clear:
+  if(tsbInvestigator.isClear<0>(possibleCollisions)) {
+    Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
+
+    std::vector<IConnectionPair> found;
+    c2.isRealizable<0>(found);
+    Encoding encoding = encoder.encode(found);
+    bool isCyclic = found.size() > numAngles;
+    if(isCyclic) {
+      if(cyclic.find(encoding) == cyclic.end()) {
+        cyclic.insert(encoding);
+        if(rectilinear)
+          ++rect;
+        else
+          ++models;
+      }
+    }
+    else {
+      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
+        nonCyclic.insert(encoding.first);
+        if(rectilinear)
+          ++rect;
+        else
+          ++models;
+      }
+    }
+
+    return;
+  }
+
+  // Check using TSB:
+  IntervalList l;
+  tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
+  // First check rectilinear:
+  if(rectilinear && math::intervalContains(l, 0)) {
+    Configuration c2 = getConfiguration(c, 0);
+    std::vector<IConnectionPair> found;
+    c2.isRealizable<0>(found);
+    Encoding encoding = encoder.encode(found);
+    bool isCyclic = found.size() > numAngles;
+    if(isCyclic) {
+      if(cyclic.find(encoding) == cyclic.end()) {
+        cyclic.insert(encoding);
+        ++rect;
+      }
+    }
+    else {
+      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
+        nonCyclic.insert(encoding.first);
+        ++rect;
+      }
+    }
+  }
+
+  for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+    Configuration c2 = getConfiguration(c, (it->second + it->first)/2);
+    std::vector<IConnectionPair> found;
+    c2.isRealizable<0>(found);
+    Encoding encoding = encoder.encode(found);
+    bool isCyclic = found.size() > numAngles;
+    if(isCyclic) {
+      if(cyclic.find(encoding) == cyclic.end()) {
+        cyclic.insert(encoding);
+        ++models;
+      }
+    }
+    else {
+      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
+        nonCyclic.insert(encoding.first);
+        ++models;
+      }
+    }
+  }
+}
+
+void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect) {
+  assert(findExtremeAnglesOnly);
+  time_t startTime, endTime;
+  time(&startTime);
+
+  // Evaluate:
+  Configuration c(sccs[0]);
+  evalExtremeConfigurations(0, c, true, nonCyclic, cyclic, models, rect);
+
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
+  if(seconds > 2)
+    std::cout << "Angle map finding performed in " << seconds << " seconds." << std::endl;
+}
+
 void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
+  assert(!findExtremeAnglesOnly);
   time_t startTime, endTime;
   time(&startTime);
 
@@ -666,7 +774,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       Configuration c = getConfiguration(mIsland.representative);
       if(!mIsland.isRectilinear) {
         ++models; // cound all non-rectilinear as models.
-        modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
+        //modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
       }
       else {
         newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));

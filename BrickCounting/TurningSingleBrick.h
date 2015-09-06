@@ -385,7 +385,6 @@ struct TurningSCCInvestigator {
     if(configurationSCCI == connectionPair.P1.first.configurationSCCI) {
       std::swap(this->connectionPair.P1,this->connectionPair.P2);
     }
-    assert(this->connectionPair.P1.first.configurationSCCI < this->connectionPair.P2.first.configurationSCCI);
   }
 
   template <int ADD_XY>

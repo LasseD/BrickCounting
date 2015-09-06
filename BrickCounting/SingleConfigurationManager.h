@@ -32,14 +32,14 @@ private:
   
   // Used only for construction:
   std::set<ConnectionPoint> above[6], below[6]; 
-  bool prevMustBeChosen[6];
+  bool prevMustBeChosen[6], findExtremeAnglesOnly;
 
 public:
-  SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os);
+  SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly);
   SingleConfigurationManager& operator=(const SingleConfigurationManager &tmp) {
     assert(false); // Assignment operator should not be used.
     std::vector<FatSCC> c;
-    SingleConfigurationManager *ret = new SingleConfigurationManager(c, tmp.os);
+    SingleConfigurationManager *ret = new SingleConfigurationManager(c, tmp.os, false);
     return *ret;
   }
 

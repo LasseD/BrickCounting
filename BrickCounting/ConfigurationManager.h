@@ -11,6 +11,7 @@ private:
 
   counter attempts, rectilinear, models, problematic;
   counter angleMappingBoosts[BOOST_STAGES];
+  bool findExtremeAnglesOnly;
 
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os);
 
@@ -21,7 +22,7 @@ public:
   std::set<FatSCC> correct; // For debugging only!
 #endif
 
-  ConfigurationManager(int maxSccSize);
+  ConfigurationManager(int maxSccSize, bool findExtremeAnglesOnly);
   void runForSize(int size);
 
   void test();

@@ -74,16 +74,19 @@ void printUsage() {
     std::cout << " Computes all models of a given combination type or size." << std::endl;
     std::cout << " Specify the combination type using input paramenter." << std::endl;
     std::cout << " Examples:" << std::endl;
-    std::cout << "  For combination type 3/1 use the parameters 3 1" << std::endl;
-    std::cout << "  For combination type 5/1 use the parameters 3 1" << std::endl;
-    std::cout << "  For combination type 2/2/1 use the parameters 2 2 1" << std::endl;
+    std::cout << "  Combination type 3/1: BrickCounting.exe 3 1" << std::endl;
+    std::cout << "  Combination type 5/1: BrickCounting.exe 5 1" << std::endl;
+    std::cout << "  Combination type 2/2/1: BrickCounting.exe 2 2 1" << std::endl;
     std::cout << " Alternatively. Specify the size of the combination using a single input parameter. All combination types with the combined size will be computed." << std::endl;
     std::cout << " Examples:" << std::endl;
-    std::cout << "  For combination of size 3 use the parameter 3" << std::endl;
-    std::cout << "  For combination of size 4 use the parameter 4" << std::endl;
+    std::cout << "  Combination size 3: BrickCounting.exe 3" << std::endl;
+    std::cout << "  Combination size 4: BrickCounting.exe 4" << std::endl;
     std::cout << " Limitations:" << std::endl;
     std::cout << "  Max configuration size is 6." << std::endl;
-    std::cout << "  Combination types with 4 or more SCCs might use too much memory (and time)." << std::endl;
+    std::cout << "  Combination types with 3 or more SCCs might use too much memory (and time)." << std::endl;
+    std::cout << " Special Use:" << std::endl;
+    std::cout << "  Compute all Rectilinear configurations: BrickCounting.exe R" << std::endl;
+    std::cout << "  Compute a lower bound for the number of models for a given size (such as size 4): BrickCounting.exe X 4" << std::endl;
 }
 
 /*
@@ -95,27 +98,22 @@ int main(int numArgs, char** argV) {
 #endif
   if(numArgs <= 1) {
     printUsage();
-#ifdef _DEBUG
-    ConfigurationManager mgr(4);
+
+    ConfigurationManager mgr(5, true);
     mgr.test();
-#else
-#ifdef _COMPARE_ALGORITHMS
-    ConfigurationManager mgr(4);
-    mgr.test();
-#endif
-#endif
+
     return 1;
   }
   ensureFoldersAreCreated();
 
-  if(numArgs == 2) {
-    if(argV[1][0] == 'P') {
+  if(numArgs == 2 || (numArgs == 3 && argV[1][0] == 'X')) {
+    if(argV[1][0] == 'R') {
       StronglyConnectedConfigurationManager sccMgr;
       sccMgr.createOld();
       return 9;
     }
 
-    int sccSize = argV[1][0]-'0';
+    int sccSize = argV[numArgs-1][0]-'0';
 
     if(!sccFilesExist(sccSize-1)) { // Create SCC data files:
       StronglyConnectedConfigurationManager mgr;
@@ -128,9 +126,9 @@ int main(int numArgs, char** argV) {
     }
 
 #ifdef _COMPARE_ALGORITHMS
-    ConfigurationManager mgr(sccSize);
+    ConfigurationManager mgr(sccSize, numArgs == 3);
 #else
-    ConfigurationManager mgr(sccSize-1);
+    ConfigurationManager mgr(sccSize-1, numArgs == 3);
 #endif
     mgr.runForSize(sccSize);
     return 0;
@@ -163,7 +161,7 @@ int main(int numArgs, char** argV) {
 #ifdef _COMPARE_ALGORITHMS
   ConfigurationManager mgr(combinedSize);
 #else
-  ConfigurationManager mgr(maxSccSize);
+  ConfigurationManager mgr(maxSccSize, false);
 #endif
   mgr.runForCombinationType(combinationType, combinedSize);
   return 0;
