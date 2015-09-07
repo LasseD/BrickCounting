@@ -64,15 +64,14 @@ public:
     pois[1] = Point(center.X+( dx*cosa-dy*sina), center.Y+( dx*sina+dy*cosa));
     pois[2] = Point(center.X+( dx*cosa+dy*sina), center.Y+( dx*sina-dy*cosa));
     pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
-    // 4 sides:
-    pois[4] = Point(center.X+dx*cosa, center.Y+dx*sina);
-    pois[5] = Point(center.X-dx*cosa, center.Y-dx*sina);
-    pois[6] = Point(center.X+dy*sina, center.Y-dy*cosa);
-    pois[7] = Point(center.X-dy*sina, center.Y+dy*cosa);
     // 2 inner:
-    pois[8] = Point(center.X+0.75*sina, center.Y-0.75*cosa);
-    pois[9] = Point(center.X-0.75*sina, center.Y+0.75*cosa);
-    assert(10 == NUMBER_OF_POIS_FOR_BOX_INTERSECTION);
+    pois[4] = Point(center.X+0.75*sina, center.Y-0.75*cosa);
+    pois[5] = Point(center.X-0.75*sina, center.Y+0.75*cosa);
+    // 4 sides:
+    pois[6] = Point(center.X+dx*cosa, center.Y+dx*sina);
+    pois[7] = Point(center.X-dx*cosa, center.Y-dx*sina);
+    pois[8] = Point(center.X+dy*sina, center.Y-dy*cosa);
+    pois[9] = Point(center.X-dy*sina, center.Y+dy*cosa);
   }
 
   template <int ADD_XY, int STUD_ADD>

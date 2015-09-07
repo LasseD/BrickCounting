@@ -159,7 +159,7 @@ int main(int numArgs, char** argV) {
 
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
 #ifdef _COMPARE_ALGORITHMS
-  ConfigurationManager mgr(combinedSize);
+  ConfigurationManager mgr(combinedSize, false);
 #else
   ConfigurationManager mgr(maxSccSize, false);
 #endif

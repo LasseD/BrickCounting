@@ -146,7 +146,30 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
 #endif
     }
     else {
-      angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, models, rectilinear);
+      std::vector<std::pair<Configuration,Encoding> > newRectilinear;
+      angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, models, rectilinear, newRectilinear);
+#ifdef _COMPARE_ALGORITHMS
+      for(std::vector<std::pair<Configuration,Encoding> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
+        FatSCC min = it->first.toMinSCC();
+
+        if(foundSCCs.find(min) != foundSCCs.end()) {
+          std::cout << "Duplicate found (encoding): " << it->second.first << "/" << it->second.second << std::endl;
+          std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
+          std::cout << "Duplicate found (config): " << it->first << std::endl;
+          std::cout << "Duplicate found: " << min << std::endl;
+          std::cout << "Island info:" << std::endl;
+          std::cout << "Connections: " << list << std::endl;
+
+          MPDPrinter h;
+          Configuration cf(min);
+          h.add("duplicate", &cf);
+          h.print("duplicate");
+          assert(false);std::cerr << "DIE X0010" << std::endl;
+          int *die = NULL; die[0] = 42;
+        }
+        foundSCCs.insert(std::make_pair(min,it->second.first));
+      }
+#endif
     }
 
     return;

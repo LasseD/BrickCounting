@@ -170,7 +170,7 @@ std::ostream& operator<<(std::ostream &os, const MovingStud& ms);
 struct TurningSingleBrick {
   Brick blocks[2];
   Brick blockAbove;
-  Fan fans[5];
+  Fan fans[6];
   MovingStud movingStuds[NUMBER_OF_STUDS];
   Point studTranslation;
 
@@ -181,11 +181,9 @@ struct TurningSingleBrick {
   void /*TurningSingleBrick::*/createFans() {
     Point pois1[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
     blocks[0].getBoxPOIs<ADD_XY>(pois1);
-    pois1[4] = blocks[0].center;
     Point pois2[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
     blocks[1].getBoxPOIs<ADD_XY>(pois2);
-    pois2[4] = blocks[1].center;
-    for(int i = 0; i < 5; ++i) {
+    for(int i = 0; i < 6; ++i) {
       double minAngle = math::angleOfPoint(pois1[i]);
       double maxAngle = math::angleOfPoint(pois2[i]);
       double radius = math::norm(pois1[i]);
@@ -258,7 +256,7 @@ struct TurningSingleBrick {
     l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS)); // Initially all angles allowed.
 
     // First test own fans against the brick:
-    for(int i = 0; i < 5; ++i) {
+    for(int i = 0; i < 6; ++i) {
       IntervalList listForFan;
       fans[i].allowableAnglesForBlock<ADD_XY>(brick, listForFan);
 #ifdef _TRACE
@@ -275,7 +273,7 @@ struct TurningSingleBrick {
     brick.getBoxPOIs<ADD_XY>(pois);
     pois[4] = brick.center;
     // Create new moving studs for the brick and check those:
-    for(int i = 0; i < 5; ++i) {
+    for(int i = 0; i < 6; ++i) {
       // Create moving stud:
       double midAngle = math::angleOfPoint(pois[i]);
       double minAngle = midAngle - MAX_ANGLE_RADIANS;

@@ -553,7 +553,41 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect) {
+void AngleMapping::add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
+  std::vector<IConnectionPair> found;
+  bool checkRealizable = c.isRealizable<0>(found);
+  if(!checkRealizable) {
+    assert(false);std::cerr << "DIE NOT REALIZABLE ADD: " << c << std::endl;
+    int *die = NULL; die[0] = 42;
+  }
+  Encoding encoding = encoder.encode(found);
+  bool isCyclic = found.size() > numAngles;
+
+  if(isCyclic) {
+    if(cyclic.find(encoding) == cyclic.end()) {
+      cyclic.insert(encoding);
+      if(rectilinear) {
+        newRectilinear.push_back(std::make_pair(c, encoding));
+        ++rect;
+      }
+      else
+        ++models;
+    }
+  }
+  else {
+    if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
+      nonCyclic.insert(encoding.first);
+      if(rectilinear) {
+        newRectilinear.push_back(std::make_pair(c, encoding));
+        ++rect;
+      }
+      else
+        ++models;
+    }
+  }
+}
+
+void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
   // Find possible collisions:
   const IConnectionPoint &ip1 = points[2*angleI];
   const IConnectionPoint &ip2 = points[2*angleI+1];
@@ -564,13 +598,13 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   if(angleI+1 < numAngles) {
     Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
     if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
-      evalExtremeConfigurations(angleI+1, c2, rectilinear, nonCyclic, cyclic, models, rect);
+      evalExtremeConfigurations(angleI+1, c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
 
     if(angleSteps[angleI] != 0) {
       for(short i = 0; i <= 1; ++i) {
         c2 = getConfiguration(c, angleI, 2*i*angleSteps[angleI]);
         if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
-          evalExtremeConfigurations(angleI+1, c2, false, nonCyclic, cyclic, models, rect);
+          evalExtremeConfigurations(angleI+1, c2, false, nonCyclic, cyclic, models, rect, newRectilinear);
       }
     }
     return;
@@ -584,119 +618,44 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   // Speed up for noSML:
   if(angleTypes[angleI] == 0) {
     Configuration c2 = getConfiguration(c, angleI, 0);
-
     if(!c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
       return;
-
-    std::vector<IConnectionPair> found;
-    c2.isRealizable<0>(found);
-    Encoding encoding = encoder.encode(found);
-    bool isCyclic = found.size() > numAngles;
-    if(isCyclic) {
-      if(cyclic.find(encoding) == cyclic.end()) {
-        cyclic.insert(encoding);
-        if(rectilinear)
-          ++rect;
-        else
-          ++models;
-      }
-    }
-    else {
-      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
-        nonCyclic.insert(encoding.first);
-        if(rectilinear)
-          ++rect;
-        else
-          ++models;
-      }
-    }
-
+    add(c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
     return;
   }
 
   // First check quick clear:
   if(tsbInvestigator.isClear<0>(possibleCollisions)) {
     Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
-
-    std::vector<IConnectionPair> found;
-    c2.isRealizable<0>(found);
-    Encoding encoding = encoder.encode(found);
-    bool isCyclic = found.size() > numAngles;
-    if(isCyclic) {
-      if(cyclic.find(encoding) == cyclic.end()) {
-        cyclic.insert(encoding);
-        if(rectilinear)
-          ++rect;
-        else
-          ++models;
-      }
-    }
-    else {
-      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
-        nonCyclic.insert(encoding.first);
-        if(rectilinear)
-          ++rect;
-        else
-          ++models;
-      }
-    }
-
+    add(c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
     return;
   }
 
   // Check using TSB:
+  // First go for rectilinear:
   IntervalList l;
   tsbInvestigator.allowableAnglesForBricks<0>(possibleCollisions, l);
   // First check rectilinear:
   if(rectilinear && math::intervalContains(l, 0)) {
     Configuration c2 = getConfiguration(c, 0);
-    std::vector<IConnectionPair> found;
-    c2.isRealizable<0>(found);
-    Encoding encoding = encoder.encode(found);
-    bool isCyclic = found.size() > numAngles;
-    if(isCyclic) {
-      if(cyclic.find(encoding) == cyclic.end()) {
-        cyclic.insert(encoding);
-        ++rect;
-      }
-    }
-    else {
-      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
-        nonCyclic.insert(encoding.first);
-        ++rect;
-      }
-    }
+    add(c2, true, nonCyclic, cyclic, models, rect, newRectilinear);
   }
 
+  // Then handle the non-rectilinear:
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     Configuration c2 = getConfiguration(c, (it->second + it->first)/2);
-    std::vector<IConnectionPair> found;
-    c2.isRealizable<0>(found);
-    Encoding encoding = encoder.encode(found);
-    bool isCyclic = found.size() > numAngles;
-    if(isCyclic) {
-      if(cyclic.find(encoding) == cyclic.end()) {
-        cyclic.insert(encoding);
-        ++models;
-      }
-    }
-    else {
-      if(nonCyclic.find(encoding.first) == nonCyclic.end()) {
-        nonCyclic.insert(encoding.first);
-        ++models;
-      }
-    }
+    add(c2, false, nonCyclic, cyclic, models, rect, newRectilinear);
   }
 }
 
-void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect) {
+void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
   assert(findExtremeAnglesOnly);
   time_t startTime, endTime;
   time(&startTime);
 
   // Evaluate:
   Configuration c(sccs[0]);
-  evalExtremeConfigurations(0, c, true, nonCyclic, cyclic, models, rect);
+  evalExtremeConfigurations(0, c, true, nonCyclic, cyclic, models, rect, newRectilinear);
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);
