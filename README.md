@@ -32,7 +32,7 @@ This is a work in progress, so the results are still incomplete. The table shows
 |:----------:|--:|---:|------:|--------:|-----------:|------------:|
 | **SCC**    | 1 | 20 | 1.004 |  58.862 |  3.817.291 | 261.534.637 |
 | **RC**     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| **Models** | 0 |  0 |     0 |  *1.100 |   *170.556 | *19.701.710 |
+| **Models** | 0 |  0 |     0 |  *1.100 |   *135.614 | *19.701.710 |
 
 Please refer to [Findings](http://c-mt.dk/counting/findings.php) for a breakdown of the current findings.
 

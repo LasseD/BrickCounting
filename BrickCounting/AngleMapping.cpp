@@ -293,19 +293,19 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     full.push_back(Interval(-EPSILON,EPSILON));
 
     if(!sDone) {
-      if(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size))
+      if(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size))
         SS->insert(smlI, full);
       else
         SS->insertEmpty(smlI);
     }
     if(!mDone) {
-      if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+      if(c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
         MM->insert(smlI, full);
       else
         MM->insertEmpty(smlI);
     }
     if(!lDone) {
-      if(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size))
+      if(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size))
         LL->insert(smlI, full);
       else
         LL->insertEmpty(smlI);
@@ -315,7 +315,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   }
 
   const IConnectionPair icp(ip1,ip2);
-  TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
+  TurningSCCInvestigator tsbInvestigator(c, sccs[ip2I], ip2I, icp);
   
   // First check quick clear:
   if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
@@ -374,7 +374,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     int numDisagreements = 0;
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
-      if(S[i] != c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size)) {
+      if(S[i] != c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size)) {
         ++numDisagreements;
       }
     }
@@ -398,7 +398,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
       bool first = true;
       for(unsigned short j = 0; j < steps; ++j) {
         Configuration c3 = getConfiguration(c, angleI, j);
-        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size);
+        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size);
         if(realizable != S[j]) {
           std::stringstream ss;
           ss << "fail_" << j;
@@ -417,7 +417,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
       std::cout << "Number of disagreements: " << numDisagreements << ":" << std::endl;
       for(unsigned short j = 0; j < steps; ++j) {
         Configuration c3 = getConfiguration(c, angleI, j);
-        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[numAngles].size);
+        bool realizable = c3.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size);
         if(realizable != S[j]) {
           if(first) {
             std::cout << "Configuration of first disagreement: " << c3 << std::endl;
@@ -555,8 +555,12 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
 
 void AngleMapping::add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
   std::vector<IConnectionPair> found;
-  bool checkRealizable = c.isRealizable<0>(found);
+  bool checkRealizable = c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
   if(!checkRealizable) {
+    MPDPrinter h;
+    h.add("ADD_FAIL", &c);
+    h.print("ADD_FAIL");
+
     assert(false);std::cerr << "DIE NOT REALIZABLE ADD: " << c << std::endl;
     int *die = NULL; die[0] = 42;
   }
@@ -597,13 +601,13 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   // Recursion:
   if(angleI+1 < numAngles) {
     Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
-    if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+    if(c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
       evalExtremeConfigurations(angleI+1, c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
 
     if(angleSteps[angleI] != 0) {
       for(short i = 0; i <= 1; ++i) {
         c2 = getConfiguration(c, angleI, 2*i*angleSteps[angleI]);
-        if(c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+        if(c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
           evalExtremeConfigurations(angleI+1, c2, false, nonCyclic, cyclic, models, rect, newRectilinear);
       }
     }
@@ -613,12 +617,12 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   // End of recursion:
   assert(angleI == numAngles-1);
   const IConnectionPair icp(ip1,ip2);
-  TurningSCCInvestigator tsbInvestigator(c, sccs[numAngles], ip2I, icp);
+  TurningSCCInvestigator tsbInvestigator(c, sccs[ip2I], ip2I, icp);
   
   // Speed up for noSML:
   if(angleTypes[angleI] == 0) {
     Configuration c2 = getConfiguration(c, angleI, 0);
-    if(!c2.isRealizable<0>(possibleCollisions, sccs[numAngles].size))
+    if(!c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
       return;
     add(c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
     return;
@@ -643,7 +647,16 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
 
   // Then handle the non-rectilinear:
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
-    Configuration c2 = getConfiguration(c, (it->second + it->first)/2);
+    double angle = (it->second + it->first)/2;
+    Configuration c2;
+    if((math::eqEpsilon(it->first, -MAX_ANGLE_RADIANS) || math::eqEpsilon(it->second, -MAX_ANGLE_RADIANS)) && (c2 = getConfiguration(c, -MAX_ANGLE_RADIANS)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
+      angle = -MAX_ANGLE_RADIANS;
+    }
+    else if((math::eqEpsilon(it->first, MAX_ANGLE_RADIANS) || math::eqEpsilon(it->second, MAX_ANGLE_RADIANS)) && (c2 = getConfiguration(c, MAX_ANGLE_RADIANS)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
+      angle = MAX_ANGLE_RADIANS;
+    }
+    else
+      c2 = getConfiguration(c, angle);
     add(c2, false, nonCyclic, cyclic, models, rect, newRectilinear);
   }
 }

@@ -109,7 +109,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << " (Accumulated totals):" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  if(findExtremeAnglesOnly) {
+  if(findExtremeAnglesOnly && combinationType.size() > 2) {
     std::cout << " NRCs:                                     " << models << std::endl;
   }
   else {
@@ -169,7 +169,7 @@ void ConfigurationManager::runForSize(int size) {
   std::cout << " Attempts:                                 " << attempts << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   if(findExtremeAnglesOnly) {
-    std::cout << " NRCs:                                     " << models << std::endl;
+    std::cout << " NRCs/models:                              " << models << std::endl;
   }
   else {
     std::cout << " Models:                                   " << models << std::endl;
@@ -185,14 +185,16 @@ void ConfigurationManager::runForSize(int size) {
 #ifdef _COMPARE_ALGORITHMS
   std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
   // Print unseen:
-  MPDPrinter d;
-  int j = 0;
-  for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
-    std::stringstream ss;
-    ss << "missing_" << j++;
-    d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+  if(!correct.empty()) {
+    MPDPrinter d;
+    int j = 0;
+    for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+      std::stringstream ss;
+      ss << "missing_" << j++;
+      d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+    }
+    d.print("missing");
   }
-  d.print("missing");
 #endif
 
   std::cout << std::endl;
@@ -243,8 +245,8 @@ void ConfigurationManager::test() {
   //runForCombinationType(v, 5);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[2][17]);
-  v2.push_back(sccs[1][17]);
+  v2.push_back(sccs[2][0]);
+  v2.push_back(sccs[1][4]);
   ConfigurationEncoder encoder(v2);
 
   std::ofstream os;
@@ -355,7 +357,7 @@ void ConfigurationManager::printResults(const std::vector<int> &combinationType,
   ss << ":" << std::endl;
   ss << " Attempts:                                 " << attempts << std::endl;
   ss << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  if(findExtremeAnglesOnly) {
+  if(findExtremeAnglesOnly && combinationType.size() > 2) {
     ss << " NRCs:                                     " << models << std::endl;
   }
   else {

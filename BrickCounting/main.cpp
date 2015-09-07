@@ -99,7 +99,7 @@ int main(int numArgs, char** argV) {
   if(numArgs <= 1) {
     printUsage();
 
-    ConfigurationManager mgr(5, true);
+    ConfigurationManager mgr(3, true);
     mgr.test();
 
     return 1;
