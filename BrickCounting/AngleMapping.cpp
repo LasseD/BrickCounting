@@ -649,11 +649,11 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
     double angle = (it->second + it->first)/2;
     Configuration c2;
-    if((math::eqEpsilon(it->first, -MAX_ANGLE_RADIANS) || math::eqEpsilon(it->second, -MAX_ANGLE_RADIANS)) && (c2 = getConfiguration(c, -MAX_ANGLE_RADIANS)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
-      angle = -MAX_ANGLE_RADIANS;
+    if((c2 = getConfiguration(c, it->second)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
+      angle = it->second;
     }
-    else if((math::eqEpsilon(it->first, MAX_ANGLE_RADIANS) || math::eqEpsilon(it->second, MAX_ANGLE_RADIANS)) && (c2 = getConfiguration(c, MAX_ANGLE_RADIANS)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
-      angle = MAX_ANGLE_RADIANS;
+    else if((c2 = getConfiguration(c, it->first)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
+      angle = it->first;
     }
     else
       c2 = getConfiguration(c, angle);
