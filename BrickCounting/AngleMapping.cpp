@@ -647,6 +647,8 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
 
   // Then handle the non-rectilinear:
   for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+    if(rectilinear && it->first <= 0 && 0 <= it->second)
+      continue;
     double angle = (it->second + it->first)/2;
     Configuration c2;
     if((c2 = getConfiguration(c, it->second)).isRealizable<0>(possibleCollisions, sccs[ip2I].size)) {
@@ -672,8 +674,15 @@ void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, s
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);
-  if(seconds > 2)
-    std::cout << "Angle map finding performed in " << seconds << " seconds." << std::endl;
+  if(seconds > 2) {
+    std::cout << "Extreme angle finding performed in " << seconds << " seconds for configuration sizes ";
+    for(unsigned int i = 0; i < numAngles+1; ++i)
+      std::cout << sccs[i].size << " ";
+    std::cout << "indices ";
+    for(unsigned int i = 0; i < numAngles+1; ++i)
+      std::cout << sccs[i].index << " ";
+    std::cout << std::endl;
+  }
 }
 
 void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
@@ -785,6 +794,13 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);
-  if(seconds > 2)
-    std::cout << "Angle map finding performed in " << seconds << " seconds." << std::endl;
+  if(seconds > 2) {
+    std::cout << "Angle map finding performed in " << seconds << " seconds for configuration sizes ";
+    for(unsigned int i = 0; i < numAngles+1; ++i)
+      std::cout << sccs[i].size << " ";
+    std::cout << "indices ";
+    for(unsigned int i = 0; i < numAngles+1; ++i)
+      std::cout << sccs[i].index << " ";
+    std::cout << std::endl;
+  }
 }

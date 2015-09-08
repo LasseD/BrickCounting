@@ -58,6 +58,8 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
+  if(findExtremeAnglesOnly && combinationType.size() <= 2)
+    return; // Don't run extreme angles for combinatoins that can be handled using the normal algorithm.
   time_t startTime, endTime;
   time(&startTime);
 
@@ -157,47 +159,48 @@ void ConfigurationManager::runForSize(int size) {
     runForCombinationType(combination, size-base, base, size);
   }
 
-  time(&endTime);
-  double seconds = difftime(endTime,startTime);
-
-  std::vector<int> fakeCombination;
-  fakeCombination.push_back(size);
-  printResults(fakeCombination, seconds);
-
   // Output results:
-  std::cout << "Results for size " << size << ":" << std::endl;
-  std::cout << " Attempts:                                 " << attempts << std::endl;
-  std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-  if(findExtremeAnglesOnly) {
-    std::cout << " NRCs/models:                              " << models << std::endl;
-  }
-  else {
-    std::cout << " Models:                                   " << models << std::endl;
-    std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
-  }
-  std::cout << " Program execution time (seconds):         " << seconds << std::endl;
+  if(!findExtremeAnglesOnly) {
+    time(&endTime);
+    double seconds = difftime(endTime,startTime);
+
+    std::vector<int> fakeCombination;
+    fakeCombination.push_back(size);
+    printResults(fakeCombination, seconds);
+
+    std::cout << "Results for size " << size << ":" << std::endl;
+    std::cout << " Attempts:                                 " << attempts << std::endl;
+    std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
+    if(findExtremeAnglesOnly) {
+      std::cout << " NRCs/models:                              " << models << std::endl;
+    }
+    else {
+      std::cout << " Models:                                   " << models << std::endl;
+      std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+    }
+    std::cout << " Program execution time (seconds):         " << seconds << std::endl;
 #ifdef _DEBUG
-  std::cout << " Boosts performed in AngleMappings:" << std::endl;
-  for(int i = 0; i < BOOST_STAGES; ++i) {
-    std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
-  }
+    std::cout << " Boosts performed in AngleMappings:" << std::endl;
+    for(int i = 0; i < BOOST_STAGES; ++i) {
+      std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
+    }
 #endif
 #ifdef _COMPARE_ALGORITHMS
-  std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
-  // Print unseen:
-  if(!correct.empty()) {
-    MPDPrinter d;
-    int j = 0;
-    for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
-      std::stringstream ss;
-      ss << "missing_" << j++;
-      d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+    std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
+    // Print unseen:
+    if(!correct.empty()) {
+      MPDPrinter d;
+      int j = 0;
+      for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+        std::stringstream ss;
+        ss << "missing_" << j++;
+        d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+      }
+      d.print("missing");
     }
-    d.print("missing");
-  }
 #endif
-
-  std::cout << std::endl;
+    std::cout << std::endl;
+  }
 }
 
 ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAnglesOnly) : attempts(0), rectilinear(0), models(0), problematic(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
