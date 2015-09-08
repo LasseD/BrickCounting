@@ -801,6 +801,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
     std::cout << "indices ";
     for(unsigned int i = 0; i < numAngles+1; ++i)
       std::cout << sccs[i].index << " ";
+    std::cout << "connections";
+    for(unsigned int i = 0; i < 2*numAngles; i+=2)
+      std::cout << " " << points[i] << "/" << points[i+1];
     std::cout << std::endl;
   }
 }

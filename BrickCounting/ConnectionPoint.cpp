@@ -165,12 +165,12 @@ bool BrickIdentifier::operator==(const BrickIdentifier &bi) const {
 }
 
 std::ostream& operator<<(std::ostream &os, const BrickIdentifier& bi) {
-  os << "BI[scc=" << bi.sccInFile << "," << bi.brickIndexInScc << "," << bi.configurationSCCI << "]";
+  os << "fileI=" << bi.sccInFile << ",brickI=" << bi.brickIndexInScc << ",sccI=" << bi.configurationSCCI;
   return os;
 }
 
 std::ostream& operator<<(std::ostream &os, const IConnectionPoint& p) {
-  os << "ICP[" << p.first << "," << p.second << "]";
+  os << "(" << p.first << "," << p.second << ")";
   return os;
 }
 

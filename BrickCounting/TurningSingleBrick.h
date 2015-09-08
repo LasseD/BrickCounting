@@ -159,6 +159,11 @@ public:
     const double b = radius;
     const double c = studDist;
     double A = acos((b*b+c*c-SNAP_DISTANCE*SNAP_DISTANCE)/(2*b*c)); // Cosine rule
+    // Ensure an even results interval:
+    if(studAngleTransformed+A > MAX_ANGLE_RADIANS)
+      A = MAX_ANGLE_RADIANS-studAngleTransformed;
+    else if(studAngleTransformed-A < -MAX_ANGLE_RADIANS)
+      A = MAX_ANGLE_RADIANS+studAngleTransformed;
 
     clicks.push_back(ClickInfo(studAngleTransformed, A));
     return;
