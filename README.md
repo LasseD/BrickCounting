@@ -1,6 +1,6 @@
 # All Combinations of Six 2x4 LEGO Bricks
 
-[Main project page](http://c-mt.dk/counting) [Findings](http://c-mt.dk/counting/findings.php) [Full paper](http://c-mt.dk/counting/?view=paper) **Project on GitHub** [Updates on Eurobricks](http://www.eurobricks.com/forum/index.php?showtopic=71971)
+[Main project page](http://c-mt.dk/counting) | [Findings](http://c-mt.dk/counting/findings.php) | [Full paper](http://c-mt.dk/counting/?view=paper) | **Project on GitHub** | [Updates on Eurobricks](http://www.eurobricks.com/forum/index.php?showtopic=71971)
 
 ## Motivation
 
