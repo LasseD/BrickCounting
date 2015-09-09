@@ -542,7 +542,7 @@ namespace math {
     return *(new IntervalListVector()); // FAILS ON PURPOSE
   }
 
-  IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(4+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
+  IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(512+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize];
     indicators = new IntervalIndicator[indicatorSize];
 #ifdef _DEBUG
