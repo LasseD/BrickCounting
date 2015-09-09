@@ -22,7 +22,7 @@ This is a work in progress, so the results are still incomplete. The tables belo
 |:----------:|--:|---:|------:|--------:|-----------:|------------:|
 | **RCs (previous results)**     | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
 | **SCCs (intermediate results)**    | 1 | 20 | 1.004 |  58.862 |  3.817.291 | 261.534.637 |
-| **Models (our main results)** | 0 |  0 |     0 |  1.100* |   161.724* | 12.802.643* |
+| **Models (our main results)** | 0 |  0 |     0 |  1.100* |   161.724* | 26.335.903* |
 
 See the detailed [Findings](http://c-mt.dk/counting/findings.php) page for a breakdown of these numbers.
 
