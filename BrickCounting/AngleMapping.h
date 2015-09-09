@@ -12,7 +12,7 @@
 #define STEPS_2 370
 #define STEPS_3 538
 #define BOOST_STAGES 4
-#define MAX_LOAD_FACTOR 3
+#define MAX_LOAD_FACTOR 4
 
 typedef unsigned long long counter;
 

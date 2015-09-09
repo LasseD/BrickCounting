@@ -242,15 +242,17 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(3);
+  v.push_back(2);
+  v.push_back(2);
   v.push_back(2);
 
   //runForCombinationType(v, 5);
   
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[2][0]);
+  v2.push_back(sccs[1][0]);
   v2.push_back(sccs[1][4]);
-  ConfigurationEncoder encoder(v2);
+  v2.push_back(sccs[1][9]); // maybe 9, 10, 11, ...
+  //ConfigurationEncoder encoder(v2);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);
