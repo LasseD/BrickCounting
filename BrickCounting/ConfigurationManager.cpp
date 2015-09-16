@@ -18,7 +18,11 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     for(int i = 0; i < BOOST_STAGES; ++i) {
       angleMappingBoosts[i] += mgr.angleMappingBoosts[i];
     }
+
 #ifdef _COMPARE_ALGORITHMS
+    if(correct.empty()) {
+      return;
+    }
     std::cout << "Removing " << mgr.foundSCCs.size() << " from " << correct.size() << std::endl;
     for(std::map<FatSCC,uint64_t>::const_iterator it = mgr.foundSCCs.begin(); it != mgr.foundSCCs.end(); ++it) {
       const FatSCC &scc = it->first;
@@ -58,8 +62,8 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
-  if(findExtremeAnglesOnly && combinationType.size() <= 2)
-    return; // Don't run extreme angles for combinatoins that can be handled using the normal algorithm.
+  //if(findExtremeAnglesOnly && combinationType.size() <= 2)
+  //  return; // Don't run extreme angles for combinatoins that can be handled using the normal algorithm.
   time_t startTime, endTime;
   time(&startTime);
 
@@ -77,6 +81,8 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   }
   ss << ".txt";
   os.open(ss.str().c_str(), std::ios::out);
+  if(findExtremeAnglesOnly)
+    std::cout << " (extreme angles only)";
   std::cout << "." << std::endl;
 
   // Store counters:
@@ -160,47 +166,45 @@ void ConfigurationManager::runForSize(int size) {
   }
 
   // Output results:
-  if(!findExtremeAnglesOnly) {
-    time(&endTime);
-    double seconds = difftime(endTime,startTime);
+  time(&endTime);
+  double seconds = difftime(endTime,startTime);
 
-    std::vector<int> fakeCombination;
-    fakeCombination.push_back(size);
-    printResults(fakeCombination, seconds);
+  std::vector<int> fakeCombination;
+  fakeCombination.push_back(size);
+  printResults(fakeCombination, seconds);
 
-    std::cout << "Results for size " << size << ":" << std::endl;
-    std::cout << " Attempts:                                 " << attempts << std::endl;
-    std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
-    if(findExtremeAnglesOnly) {
-      std::cout << " NRCs/models:                              " << models << std::endl;
-    }
-    else {
-      std::cout << " Models:                                   " << models << std::endl;
-      std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
-    }
-    std::cout << " Program execution time (seconds):         " << seconds << std::endl;
+  std::cout << "Results for size " << size << ":" << std::endl;
+  std::cout << " Attempts:                                 " << attempts << std::endl;
+  std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
+  if(findExtremeAnglesOnly) {
+    std::cout << " NRCs/models:                              " << models << std::endl;
+  }
+  else {
+    std::cout << " Models:                                   " << models << std::endl;
+    std::cout << " Models requiring manual confirmation:     " << problematic << std::endl;
+  }
+  std::cout << " Program execution time (seconds):         " << seconds << std::endl;
 #ifdef _DEBUG
-    std::cout << " Boosts performed in AngleMappings:" << std::endl;
-    for(int i = 0; i < BOOST_STAGES; ++i) {
-      std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
-    }
+  std::cout << " Boosts performed in AngleMappings:" << std::endl;
+  for(int i = 0; i < BOOST_STAGES; ++i) {
+    std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
+  }
 #endif
 #ifdef _COMPARE_ALGORITHMS
-    std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
-    // Print unseen:
-    if(!correct.empty()) {
-      MPDPrinter d;
-      int j = 0;
-      for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
-        std::stringstream ss;
-        ss << "missing_" << j++;
-        d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
-      }
-      d.print("missing");
+  std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
+  // Print unseen:
+  if(!correct.empty()) {
+    MPDPrinter d;
+    int j = 0;
+    for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+      std::stringstream ss;
+      ss << "missing_" << j++;
+      d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
     }
-#endif
-    std::cout << std::endl;
+    d.print("missing");
   }
+#endif
+  std::cout << std::endl;
 }
 
 ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAnglesOnly) : attempts(0), rectilinear(0), models(0), problematic(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
@@ -212,11 +216,14 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i], false);
   }
 #ifdef _COMPARE_ALGORITHMS
+  if(maxSccSize >= 6) {
+    std::cout << "Not loading all configuration of size 6!" << std::endl;
+    return;
+  }
   unsigned long correctSccsSize;;
   FatSCC* correctSccs = sccMgr.loadFromFile(maxSccSize-1, correctSccsSize, true);
   for(unsigned long i = 0; i < correctSccsSize; ++i) {
     FatSCC scc(correctSccs[i]);
-    scc.index = NO_INDEX;
     scc = scc.rotateToMin();
     assert(correct.find(scc) == correct.end());
     correct.insert(scc);
@@ -224,7 +231,6 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
   // remove all SCCs:
   for(unsigned long i = 0; i < sccsSize[maxSccSize-1]; ++i) {
     FatSCC scc(sccs[maxSccSize-1][i]);
-    scc.index = NO_INDEX;
     scc = scc.rotateToMin();
     if(correct.find(scc) == correct.end()) {
       std::cout << "Incorrectly removed: " << scc << std::endl;
@@ -242,25 +248,51 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(1);
-  v.push_back(1);
-  v.push_back(1);
-  v.push_back(1);
-  v.push_back(1);
-  v.push_back(1);
-
-  runForCombinationType(v, 5);
-/*  
-  std::vector<FatSCC> v2;
-  v2.push_back(sccs[1][0]);
-  v2.push_back(sccs[1][4]);
-  v2.push_back(sccs[1][10]); // maybe 9, 10, 11, ...
-  //ConfigurationEncoder encoder(v2);
+  v.push_back(3);
+  v.push_back(3);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);
-  runForCombination(v2, v, -1, os);//*/
+
+  std::cout << "Running all non-extreme" << std::endl;
+  findExtremeAnglesOnly = false;
+  runForCombinationType(v, 6);
+  std::set<FatSCC> casheCorrect(correct);
+  correct.clear();
+  std::cout << "Running all extreme" << std::endl;
+  findExtremeAnglesOnly = true;
+  runForCombinationType(v, 6);
+  std::cout << "Removing " << correct.size() << " from " << casheCorrect.size() << std::endl;
+  for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+    const FatSCC &scc = *it;
+    if(casheCorrect.find(scc) == casheCorrect.end()) {
+      std::cout << "Incorrectly found: " << scc << std::endl;
+      MPDPrinter h;
+      h.add("IncorrectlyNonExtreme", new Configuration(scc)); // new OK as we are done.
+      h.print("IncorrectlyNonExtreme");
+    }
+    assert(correct.find(scc) != correct.end());
+    correct.erase(scc);
+  }
+  MPDPrinter d;
+  for(std::set<FatSCC>::const_iterator it2 = correct.begin(); it2 != correct.end(); ++it2) {
+    const FatSCC &scc2 = *it2;
+    std::stringstream ss;
+    ss << "all" << *it2;
+    d.add(ss.str(), new Configuration(scc2)); // new OK as we are done.
+  }
+  d.print("AllInIncorrectCorrect");
+
   /*
+    std::vector<FatSCC> v2;
+  v2.push_back(sccs[2][0]);
+  v2.push_back(sccs[2][5]);
+
+  runForCombination(v2, v, -1, os);
+
+
+  //ConfigurationEncoder encoder(v2);
+
   std::vector<IConnectionPair> pairs;
   RectilinearBrick b0;
   RectilinearBrick &b1 = sccs[1][3].otherBricks[0];

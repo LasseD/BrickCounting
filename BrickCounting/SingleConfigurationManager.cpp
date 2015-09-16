@@ -107,9 +107,11 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       MPDPrinter h;
       for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
         const Configuration &c = it->first;
+        FatSCC min = it->first.toMinSCC();
         std::stringstream ss;
         ss << "rc_" << it->second.encoding.first;
         h.add(ss.str(), new Configuration(c)); // OK Be cause we are debugging.
+        h.add("min", new Configuration(min)); // OK Be cause we are debugging.
       }
       std::stringstream ss;
       ss << "rc\\rectilinear_configurations_" << encoded;
@@ -135,8 +137,11 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
           std::cout << "Connections: " << list << std::endl;
 
           MPDPrinter h;
-          Configuration cf(min);
-          h.add("duplicate", &cf);
+          Configuration cf1(min);
+          Configuration cf2(foundSCCs.find(min)->first);
+          h.add("itFirst", &(it->first));
+          h.add("fromFoundScc", &cf2);
+          h.add("fromNewRectlinear", &cf1);
           h.print("duplicate");
           assert(false);std::cerr << "DIE X0010" << std::endl;
           int *die = NULL; die[0] = 42;

@@ -256,6 +256,7 @@ struct Configuration : public LDRPrintable {
   }
 
   void initSCC(const FatSCC &scc) {
+    assert(bricksSize == 0);
 #ifdef _TRACE
     std::cout << "Configuration::init(" << scc << ")" << std::endl;
 #endif

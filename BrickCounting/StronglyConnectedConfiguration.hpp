@@ -91,7 +91,7 @@ public:
     if(ithis == SIZE-2)
       otherBricks[SIZE-2] = b;
 
-    ensureOriginIsSmallest();
+    ensureOriginIsSmallest(); // Sorting is ensured above, hence no additional sorting required if origin doesn't change.
     assert(verify());
   }
 
@@ -302,7 +302,7 @@ class FatSCC {
 public:
   int size;
   unsigned long index;
-  RectilinearBrick otherBricks[4];
+  RectilinearBrick otherBricks[5];
   bool isRotationallySymmetric;
   std::pair<int,int> rotationBrickPosition;
 
@@ -522,10 +522,10 @@ public:
       otherBricks[i].y -= min.y;
     }
 
-    // Re-introduce old origin at the brick now representing the new origin:
-    otherBricks[minI].x -= min.x;
-    otherBricks[minI].y -= min.y;
-    std::sort(otherBricks, &otherBricks[size-1]);
+    // Re-introduce old origin at the brick now representing the new origin (this was centered at 0,0, so can be used for this):
+    otherBricks[minI].x = -min.x;
+    otherBricks[minI].y = -min.y;
+    std::sort(otherBricks, otherBricks + size-1);
     return true;
   }
 
@@ -566,7 +566,7 @@ public:
     otherBricks[minI].y -= moveY;
 
     // Sort bricks:
-    std::sort(otherBricks, &otherBricks[size-1]);
+    std::sort(otherBricks, otherBricks + size-1);
   }
 
   void turn180() {
@@ -575,12 +575,12 @@ public:
       otherBricks[i].x = -otherBricks[i].x;
       otherBricks[i].y = -otherBricks[i].y;
     }
-    if(size == 2)
+    if(size <= 2)
       return;
 
     // Find the new origin if necessary. If no change: sort.:
     if(!ensureOriginIsSmallest())
-      std::sort(otherBricks, &(otherBricks[size-1]));
+      std::sort(otherBricks, otherBricks + size-1);
   }
 
   bool canTurn90() const {
@@ -614,6 +614,7 @@ public:
         min = candidate;
       }
     }
+    min.index = NO_INDEX;
     return min;
   }
 

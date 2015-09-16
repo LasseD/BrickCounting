@@ -564,8 +564,8 @@ void AngleMapping::add(const Configuration &c, bool rectilinear, std::set<uint64
     assert(false);std::cerr << "DIE NOT REALIZABLE ADD: " << c << std::endl;
     int *die = NULL; die[0] = 42;
   }
-  Encoding encoding = encoder.encode(found);
   bool isCyclic = found.size() > numAngles;
+  Encoding encoding = encoder.encode(found);
 
   if(isCyclic) {
     if(cyclic.find(encoding) == cyclic.end()) {
@@ -603,7 +603,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
     Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
     if(c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
       evalExtremeConfigurations(angleI+1, c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
-
+    
     if(angleSteps[angleI] != 0) {
       for(short i = 0; i <= 1; ++i) {
         c2 = getConfiguration(c, angleI, 2*i*angleSteps[angleI]);
@@ -621,7 +621,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   
   // Speed up for noSML:
   if(angleTypes[angleI] == 0) {
-    Configuration c2 = getConfiguration(c, angleI, 0);
+    Configuration c2 = getConfiguration(c, 0);
     if(!c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
       return;
     add(c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
@@ -630,7 +630,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
 
   // First check quick clear:
   if(tsbInvestigator.isClear<0>(possibleCollisions)) {
-    Configuration c2 = getConfiguration(c, angleI, angleSteps[angleI]);
+    Configuration c2 = getConfiguration(c, 0);
     add(c2, rectilinear, nonCyclic, cyclic, models, rect, newRectilinear);
     return;
   }
@@ -754,7 +754,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
 
       Configuration c = getConfiguration(mIsland.representative);
       if(!mIsland.isRectilinear) {
-        ++models; // cound all non-rectilinear as models.
+        ++models; // count all non-rectilinear as models.
         //modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
       }
       else {
