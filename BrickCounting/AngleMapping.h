@@ -88,6 +88,7 @@ struct MIsland {
 
   MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
     assert(unionFindIndex == a->ufM->getRootForPosition(p));
+    bool encodingUpdated = false;
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
     isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == unionFindIndex;
@@ -98,6 +99,10 @@ struct MIsland {
       this->encoding = a->encoder.encode(found);
       this->isCyclic = found.size() > a->numAngles;
       this->representative = a->rectilinearPosition;
+      encodingUpdated = true;
+#ifdef _TRACE
+      std::cout << "Encoding updated for rectilinear position!" << std::endl;
+#endif
     }
 
     // Add all L-islands:
@@ -106,6 +111,19 @@ struct MIsland {
       MixedPosition rep;
       a->ufL->getRepresentativeOfUnion(unionI, rep);
       if(a->ufM->getRootForPosition(rep) == unionFindIndex) {
+        if(!encodingUpdated) {
+          // Update members to ensure correct encoding:
+          std::vector<IConnectionPair> found;
+          a->getConfiguration(rep).isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
+          this->encoding = a->encoder.encode(found);
+          this->isCyclic = found.size() > a->numAngles;
+          this->representative = rep;
+          encodingUpdated = true;
+#ifdef _TRACE
+          std::cout << "Encoding updated!" << std::endl;
+#endif
+        }
+
         ++lIslands;
       }
     }
