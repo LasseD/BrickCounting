@@ -91,6 +91,15 @@ struct MIsland {
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
     isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == unionFindIndex;
+    if(isRectilinear) {
+      // Update members to ensure correct encoding:
+      std::vector<IConnectionPair> found;
+      a->getConfiguration(a->rectilinearPosition).isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
+      this->encoding = a->encoder.encode(found);
+      this->isCyclic = found.size() > a->numAngles;
+      this->representative = a->rectilinearPosition;
+    }
+
     // Add all L-islands:
     for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
       const uint32_t unionI = *it;

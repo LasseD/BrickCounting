@@ -58,22 +58,6 @@ bool ConnectionPoint::angleLocks(const ConnectionPoint &p) const {
          ((y4x4() == p.y4x4()+1 || y4x4()+1 == p.y4x4()) && x4x4() == p.x4x4());
 }
 
-
-/*
-// For specialized use: Position of connection point 
-double ConnectionPoint::x() const {
-  if(type == NW || type == SW)
-    return brick.x-HALF_STUD_DISTANCE;
-  return brick.x+HALF_STUD_DISTANCE;
-}
-
-double ConnectionPoint::y() const {
-  if(type == SW || type == SE) 
-    return brick.y-STUD_AND_A_HALF_DISTANCE;
-  return brick.y+STUD_AND_A_HALF_DISTANCE;
-}
-//*/
-
 // For specialized use: Position of connection point 
 double ConnectionPoint::x() const {
   if(brick.horizontal()) {
@@ -100,7 +84,6 @@ double ConnectionPoint::y() const {
     return brick.y+STUD_AND_A_HALF_DISTANCE;
   }
 }
- //*/
 
 bool ConnectionPoint::operator < (const ConnectionPoint &p) const {
   if(brick != p.brick)

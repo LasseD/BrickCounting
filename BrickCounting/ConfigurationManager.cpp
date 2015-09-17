@@ -251,17 +251,24 @@ void ConfigurationManager::test() {
   v.push_back(3);
   v.push_back(3);
 
+  /*
+  std::vector<FatSCC> v2;
+  v2.push_back(sccs[2][63]);
+  v2.push_back(sccs[2][945]);
+
   std::ofstream os;
-  os.open("temp.txt", std::ios::out);
+  os.open("temp.txt", std::ios::out);//*/
 
   std::cout << "Running all non-extreme" << std::endl;
   findExtremeAnglesOnly = false;
   runForCombinationType(v, 6);
+  //runForCombination(v2, v, -1, os);
   std::set<FatSCC> casheCorrect(correct);
   correct.clear();
   std::cout << "Running all extreme" << std::endl;
   findExtremeAnglesOnly = true;
   runForCombinationType(v, 6);
+  //runForCombination(v2, v, -1, os);
   std::cout << "Removing " << correct.size() << " from " << casheCorrect.size() << std::endl;
   for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
     const FatSCC &scc = *it;

@@ -123,6 +123,14 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         FatSCC min = it->first.toMinSCC();
 
         if(foundSCCs.find(min) != foundSCCs.end()) {
+          // For stepping through debugger:
+          std::vector<IConnectionPair> found;
+          it->first.isRealizable<0>(found);
+          Encoding encoding = encoder.encode(found);
+          IConnectionPairList decodeFound;
+          encoder.decode(foundSCCs.find(min)->second, decodeFound);
+
+          // Output Error:
           std::cout << "Duplicate found (encoding): " << it->second.encoding.first << std::endl;
           std::cout << "Duplicate found (previous encoding): " << foundSCCs.find(min)->second << std::endl;
           std::cout << "Duplicate found (config): " << it->first << std::endl;

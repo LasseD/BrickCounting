@@ -151,30 +151,30 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
       std::cout << " IConnectionPair: " << connection.P2 << ", " << ip2 << std::endl;
       std::cout << " Connecting to configuration scc " << fatSccI2 << std::endl;
 #endif
-      
-      if(unencoded[fatSccI2]) {
-	// Connection to new scc found!
-	// Check if rotation necessary!
-	if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
-	  rotateSCC(fatSccI2, connectionPoints, connectionMaps);
-	  rotated[fatSccI2] = true;
-	  // Update already extracted connection data:
-	  p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
-	  ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
-	}
-#ifdef _TRACE
-	std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
-#endif
-	requiredConnectionsToEncode.push_back(connection);
-	queue.push(fatSccI2);
-	unencoded[fatSccI2] = false;
 
-	// If same as prev SCC, minimize index (add final index to perm):
-	unsigned int mappedI = duplicateMapping[fatSccI2];
-	perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
+      if(unencoded[fatSccI2]) {
+        // Connection to new scc found!
+        // Check if rotation necessary!
+        if(!fatSccs[fatSccI2].isRotationallyMinimal(p2)) {
+          rotateSCC(fatSccI2, connectionPoints, connectionMaps);
+          rotated[fatSccI2] = true;
+          // Update already extracted connection data:
+          p2 = ConnectionPoint(p2, fatSccs[fatSccI2].rotationBrickPosition);
+          ip2.first.brickIndexInScc = fatSccs[fatSccI2].getBrickIndex(p2.brick);
+        }
+#ifdef _TRACE
+        std::cout << " SCC added to pool: " << fatSccI2 << std::endl;
+#endif
+        requiredConnectionsToEncode.push_back(connection);
+        queue.push(fatSccI2);
+        unencoded[fatSccI2] = false;
+
+        // If same as prev SCC, minimize index (add final index to perm):
+        unsigned int mappedI = duplicateMapping[fatSccI2];
+        perm[fatSccI2] = duplicateMappingCounters[mappedI]++;
       }
       else if(unusedConnections[fatSccI*6+fatSccI2]) {
-	// redundant connection:
+        // redundant connection:
         additionalConnectionsToEncode.push_back(connection);
       }
       unusedConnections[fatSccI*6+fatSccI2] = unusedConnections[fatSccI2*6+fatSccI] = false;
@@ -393,7 +393,7 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Con
   IConnectionPairList icpl;
   for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
     icpl.insert(*it);
-  
+
   Encoding encoded = encode(icpl);
 
   ss << "size" << c.bricksSize << "_sccs" << fatSccSize << "_sccsizes";  
