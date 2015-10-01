@@ -13,6 +13,9 @@
 #include <windows.h>
 
 template <unsigned int ELEMENT_SIZE>
+class CombinationTypeList; // Forward declaration
+
+template <unsigned int ELEMENT_SIZE>
 class RectilinearConfigurationHashList {
 public:
   std::ofstream *os;
@@ -57,7 +60,7 @@ public:
   }
 
   // Close stream, then read and count. 
-  unsigned long count() {
+  unsigned long count(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* > &combinationTypeLists) {
     os->close();
     delete os;
     std::cout << "Written " << written << " unsorted elements of hash " << hash << " to stream. Now counting." << std::endl;
@@ -93,6 +96,15 @@ public:
         }
       }
       s.insert(candidate);
+
+      if(ELEMENT_SIZE > 2) {
+        std::vector<int> combinationType;
+        candidate.getCombinationType(combinationType);
+        uint32_t encoding = math::encodeCombinationType(combinationType);
+
+        assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
+        combinationTypeLists[encoding]->writeConfiguration(candidate);
+      }
     }
     infile.close();
     unsigned int res = (unsigned int)s.size();
@@ -317,9 +329,9 @@ public:
   }
 
 private:
-  void countAllFor(const RectilinearConfiguration<ELEMENT_SIZE-1> &smaller) {
+  void countAllFor(const RectilinearConfiguration<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
     std::set<RectilinearBrick> newBricks;
-    getAllNewBricks(smaller, newBricks, false);
+    getAllNewBricks(smaller, newBricks, includeNonSCCs);
 
     // Try all new scc's:
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
@@ -338,19 +350,31 @@ private:
   }
 
 public:
-  unsigned long countAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller) {
+  unsigned long countAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
+    if(ELEMENT_SIZE > 2) {
+      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+        it->second->openForWrite();
+    }
+
     typename std::set<RectilinearConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
-      countAllFor(*it);
+      countAllFor(*it, includeNonSCCs);
     }
 
     // Now do the counting:
     unsigned long sum = 0;
     typename std::map<unsigned int,RectilinearConfigurationHashList<ELEMENT_SIZE> >::iterator it2;
     for(it2 = hashLists.begin(); it2 != hashLists.end(); ++it2) {
-      sum += it2->second.count();
+      RectilinearConfigurationHashList<ELEMENT_SIZE> &configuration = it2->second;
+      sum += configuration.count(combinationTypeLists);
     }
     std::cout << "Number of RectilinearConfigurations of size " << ELEMENT_SIZE << ": " << sum << std::endl;
+
+    if(ELEMENT_SIZE > 2) {
+      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+        it->second->closeForWrite();
+    }
+
     return sum;
   }
 
