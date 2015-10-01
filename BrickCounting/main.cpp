@@ -97,10 +97,13 @@ int main(int numArgs, char** argV) {
   std::cout << "DEBUG MODE" << std::endl;
 #endif
   if(numArgs <= 1) {
-    printUsage();
-
+    //printUsage();
+    /*
     ConfigurationManager mgr(6, true);
     mgr.test();
+    */
+    RectilinearConfigurationManager mgr;
+    mgr.createOld();
 
     return 1;
   }
@@ -108,7 +111,7 @@ int main(int numArgs, char** argV) {
 
   if(numArgs == 2 || (numArgs == 3 && argV[1][0] == 'X')) {
     if(argV[1][0] == 'R') {
-      StronglyConnectedConfigurationManager sccMgr;
+      RectilinearConfigurationManager sccMgr;
       sccMgr.createOld();
       return 9;
     }
@@ -116,7 +119,7 @@ int main(int numArgs, char** argV) {
     int sccSize = argV[numArgs-1][0]-'0';
 
     if(!sccFilesExist(sccSize-1)) { // Create SCC data files:
-      StronglyConnectedConfigurationManager mgr;
+      RectilinearConfigurationManager mgr;
       mgr.create(sccSize-1);
     }
 
@@ -153,7 +156,7 @@ int main(int numArgs, char** argV) {
   }
 
   if(!sccFilesExist(maxSccSize)) { // Create SCC data files:
-    StronglyConnectedConfigurationManager mgr;
+    RectilinearConfigurationManager mgr;
     mgr.create(maxSccSize);
   }
 

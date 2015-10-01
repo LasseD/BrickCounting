@@ -2,7 +2,7 @@
 #include <sstream>
 #include <windows.h>
 
-StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
+RectilinearConfigurationManager::RectilinearConfigurationManager() {
   lists = new void*[6];
   lists[0] = &l1;
   lists[1] = &l2;
@@ -12,9 +12,9 @@ StronglyConnectedConfigurationManager::StronglyConnectedConfigurationManager() {
   lists[5] = &l6;
 }
 
-void StronglyConnectedConfigurationManager::create(int maxSccSize) {
+void RectilinearConfigurationManager::create(int maxSccSize) {
   // 1:
-  StronglyConnectedConfiguration<1> baseConfiguration;
+  RectilinearConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
   std::cout << l1 << std::endl;
   writeToFile(0);
@@ -23,7 +23,7 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   if(maxSccSize <= 1) return;
 
   // 2:
-  l2.addAllFor(baseConfiguration);
+  l2.addAllFor(baseConfiguration, false);
   //l1.s.clear();
   std::cout << l2 << std::endl;
   writeToFile(1);
@@ -33,7 +33,7 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   if(maxSccSize <= 2) return;
 
   // 3:
-  l3.addAllFor(l2);
+  l3.addAllFor(l2, false);
   l2.s.clear();
   std::cout << l3 << std::endl;
   writeToFile(2);
@@ -43,7 +43,7 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   if(maxSccSize <= 3) return;
 
   // 4:
-  l4.addAllFor(l3);
+  l4.addAllFor(l3, false);
   l3.s.clear();
   std::cout << l4 << std::endl;
   writeToFile(3);
@@ -51,7 +51,7 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   if(maxSccSize <= 4) return;
 
   // 5:
-  l5.addAllFor(l4);
+  l5.addAllFor(l4, false);
   l4.s.clear();
   std::cout << l5 << std::endl;
   writeToFile(4);
@@ -65,9 +65,9 @@ void StronglyConnectedConfigurationManager::create(int maxSccSize) {
   l6.s.clear();
 }
 
-void StronglyConnectedConfigurationManager::createOld() {
+void RectilinearConfigurationManager::createOld() {
   // 1:
-  StronglyConnectedConfiguration<1> baseConfiguration;
+  RectilinearConfiguration<1> baseConfiguration;
   l1.s.insert(baseConfiguration);
   std::cout << l1 << std::endl;
   writeToFile(0);
@@ -108,7 +108,7 @@ void StronglyConnectedConfigurationManager::createOld() {
   std::cout << "DONE OLD OF SIZE 5" << std::endl << std::endl;
 }
 
-void StronglyConnectedConfigurationManager::writeToFile(int i, bool old) {
+void RectilinearConfigurationManager::writeToFile(int i, bool old) {
   std::ofstream os;
   std::stringstream ss;
   if(old)
@@ -142,7 +142,7 @@ void StronglyConnectedConfigurationManager::writeToFile(int i, bool old) {
   os.close();
 }
 
-FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long &size, bool oldSccFile) const {
+FatSCC* RectilinearConfigurationManager::loadFromFile(int i, unsigned long &size, bool oldSccFile) const {
   std::ifstream is;
   std::stringstream ss;
   if(oldSccFile)
@@ -171,7 +171,7 @@ FatSCC* StronglyConnectedConfigurationManager::loadFromFile(int i, unsigned long
     ret = l5.deserialize(is, size);
     break;
   default:
-    std::cout << "ERROR: StronglyConnectedConfigurationManager::loadFromFile() called on " << i << std::endl;
+    std::cout << "ERROR: RectilinearConfigurationManager::loadFromFile() called on " << i << std::endl;
     return NULL;
   }
   is.close();

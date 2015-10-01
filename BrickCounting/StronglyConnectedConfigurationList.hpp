@@ -13,15 +13,15 @@
 #include <windows.h>
 
 template <unsigned int ELEMENT_SIZE>
-class StronglyConnectedConfigurationHashList {
+class RectilinearConfigurationHashList {
 public:
   std::ofstream *os;
   std::string fileName;
   unsigned long written, hash;
 
-  StronglyConnectedConfigurationHashList() {} // to satisfy array constructor.
+  RectilinearConfigurationHashList() {} // to satisfy array constructor.
 
-  StronglyConnectedConfigurationHashList(const unsigned long hash) : written(0), hash(hash) {}
+  RectilinearConfigurationHashList(const unsigned long hash) : written(0), hash(hash) {}
 
   void open() {
     std::stringstream ss;
@@ -34,15 +34,15 @@ public:
     os->open(fileName.c_str(), std::ios::binary | std::ios::out);
   }
 
-  void output(const StronglyConnectedConfiguration<ELEMENT_SIZE> &c) {
+  void output(const RectilinearConfiguration<ELEMENT_SIZE> &c) {
     c.serialize(*os);
     ++written;
   }
 
-  void printLDRFile(const unsigned long hash, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) {
+  void printLDRFile(const unsigned long hash, std::set<RectilinearConfiguration<ELEMENT_SIZE> > &s) {
     MPDPrinter h;
 
-    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
+    typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
       LDRPrintable const * p = &(*it);
       std::stringstream ss;
@@ -66,9 +66,9 @@ public:
     std::ifstream infile;
     infile.open(fileName.c_str(), std::ios::binary | std::ios::in);
 
-    std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > s; 
+    std::set<RectilinearConfiguration<ELEMENT_SIZE> > s; 
     for(unsigned long i = 0; i < written; ++i) {
-      StronglyConnectedConfiguration<ELEMENT_SIZE> candidate;
+      RectilinearConfiguration<ELEMENT_SIZE> candidate;
       candidate.deserialize(infile);
 
       if(s.find(candidate) != s.end()) {
@@ -104,16 +104,109 @@ public:
 };
 
 template <unsigned int ELEMENT_SIZE>
-class StronglyConnectedConfigurationList {
+class CombinationTypeList {
 public:
-  std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > s; // only used for construction.
-  std::map<unsigned int,StronglyConnectedConfigurationHashList<ELEMENT_SIZE> > hashLists;
+  std::ofstream *os;
+  std::string fileName;
+  unsigned long written;
+  std::vector<int> combinationType;
+
+  CombinationTypeList() : written(0) {} // to satisfy array constructor.
+
+  CombinationTypeList(const std::vector<int> &combinationType) : written(0), combinationType(combinationType) {
+    std::stringstream ss;
+    ss << "scc\\" << ELEMENT_SIZE;
+    ss << "\\combination_type";
+    for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+      ss << "_" << *it;
+    ss << ".dat";
+    //std::cout << " Creating combination type list for combination type " << ss.str() << std::endl;
+
+    fileName = ss.str();
+  }
+
+  void openForWrite() {
+    os = new std::ofstream;
+    os->open(fileName.c_str(), std::ios::binary | std::ios::out);
+  }
+  void writeConfiguration(const RectilinearConfiguration<ELEMENT_SIZE> &c) {
+    c.serialize(*os);
+    ++written;
+  }
+  void closeForWrite() {
+    std::cout << "Written " << written << " configurations of combination type ";
+    for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+      std::cout << " " << *it;
+    std::cout << std::endl;
+
+    // Add end element:
+    RectilinearConfiguration<ELEMENT_SIZE> endElement;
+    RectilinearBrick baseBrick;
+    endElement.otherBricks[0] = baseBrick;
+    writeConfiguration(endElement);
+
+    os->close();
+    delete os;
+  }
+
+  void readFile(std::set<RectilinearConfiguration<ELEMENT_SIZE> > &s) {
+    // Read and count!
+    std::ifstream infile;
+    infile.open(fileName.c_str(), std::ios::binary | std::ios::in);
+
+    while(true) {
+      RectilinearConfiguration<ELEMENT_SIZE> configuration;
+      configuration.deserialize(infile);
+
+      if(configuration.otherBricks[0].isBase())
+        break;
+
+      s.insert(configuration);
+    }
+    infile.close();
+  }
+};
+
+template <unsigned int ELEMENT_SIZE>
+class RectilinearConfigurationList {
+public:
+  std::set<RectilinearConfiguration<ELEMENT_SIZE> > s; // only used for construction.
+private:
+  std::map<unsigned int,RectilinearConfigurationHashList<ELEMENT_SIZE> > hashLists; // Only used in countAllFor, that is, when we can't store all.
+  std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* > combinationTypeLists;
+
+  void createCombinationTypeLists(const std::vector<int> &combinationType, int remaining) {
+    if(remaining == 0) {
+      uint32_t encodedCombinationType = math::encodeCombinationType(combinationType);
+      CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType); // TODO: Missing cleanup!
+      combinationTypeLists.insert(std::make_pair(encodedCombinationType,list));
+      return;
+    }
+    for(int i = MIN(remaining,combinationType[combinationType.size()-1]); i > 0; --i) {
+      std::vector<int> ct(combinationType);
+      ct.push_back(i);
+      createCombinationTypeLists(ct, remaining-i);
+    }
+  }
+
+public:
+  RectilinearConfigurationList() {
+    if(ELEMENT_SIZE <= 2) 
+      return;
+    //std::cout << "Creating RectilinearConfigurationList of size " << ELEMENT_SIZE << std::endl;
+    // Create combinationTypeLists:
+    for(int i = ELEMENT_SIZE; i > 0; --i) {
+      std::vector<int> combinationType;
+      combinationType.push_back(i);
+      createCombinationTypeLists(combinationType, ELEMENT_SIZE-i);
+    }
+  }
 
   void serialize(std::ofstream &os) {
     unsigned int size = (unsigned int)s.size();
     os.write(reinterpret_cast<const char *>(&size), sizeof(unsigned long));
 
-    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it;
+    typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it;
     for(it = s.begin(); it != s.end(); ++it) {
       it->serialize(os);
     }
@@ -122,23 +215,24 @@ public:
     is.read((char*)&size, sizeof(unsigned long));
     FatSCC* v = new FatSCC[size];
     for(unsigned int i = 0; i < size; ++i) {
-      StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
+      RectilinearConfiguration<ELEMENT_SIZE> scc;
       scc.deserialize(is);
       v[i] = FatSCC(scc, i);
     }
     return v;
   }
-  void deserialize(std::ifstream &is, std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> > &s) const {
+  void deserialize(std::ifstream &is, std::set<RectilinearConfiguration<ELEMENT_SIZE> > &s) const {
     unsigned long size;
     is.read((char*)&size, sizeof(unsigned long));
     for(int i = 0; i < size; ++i) {
-      StronglyConnectedConfiguration<ELEMENT_SIZE> scc;
+      RectilinearConfiguration<ELEMENT_SIZE> scc;
       scc.deserialize(is);
       s.insert(scc);
     }
   }
 
-  void getAllNewBricks(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks, bool includeCorners) {
+private:
+  void getAllNewBricks(const RectilinearConfiguration<ELEMENT_SIZE-1> &smaller, std::set<RectilinearBrick> &newBricks, bool includeNonSCCs) {
     // Add for all bricks in smaller:
     int tmpSize;
     RectilinearBrick tmp[STRONGLY_CONNECTED_BRICK_POSITIONS];
@@ -147,7 +241,7 @@ public:
     RectilinearBrick b;
     for(int i = 0; i < ELEMENT_SIZE-1; b = smaller.otherBricks[i++]) {
       tmpSize = 0;
-      b.constructAllStronglyConnected(tmp, tmpSize, includeCorners);
+      b.constructAllStronglyConnected(tmp, tmpSize, includeNonSCCs);
 
       for(int j = 0; j < tmpSize; ++j) {
         RectilinearBrick &b2 = tmp[j];
@@ -157,19 +251,20 @@ public:
     }
   }
 
+public:
   /*
   Add all scc's of this size from the scc c of a size smaller:
   1) Have a small set s in which to put all possible bricks that can connect strongly to c
   1a) Ensure no intersection with c when doing this!
   2) Add all x from s to c (and sort to c') to self. First rotate c' to check for duplicates. 
   */
-  void addAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller, bool includeCorners = false) {
+  void addAllFor(const RectilinearConfiguration<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
     std::set<RectilinearBrick> newBricks;
-    getAllNewBricks(smaller, newBricks, includeCorners);
+    getAllNewBricks(smaller, newBricks, includeNonSCCs);
 
     // Try all new scc's:
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
-      StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
+      RectilinearConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
 
       if(s.find(candidate) != s.end()) {
         continue;
@@ -189,32 +284,51 @@ public:
       else {
         candidate.turn180();
         if(s.find(candidate) != s.end()) {
-          continue;	
+          continue;
         }
       }
       s.insert(candidate);
+      if(ELEMENT_SIZE > 2) {
+        std::vector<int> combinationType;
+        candidate.getCombinationType(combinationType);
+        uint32_t encoding = math::encodeCombinationType(combinationType);
+
+        assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
+        combinationTypeLists[encoding]->writeConfiguration(candidate);
+      }
     }
   }
 
-  void addAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeCorners = false) {
-    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
+  void addAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
+    if(ELEMENT_SIZE > 2) {
+      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+        it->second->openForWrite();
+    }
+
+    typename std::set<RectilinearConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
-      addAllFor(*it, includeCorners);
+      addAllFor(*it, includeNonSCCs);
+    }
+
+    if(ELEMENT_SIZE > 2) {
+      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+        it->second->closeForWrite();
     }
   }
 
-  void countAllFor(const StronglyConnectedConfiguration<ELEMENT_SIZE-1> &smaller) {
+private:
+  void countAllFor(const RectilinearConfiguration<ELEMENT_SIZE-1> &smaller) {
     std::set<RectilinearBrick> newBricks;
     getAllNewBricks(smaller, newBricks, false);
 
     // Try all new scc's:
     for(std::set<RectilinearBrick>::const_iterator it = newBricks.begin(); it != newBricks.end(); ++it) {
-      StronglyConnectedConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
+      RectilinearConfiguration<ELEMENT_SIZE> candidate(smaller,*it);
       unsigned long hash = candidate.layerHash();
 
       // ensure existence:
       if(hashLists.find(hash) == hashLists.end()) {
-        StronglyConnectedConfigurationHashList<ELEMENT_SIZE> newList(hash);
+        RectilinearConfigurationHashList<ELEMENT_SIZE> newList(hash);
         newList.open();
         hashLists.insert(std::make_pair(hash, newList));
       }
@@ -223,26 +337,27 @@ public:
     }
   }
 
-  unsigned long countAllFor(StronglyConnectedConfigurationList<ELEMENT_SIZE-1> &smaller) {
-    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
+public:
+  unsigned long countAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller) {
+    typename std::set<RectilinearConfiguration<ELEMENT_SIZE-1> >::const_iterator it;
     for(it = smaller.s.begin(); it != smaller.s.end(); ++it) {
       countAllFor(*it);
     }
 
     // Now do the counting:
     unsigned long sum = 0;
-    typename std::map<unsigned int,StronglyConnectedConfigurationHashList<ELEMENT_SIZE> >::iterator it2;
+    typename std::map<unsigned int,RectilinearConfigurationHashList<ELEMENT_SIZE> >::iterator it2;
     for(it2 = hashLists.begin(); it2 != hashLists.end(); ++it2) {
       sum += it2->second.count();
     }
-    std::cout << "Number of StronglyConnectedConfigurations of size " << ELEMENT_SIZE << ": " << sum << std::endl;
+    std::cout << "Number of RectilinearConfigurations of size " << ELEMENT_SIZE << ": " << sum << std::endl;
     return sum;
   }
 
-  void printLDRFile(bool includeCorners = false) {
+  void printLDRFile(bool includeNonSCCs = false) {
     MPDPrinter h;
 
-    typename std::set<StronglyConnectedConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
+    typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
     for(int i = 0; it != s.end(); ++it, ++i) {
       LDRPrintable const * p = &(*it);
       std::stringstream ss;
@@ -251,17 +366,17 @@ public:
     }
 
     std::stringstream ss;
-    if(includeCorners)
+    if(includeNonSCCs)
       ss << "old_rc";
     else
       ss << "scc";
-    ss << "\\StronglyConnectedConfigurationOfSize" << ELEMENT_SIZE;
+    ss << "\\RectilinearConfigurationOfSize" << ELEMENT_SIZE;
     h.print(ss.str());
   }
 };
 
 template <unsigned int ELEMENT_SIZE>
-std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfigurationList<ELEMENT_SIZE>& l) {
+std::ostream& operator<<(std::ostream& os, const RectilinearConfigurationList<ELEMENT_SIZE>& l) {
   os << "Combinations of size " << ELEMENT_SIZE << ": " << l.s.size() << std::endl;
   return os;
 };

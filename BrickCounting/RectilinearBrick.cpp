@@ -1,3 +1,4 @@
+#include "Math.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
 
@@ -50,21 +51,21 @@ bool RectilinearBrick::intersects(const RectilinearBrick &b) const {
   return x-2 <= b.x && b.x <= x+2 && y-2 <= b.y && b.y <= y+2;
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeCorners) const {
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeNonSCCs) const {
   int lv = level();
   if(lv > 0)
-    constructAllStronglyConnected(bricks, bricksSize, lv-1, includeCorners);  
-  constructAllStronglyConnected(bricks, bricksSize, lv+1, includeCorners);  
+    constructAllStronglyConnected(bricks, bricksSize, lv-1, includeNonSCCs);  
+  constructAllStronglyConnected(bricks, bricksSize, lv+1, includeNonSCCs);  
 }
 
-void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeCorners) const {
+void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeNonSCCs) const {
   if(horizontal()) {
     // all horizontal:
     for(int8_t xx = x-3; xx <= x+3; ++xx) {
       bool xExtreme = xx == x-3 || xx == x+3;
       for(int8_t yy = y-1; yy <= y+1; ++yy) {
         bool yExtreme = yy == y-1 || yy == y+1;
-        if(includeCorners || !(xExtreme && yExtreme))
+        if(includeNonSCCs || !(xExtreme && yExtreme))
           bricks[bricksSize++] = RectilinearBrick(xx, yy, level, true);
       }
     }
@@ -75,7 +76,7 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
       bool xExtreme = xx == x-1 || xx == x+1;
       for(int8_t yy = y-3; yy <= y+3; ++yy) {
         bool yExtreme = yy == y-3 || yy == y+3;
-        if(includeCorners || !(xExtreme && yExtreme))
+        if(includeNonSCCs || !(xExtreme && yExtreme))
           bricks[bricksSize++] = RectilinearBrick(xx, yy, level, false);
       }
     }
@@ -85,7 +86,7 @@ void RectilinearBrick::constructAllStronglyConnected(RectilinearBrick *bricks, i
     bool xExtreme = xx == x-2 || xx == x+2;
     for(int8_t yy = y-2; yy <= y+2; ++yy) {
       bool yExtreme = yy == y-2 || yy == y+2;
-      if(includeCorners || !(xExtreme && yExtreme))
+      if(includeNonSCCs || !(xExtreme && yExtreme))
         bricks[bricksSize++] = RectilinearBrick(xx, yy, level, !horizontal());
     }
   }
@@ -158,12 +159,12 @@ bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   // Angle locks when touching a side of the brick:
   if(horizontal()) {
     return 
-      ((p.y4x4() == y   || p.y4x4() == y+3) && inInterval(x,x+3,p.x4x4())) ||
+      ((p.y4x4() == y   || p.y4x4() == y+3) && math::inInterval(x,x+3,p.x4x4())) ||
       ((p.y4x4() == y+1 || p.y4x4() == y+2) && (p.x4x4() == x-1 || p.x4x4() == x+4));
   }
   else {
     return 
-      ((p.x4x4() == x   || p.x4x4() == x+3) && inInterval(y,y+3,p.y4x4())) ||
+      ((p.x4x4() == x   || p.x4x4() == x+3) && math::inInterval(y,y+3,p.y4x4())) ||
       ((p.x4x4() == x+1 || p.x4x4() == x+2) && (p.y4x4() == y-1 || p.y4x4() == y+4));
   }  
 }
@@ -172,10 +173,26 @@ bool RectilinearBrick::isBase() const {
   return x == 0 && y == 0 && levelShifted == 0;
 }
 
-bool RectilinearBrick::inInterval(int8_t min, int8_t max, int8_t a) const {
-  return  min <= a && a <= max;
-}
-bool RectilinearBrick::distLessThan2(int8_t a, int8_t b) const {
-  return a == b || a-1 == b || b-1 == a;
-}
+bool RectilinearBrick::isStronglyConnectedWith(const RectilinearBrick &b) const {
+  if(!(level() == b.level()+1 || level()+1 == b.level()))
+    return false; // Not at connecting levels.
 
+  unsigned int diffX = math::diff(x, b.x);
+  unsigned int diffY = math::diff(y, b.y);
+
+  if(horizontal() != b.horizontal()) { // One horizontal, one vertical:
+    if(diffX > 2 || diffY > 2)
+      return false; // Disconnected.
+    return !(diffX == 2 && diffY == 2); // One axle must be double-connected.
+  }
+  if(horizontal()) { // Both horizontal:
+    if(diffX > 3 || diffY > 1)
+      return false; // Disconnected.
+    return !(diffX == 3 && diffY == 1); // One axle must be double-connected.
+  }
+  else { // Both vertical:
+    if(diffY > 3 || diffX > 1)
+      return false; // Disconnected.
+    return !(diffY == 3 && diffX == 1); // One axle must be double-connected.
+  }  
+}

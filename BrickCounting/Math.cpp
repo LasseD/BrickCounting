@@ -6,6 +6,18 @@
 // Simple geometry functions
 ///////////////////////////////////////////////////////
 namespace math {
+  bool inInterval(int8_t min, int8_t max, int8_t a) {
+    return min <= a && a <= max;
+  }
+  bool distLessThan2(int8_t a, int8_t b) {
+    return a == b || a-1 == b || b-1 == a;
+  }
+  unsigned int diff(int8_t a, int8_t b) {
+    if(a > b)
+      return a-(int)b;
+    return b-(int)a;
+  }
+
   bool eqEpsilon(double a, double b) {
     return a >= b-EPSILON && a <= b+EPSILON;
   }
@@ -41,9 +53,9 @@ namespace math {
   }
   double normalizeAngle(double a) {
     while(a < -M_PI)
-        a += 2*M_PI;
+      a += 2*M_PI;
     while(a >= M_PI)
-        a -= 2*M_PI;
+      a -= 2*M_PI;
     return a;
   }
 
@@ -110,12 +122,12 @@ namespace math {
   }
 
   /*
-    Assumes the right side of the line is the half plane in which the intersection is to be reported.
-    The intersection is saved as an interval in [intersectionMin;intersectionMax]. 
-    If intersectionMin > intersectionMax, then the intersection passes -M_PI/M_PI and consists of two intervals:
-      [intersectionMin;M_PI] and [-M_PI;intersectionMax]
-    Returns true if there is an intersection. 
-   */
+  Assumes the right side of the line is the half plane in which the intersection is to be reported.
+  The intersection is saved as an interval in [intersectionMin;intersectionMax]. 
+  If intersectionMin > intersectionMax, then the intersection passes -M_PI/M_PI and consists of two intervals:
+  [intersectionMin;M_PI] and [-M_PI;intersectionMax]
+  Returns true if there is an intersection. 
+  */
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, RadianInterval &intersection) {
 #ifdef _DEBUG
     Point i1, i2;
@@ -180,7 +192,7 @@ namespace math {
     assert(from < M_PI + EPSILON);
     assert(to >= -M_PI - EPSILON);
     assert(to < M_PI + EPSILON);
-    
+
     if(from > to) { // Jumps at PI/-PI:
       return (-M_PI <= a && a <= to) || (from <= a && a <= M_PI);
     }
@@ -248,8 +260,8 @@ namespace math {
   }
 
   /*
-    Finds the (angle) intervals of the circle at O with radius r where it intersects with the circle at p and radius pr.
-   */
+  Finds the (angle) intervals of the circle at O with radius r where it intersects with the circle at p and radius pr.
+  */
   IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
     double ai1, ai2;
     bool newIntersections = findCircleCircleIntersections(r, p, pr, ai1, ai2);
@@ -272,8 +284,8 @@ namespace math {
   }
 
   /*
-    Handles splitting of a and b if they jump.
-   */
+  Handles splitting of a and b if they jump.
+  */
   IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b) {
     const double &a1 = a.P1;
     const double &a2 = a.P2;
@@ -367,13 +379,13 @@ namespace math {
       // Both A and B end after they both have started:
       const double min = MAX(itA->first, itB->first);
       if(itA->second < itB->second) {
-	if(min < itA->second-EPSILON)
-	  ret.push_back(Interval(min,itA->second));      
+        if(min < itA->second-EPSILON)
+          ret.push_back(Interval(min,itA->second));      
         ++itA;
       }
       else {
-	if(min < itB->second-EPSILON)
-	  ret.push_back(Interval(min,itB->second));      
+        if(min < itB->second-EPSILON)
+          ret.push_back(Interval(min,itB->second));      
         ++itB;
       }
     }
@@ -622,6 +634,20 @@ namespace math {
         prev = interval;
       }
     }
+  }
+
+  /*
+  The combination type consists of 1 to 6 integers in the range [1;6]. 3 bits are used per integer, finally three bits contain the number of integers.
+   */
+  uint32_t encodeCombinationType(const std::vector<int> &l) {
+    assert(l.size() <= 6);
+    uint32_t ret = 0;
+    for(std::vector<int>::const_iterator it = l.begin(); it != l.end(); ++it) {
+      assert(*it <= 6);
+      ret = (ret << 3) + *it;
+    }
+    ret = (ret << 3) + l.size();
+    return ret;
   }
 }
 

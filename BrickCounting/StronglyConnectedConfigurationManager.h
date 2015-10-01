@@ -7,9 +7,9 @@
 #include "StronglyConnectedConfiguration.hpp"
 #include "StronglyConnectedConfigurationList.hpp"
 
-class StronglyConnectedConfigurationManager {
+class RectilinearConfigurationManager {
 public:
-  StronglyConnectedConfigurationManager();
+  RectilinearConfigurationManager();
   void create(int maxSize);
   void createOld();
   void loadAllFromDisk();
@@ -19,12 +19,12 @@ public:
   FatSCC* loadFromFile(int i, unsigned long &size, bool oldSccFile) const;
 
 private:
-  StronglyConnectedConfigurationList<1> l1;
-  StronglyConnectedConfigurationList<2> l2;
-  StronglyConnectedConfigurationList<3> l3;
-  StronglyConnectedConfigurationList<4> l4;
-  StronglyConnectedConfigurationList<5> l5;
-  StronglyConnectedConfigurationList<6> l6;
+  RectilinearConfigurationList<1> l1;
+  RectilinearConfigurationList<2> l2;
+  RectilinearConfigurationList<3> l3;
+  RectilinearConfigurationList<4> l4;
+  RectilinearConfigurationList<5> l5;
+  RectilinearConfigurationList<6> l6;
 
   void writeToFile(int i, bool old = false);
 };

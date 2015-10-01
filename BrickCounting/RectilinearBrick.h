@@ -34,7 +34,7 @@ public:
 
   bool intersects(const RectilinearBrick &b) const;
 
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeCorners) const;
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, bool includeNonSCCs) const;
 
   void getConnectionPointsAbove(ConnectionPoint *pts, int brickI);
   void getConnectionPointsBelow(ConnectionPoint *pts, int brickI);
@@ -48,12 +48,11 @@ public:
   bool blocks(const ConnectionPoint &p) const;
   bool angleLocks(const ConnectionPoint &p) const;
   bool isBase() const;
+  bool isStronglyConnectedWith(const RectilinearBrick &b) const;
 
 private:
-  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeCorners) const;
+  void constructAllStronglyConnected(RectilinearBrick *bricks, int &bricksSize, int level, bool includeNonSCCs) const;
   void getConnectionPoints(ConnectionPoint *pts, bool above, int brickI);
-  bool inInterval(int8_t min, int8_t max, int8_t a) const;
-  bool distLessThan2(int8_t a, int8_t b) const;
 };
 
 std::ostream& operator<<(std::ostream &os, const RectilinearBrick& b);

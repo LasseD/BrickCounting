@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 //#define _TRACE 1
-#define _COMPARE_ALGORITHMS 1
+//#define _COMPARE_ALGORITHMS 1
 
 // Ensure cross platform compatibility of std::min:
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -34,6 +34,10 @@ typedef std::pair<Point,Point> LineSegment;
 std::ostream& operator<<(std::ostream &os, const LineSegment& l);
 
 namespace math {
+  bool inInterval(int8_t min, int8_t max, int8_t a);
+  bool distLessThan2(int8_t a, int8_t b);
+  unsigned int diff(int8_t a, int8_t b);
+
   bool eqEpsilon(double a, double b);
   bool eqEpsilon(const Point &p1, const Point &p2);
   double round(double number);
@@ -101,6 +105,8 @@ namespace math {
     unsigned short intervalSizeForIndicator(uint32_t i) const;
     void validateAllIntervalsSet() const;
   };
+
+  uint32_t encodeCombinationType(const std::vector<int> &l);
 }
 
 #endif // MATH_H

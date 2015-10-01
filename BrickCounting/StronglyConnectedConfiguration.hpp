@@ -12,11 +12,13 @@
 #include <assert.h> 
 #include <set> 
 #include <limits.h>
+#include <stack>
+#include <functional>
 
 #define NO_INDEX ULONG_MAX
 
 template <unsigned int SIZE>
-class StronglyConnectedConfiguration : public LDRPrintable {
+class RectilinearConfiguration : public LDRPrintable {
 public:
   RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
@@ -65,8 +67,8 @@ public:
     return true;
   }
 
-  StronglyConnectedConfiguration() {}
-  StronglyConnectedConfiguration(const StronglyConnectedConfiguration& c) {
+  RectilinearConfiguration() {}
+  RectilinearConfiguration(const RectilinearConfiguration& c) {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i] = c.otherBricks[i];
     }
@@ -76,7 +78,7 @@ public:
   Constructor for constructing a scc from a smaller scc c and a brick b.
   Assumptions about the input: b does not intersect c. b and c are strongly connected.
   */
-  StronglyConnectedConfiguration(const StronglyConnectedConfiguration<SIZE-1> &c, const RectilinearBrick &b) {
+  RectilinearConfiguration(const RectilinearConfiguration<SIZE-1> &c, const RectilinearBrick &b) {
     if(SIZE == 2) {
       otherBricks[0] = b;
       return;
@@ -180,7 +182,7 @@ public:
     return std::make_pair(furthest.x, furthest.y);
   }
 
-  bool operator<(const StronglyConnectedConfiguration<SIZE> &c) const {
+  bool operator<(const RectilinearConfiguration<SIZE> &c) const {
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] != c.otherBricks[i])
         return otherBricks[i] < c.otherBricks[i];
@@ -188,7 +190,7 @@ public:
     return false;
   }
 
-  bool operator==(const StronglyConnectedConfiguration<SIZE> &c) const {
+  bool operator==(const RectilinearConfiguration<SIZE> &c) const {
     for(int i = 0; i < SIZE-1; ++i) {
       if(otherBricks[i] != c.otherBricks[i])
         return false;
@@ -224,15 +226,6 @@ public:
     }
   }
 
-  int height() const {
-    int res = 1;
-    for(int i = 0; i < SIZE-1; ++i) {
-      if(otherBricks[i].level() > res)
-        res = otherBricks[i].level();
-    }
-    return res+1;
-  }
-
   unsigned long layerHash() const {
     // Initialize layers:
     unsigned int hLayerSizes[SIZE] = {};
@@ -261,29 +254,51 @@ public:
     return res;
   }
 
-  bool inSet(const std::set<StronglyConnectedConfiguration<SIZE> > &s) {
-    if(s.find(*this) != s.end()) {
-      return true;
+  void getCombinationType(std::vector<int> &l) const {
+    assert(l.empty());
+    // Create initial sccs:
+    bool linked[36];
+    for(int i = 0; i < 36; ++i)
+      linked[i] = false;
+
+    // Join sccs based on strong connections:
+    RectilinearBrick b;
+    for(int i = 0; i < SIZE; b = otherBricks[i++]) {
+      for(int j = i+1; j < SIZE; ++j) {
+        if(b.isStronglyConnectedWith(otherBricks[j-1]))
+          linked[6*i+j] = linked[6*j+i] = true;
+      }
     }
-    if(this->canTurn90()) {
-      for(int i = 0; i < 3; ++i) {
-        this->turn90();
-        if(s.find(*this) != s.end()) {
-          return true;
+
+    // Traverse sccs:
+    bool handled[6] = {false,false,false,false,false,false};
+    std::stack<int> stack;
+    for(int i = 0; i < SIZE; ++i) {
+      if(handled[i])
+        continue;
+      handled[i] = true;
+      int sccSize = 1;
+      stack.push(i);
+      while(!stack.empty()) {
+        int fromStack = stack.top();
+        stack.pop();
+        for(int j = i+1; j < SIZE; ++j) {
+          if(!handled[j] && linked[6*fromStack+j]) {
+            stack.push(j);
+            handled[j] = true;
+            ++sccSize;
+          }
         }
       }
-      return false;
+      l.push_back(sccSize);
     }
-    else {
-      this->turn180();
-      return s.find(*this) != s.end();
-    }
+    std::sort(l.begin(), l.end(), std::greater<int>());
   }
 };
 
 /*
 template <>
-class StronglyConnectedConfiguration<1> : public LDRPrintable {
+class RectilinearConfiguration<1> : public LDRPrintable {
 public:
   void serialize(std::ofstream &os) const;
   void deserialize(std::ifstream &is);
@@ -291,7 +306,7 @@ public:
 };*/
 
 template <unsigned int SIZE>
-std::ostream& operator<<(std::ostream& os, const StronglyConnectedConfiguration<SIZE>& c)
+std::ostream& operator<<(std::ostream& os, const RectilinearConfiguration<SIZE>& c)
 {
   for(int i = 0; i < SIZE-1; ++i)
     os << c.otherBricks[i];
@@ -314,11 +329,11 @@ public:
   }
 
   template <unsigned int SIZE>
-  FatSCC(const StronglyConnectedConfiguration<SIZE>& scc, unsigned long index) : size(SIZE), index(index) {
+  FatSCC(const RectilinearConfiguration<SIZE>& scc, unsigned long index) : size(SIZE), index(index) {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i] = scc.otherBricks[i];
     }
-    StronglyConnectedConfiguration<SIZE> turned(scc);
+    RectilinearConfiguration<SIZE> turned(scc);
     turned.turn180();
     isRotationallySymmetric = (turned == scc);
     rotationBrickPosition = scc.rotationBrickPosition();
@@ -382,8 +397,8 @@ public:
   }
 
   template <unsigned int SIZE>
-  StronglyConnectedConfiguration<SIZE> toSCC() const {
-    StronglyConnectedConfiguration<SIZE> ret;
+  RectilinearConfiguration<SIZE> toSCC() const {
+    RectilinearConfiguration<SIZE> ret;
     for(int i = 0; i < SIZE-1; ++i) {
       ret.otherBricks[i] = otherBricks[i];
     }

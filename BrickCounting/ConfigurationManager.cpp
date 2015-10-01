@@ -211,7 +211,7 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
-  StronglyConnectedConfigurationManager sccMgr;
+  RectilinearConfigurationManager sccMgr;
   for(int i = 0; i < maxSccSize; ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i], false);
   }
@@ -257,7 +257,7 @@ void ConfigurationManager::test() {
   v2.push_back(sccs[2][945]);
 
   std::ofstream os;
-  os.open("temp.txt", std::ios::out);//*/
+  os.open("temp.txt", std::ios::out);//
 
   std::cout << "Running all non-extreme" << std::endl;
   findExtremeAnglesOnly = false;
