@@ -14,7 +14,7 @@ void ensureFoldersAreCreated() {
 
 #ifdef _WIN32
   CreateDirectory(L"scc", NULL);
-  CreateDirectory(L"scc\\6", NULL); // For hash lists.
+  CreateDirectory(L"scc\\6", NULL); // For hash lists and combination type lists.
   CreateDirectory(L"models", NULL);
   CreateDirectory(L"models\\4", NULL);
   CreateDirectory(L"models\\5", NULL);
@@ -97,13 +97,9 @@ int main(int numArgs, char** argV) {
   std::cout << "DEBUG MODE" << std::endl;
 #endif
   if(numArgs <= 1) {
-    //printUsage();
-    /*
-    ConfigurationManager mgr(6, true);
+    printUsage();
+    ConfigurationManager mgr(3, true);
     mgr.test();
-    */
-    RectilinearConfigurationManager mgr;
-    mgr.createOld();
 
     return 1;
   }

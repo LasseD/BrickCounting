@@ -10,6 +10,7 @@
 class RectilinearConfigurationManager {
 public:
   RectilinearConfigurationManager();
+  ~RectilinearConfigurationManager();
   void create(int maxSize);
   void createOld();
   void loadAllFromDisk();
@@ -17,8 +18,12 @@ public:
   void **lists;  
 
   FatSCC* loadFromFile(int i, unsigned long &size, bool oldSccFile) const;
+  //FatSCC* loadFromFile(std::vector<int> combinationType, unsigned long &size) const;
+  void loadFromFile(std::set<FatSCC> &s, std::vector<int> combinationType) const;
 
 private:
+  FatSCC* loadFromFile(std::string fileName, int i, unsigned long &size) const;
+
   RectilinearConfigurationList<1> l1;
   RectilinearConfigurationList<2> l2;
   RectilinearConfigurationList<3> l3;

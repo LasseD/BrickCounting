@@ -490,6 +490,7 @@ public:
   bool operator<(const FatSCC &c) const {
     assert((index == NO_INDEX) == (c.index == NO_INDEX));
     if(index == NO_INDEX) { // Proper comparison:
+      assert(size == c.size);
       for(int i = 0; i < size-1; ++i) {
         if(otherBricks[i] != c.otherBricks[i])
           return otherBricks[i] < c.otherBricks[i];
@@ -642,6 +643,30 @@ public:
     assert(false);std::cerr << "DIE X002" << std::endl;
     int *die = NULL; die[0] = 42;
     return -1;
+  }
+
+  std::pair<int,int> getRotationBrickPosition() const {
+    if(size == 1)
+      return std::make_pair(0,0);
+    RectilinearBrick furthest;
+    for(int i = 0; i < size-1; ++i) {
+      if(otherBricks[i].level() > 0)
+        break;
+      if(otherBricks[i].horizontal())
+        continue; // horizontal first - ignore these!
+      furthest = otherBricks[i];
+    }
+    return std::make_pair(furthest.x, furthest.y);
+  }
+
+  void deserialize(std::ifstream &is) {
+    for(int i = 0; i < size-1; ++i)
+      otherBricks[i].deserialize(is);
+
+    FatSCC turned(*this);
+    turned.turn180();
+    isRotationallySymmetric = (turned == *this);
+    rotationBrickPosition = getRotationBrickPosition();
   }
 };
 

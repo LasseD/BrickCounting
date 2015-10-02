@@ -190,7 +190,7 @@ private:
   void createCombinationTypeLists(const std::vector<int> &combinationType, int remaining) {
     if(remaining == 0) {
       uint32_t encodedCombinationType = math::encodeCombinationType(combinationType);
-      CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType); // TODO: Missing cleanup!
+      CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType);
       combinationTypeLists.insert(std::make_pair(encodedCombinationType,list));
       return;
     }
@@ -212,6 +212,13 @@ public:
       combinationType.push_back(i);
       createCombinationTypeLists(combinationType, ELEMENT_SIZE-i);
     }
+  }
+  ~RectilinearConfigurationList() {
+    for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it) {
+      CombinationTypeList<ELEMENT_SIZE>* list = it->second;
+      delete list;
+    }
+    combinationTypeLists.clear();
   }
 
   void serialize(std::ofstream &os) {
@@ -306,7 +313,7 @@ public:
         uint32_t encoding = math::encodeCombinationType(combinationType);
 
         assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
-        combinationTypeLists[encoding]->writeConfiguration(candidate);
+        combinationTypeLists[encoding]->writeConfiguration(candidate); // Notize: Not minimized! This has to be done on read!
       }
     }
   }

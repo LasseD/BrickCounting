@@ -28,7 +28,7 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
       const FatSCC &scc = it->first;
       if(correct.find(scc) == correct.end()) {
         std::cout << "Incorrectly found: " << scc << std::endl;
-        MPDPrinter h, d;
+        MPDPrinter h, d, d2;
         h.add("IncorrectlyFound", new Configuration(scc)); // new OK as we are done.
         h.print("IncorrectlyFound");
 
@@ -39,8 +39,19 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
           d.add(ss.str(), new Configuration(scc2)); // new OK as we are done.
         }
         d.print("AllInIncorrectBatch");
+
+        int i = 0;
+        for(std::set<FatSCC>::const_iterator it2 = correct.begin(); it2 != correct.end() && i < 9; ++it2, ++i) {
+          const FatSCC &scc2 = *it2;
+          std::stringstream ss;
+          ss << "correct_" << i;
+          d2.add(ss.str(), new Configuration(scc2)); // new OK as we are done.
+        }
+        d2.print("FirstCorrect");
+
+        assert(false);std::cerr << "DIE X429" << std::endl;
+        int *die = NULL; die[0] = 42;
       }
-      assert(correct.find(scc) != correct.end());
       correct.erase(scc);
     }
 #endif
@@ -62,6 +73,12 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
 }
 
 void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
+#ifdef _COMPARE_ALGORITHMS
+  RectilinearConfigurationManager sccMgr;
+  sccMgr.loadFromFile(correct, combinationType);
+  std::cout << "RCs to be found: " << correct.size() << std::endl;
+#endif
+
   //if(findExtremeAnglesOnly && combinationType.size() <= 2)
   //  return; // Don't run extreme angles for combinatoins that can be handled using the normal algorithm.
   time_t startTime, endTime;
@@ -212,44 +229,16 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
     angleMappingBoosts[i] = 0;
   }
   RectilinearConfigurationManager sccMgr;
-  for(int i = 0; i < maxSccSize; ++i) {
+  for(int i = 0; i < MIN(maxSccSize,5); ++i) {
     sccs[i] = sccMgr.loadFromFile(i, sccsSize[i], false);
   }
-#ifdef _COMPARE_ALGORITHMS
-  if(maxSccSize >= 6) {
-    std::cout << "Not loading all configuration of size 6!" << std::endl;
-    return;
-  }
-  unsigned long correctSccsSize;;
-  FatSCC* correctSccs = sccMgr.loadFromFile(maxSccSize-1, correctSccsSize, true);
-  for(unsigned long i = 0; i < correctSccsSize; ++i) {
-    FatSCC scc(correctSccs[i]);
-    scc = scc.rotateToMin();
-    assert(correct.find(scc) == correct.end());
-    correct.insert(scc);
-  }
-  // remove all SCCs:
-  for(unsigned long i = 0; i < sccsSize[maxSccSize-1]; ++i) {
-    FatSCC scc(sccs[maxSccSize-1][i]);
-    scc = scc.rotateToMin();
-    if(correct.find(scc) == correct.end()) {
-      std::cout << "Incorrectly removed: " << scc << std::endl;
-      MPDPrinter h;
-      h.add("IncorrectlyRemoved", new Configuration(scc)); // new OK as we are done.
-      h.print("IncorrectlyRemoved");
-    }
-    assert(correct.find(scc) != correct.end());
-    correct.erase(scc);
-  }
-  std::cout << "RCs to be found: " << correct.size() << std::endl;
-  delete[] correctSccs;
-#endif
 }
 
 void ConfigurationManager::test() {
   std::vector<int> v;
   v.push_back(3);
   v.push_back(3);
+  runForCombinationType(v, 6);
 
   /*
   std::vector<FatSCC> v2;

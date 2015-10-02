@@ -12,6 +12,10 @@ RectilinearConfigurationManager::RectilinearConfigurationManager() {
   lists[5] = &l6;
 }
 
+RectilinearConfigurationManager::~RectilinearConfigurationManager() {
+  delete[] lists;
+}
+
 void RectilinearConfigurationManager::create(int maxSccSize) {
   // 1:
   RectilinearConfiguration<1> baseConfiguration;
@@ -149,17 +153,9 @@ void RectilinearConfigurationManager::writeToFile(int i, bool old) {
   os.close();
 }
 
-FatSCC* RectilinearConfigurationManager::loadFromFile(int i, unsigned long &size, bool oldSccFile) const {
+FatSCC* RectilinearConfigurationManager::loadFromFile(std::string fileName, int i, unsigned long &size) const {
   std::ifstream is;
-  std::stringstream ss;
-  if(oldSccFile)
-    ss << "old_rc\\";
-  else
-    ss << "scc\\";
-  ss << (i+1) << ".dat";
-  is.open(ss.str().c_str(), std::ios::binary | std::ios::in);
-  std::cout << "Reading file with strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
-
+  is.open(fileName.c_str(), std::ios::binary | std::ios::in);
   FatSCC* ret;
   switch(i) {
   case 0:    
@@ -177,12 +173,56 @@ FatSCC* RectilinearConfigurationManager::loadFromFile(int i, unsigned long &size
   case 4:
     ret = l5.deserialize(is, size);
     break;
+  case 5:
+    ret = l6.deserialize(is, size);
+    break;
   default:
     std::cout << "ERROR: RectilinearConfigurationManager::loadFromFile() called on " << i << std::endl;
     return NULL;
   }
   is.close();
   
-  std::cout << "Read " << size << " strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
+  std::cout << "Read " << size << " strongly connected configurations of size " << (i+1) << " from " << fileName << std::endl;
   return ret;
+}
+
+void RectilinearConfigurationManager::loadFromFile(std::set<FatSCC> &s, std::vector<int> combinationType) const {
+  int combinedSize = 0;
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+    combinedSize += *it;
+
+  std::stringstream ss;
+  ss << "scc\\" << combinedSize << "\\combination_type";
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+    ss << "_" << *it;
+  ss << ".dat";
+  std::cout << "Reading file with strongly connected configurations from " << ss.str() << std::endl;
+
+  // Read:
+  std::ifstream infile;
+  infile.open(ss.str().c_str(), std::ios::binary | std::ios::in);
+
+  while(true) {
+    FatSCC configuration;
+    configuration.size = combinedSize;
+    configuration.index = NO_INDEX;
+    configuration.deserialize(infile);
+
+    if(configuration.otherBricks[0].isBase())
+      break;
+
+    s.insert(configuration.rotateToMin());
+  }
+  infile.close();
+}
+
+FatSCC* RectilinearConfigurationManager::loadFromFile(int i, unsigned long &size, bool oldSccFile) const {
+  std::stringstream ss;
+  if(oldSccFile)
+    ss << "old_rc\\";
+  else
+    ss << "scc\\";
+  ss << (i+1) << ".dat";
+  std::cout << "Reading file with strongly connected configurations of size " << (i+1) << " from " << ss.str() << std::endl;
+  return loadFromFile(ss.str(), i, size);
 }
