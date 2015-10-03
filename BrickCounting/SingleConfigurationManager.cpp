@@ -27,6 +27,13 @@ SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC>
   }
 }
 
+SingleConfigurationManager::~SingleConfigurationManager() {
+  for(int i = 0; i < 6; ++i) {
+    above[i].clear();
+    below[i].clear(); 
+  }
+}
+
 void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConnectionPoint> &oldPool, const std::vector<IConnectionPoint>::const_iterator &itIgnoreFromOld, 
                 const std::set<ConnectionPoint> &newElements, unsigned long newSCCI, int newConfigurationSCCI) {
   for(std::vector<IConnectionPoint>::const_iterator it = oldPool.begin(); it != oldPool.end(); ++it) {
@@ -111,7 +118,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         std::stringstream ss;
         ss << "rc_" << it->second.encoding.first;
         h.add(ss.str(), new Configuration(c)); // OK Be cause we are debugging.
-        h.add("min", new Configuration(min)); // OK Be cause we are debugging.
+        //h.add("min", new Configuration(min)); // OK Be cause we are debugging.
       }
       std::stringstream ss;
       ss << "rc\\rectilinear_configurations_" << encoded;

@@ -54,7 +54,7 @@ public:
   AngleMapping& operator=(const AngleMapping &tmp) {
     assert(false); // Assignment operator should not be used.
     std::vector<IConnectionPair> cs;
-    AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os, false);
+    AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os, false); // Not deleted - fails.
     return *ret;
   }
   ~AngleMapping();

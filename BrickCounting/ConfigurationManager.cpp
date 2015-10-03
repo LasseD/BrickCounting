@@ -19,6 +19,10 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
       angleMappingBoosts[i] += mgr.angleMappingBoosts[i];
     }
 
+#ifdef _DEBUG
+    mgr.printLDRFile();
+#endif
+
 #ifdef _COMPARE_ALGORITHMS
     if(correct.empty()) {
       return;
@@ -148,8 +152,19 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
     std::cout << "  BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
   std::cout << " Remaining Rectilinear SCCs to find:       " << correct.size() << std::endl;
-#endif
   std::cout << std::endl;
+  // Print unseen:
+  if(!correct.empty()) {
+    MPDPrinter d;
+    int j = 0;
+    for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
+      std::stringstream ss;
+      ss << "missing_" << j++;
+      d.add(ss.str(), new Configuration(*it)); // 'new' is OK as we are done... and don't give a damn anymore.
+    }
+    d.print("missing");
+  }
+#endif
 
   // Restore counters
   attempts+=storeAttempts;
@@ -238,74 +253,33 @@ void ConfigurationManager::test() {
   std::vector<int> v;
   v.push_back(3);
   v.push_back(3);
-  runForCombinationType(v, 6);
+  //runForCombinationType(v, 6);
 
-  /*
+  // Investigate failure #76:
   std::vector<FatSCC> v2;
-  v2.push_back(sccs[2][63]);
-  v2.push_back(sccs[2][945]);
+  v2.push_back(sccs[2][125]);
+  v2.push_back(sccs[2][934]);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);//
 
-  std::cout << "Running all non-extreme" << std::endl;
-  findExtremeAnglesOnly = false;
-  runForCombinationType(v, 6);
   //runForCombination(v2, v, -1, os);
-  std::set<FatSCC> casheCorrect(correct);
-  correct.clear();
-  std::cout << "Running all extreme" << std::endl;
-  findExtremeAnglesOnly = true;
-  runForCombinationType(v, 6);
-  //runForCombination(v2, v, -1, os);
-  std::cout << "Removing " << correct.size() << " from " << casheCorrect.size() << std::endl;
-  for(std::set<FatSCC>::const_iterator it = correct.begin(); it != correct.end(); ++it) {
-    const FatSCC &scc = *it;
-    if(casheCorrect.find(scc) == casheCorrect.end()) {
-      std::cout << "Incorrectly found: " << scc << std::endl;
-      MPDPrinter h;
-      h.add("IncorrectlyNonExtreme", new Configuration(scc)); // new OK as we are done.
-      h.print("IncorrectlyNonExtreme");
-    }
-    assert(correct.find(scc) != correct.end());
-    correct.erase(scc);
-  }
-  MPDPrinter d;
-  for(std::set<FatSCC>::const_iterator it2 = correct.begin(); it2 != correct.end(); ++it2) {
-    const FatSCC &scc2 = *it2;
-    std::stringstream ss;
-    ss << "all" << *it2;
-    d.add(ss.str(), new Configuration(scc2)); // new OK as we are done.
-  }
-  d.print("AllInIncorrectCorrect");
-
-  /*
-    std::vector<FatSCC> v2;
-  v2.push_back(sccs[2][0]);
-  v2.push_back(sccs[2][5]);
-
-  runForCombination(v2, v, -1, os);
-
-
-  //ConfigurationEncoder encoder(v2);
 
   std::vector<IConnectionPair> pairs;
   RectilinearBrick b0;
-  RectilinearBrick &b1 = sccs[1][3].otherBricks[0];
+  RectilinearBrick &b1 = sccs[2][125].otherBricks[0];
+  RectilinearBrick &b2 = sccs[2][934].otherBricks[1];
 
-  IConnectionPoint icp1(BrickIdentifier(3,1,0),ConnectionPoint(NW,b1,false,1));
-  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,true ,0));
-  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NE,b0,false,0));
-  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,true ,0));
+  IConnectionPoint icp1(BrickIdentifier(125,1,0),ConnectionPoint(NE,b1,true,1));
+  IConnectionPoint icp2(BrickIdentifier(934,2,1),ConnectionPoint(NW,b2,false,2));
 
   pairs.push_back(IConnectionPair(icp1,icp2));
-  pairs.push_back(IConnectionPair(icp3,icp4));
 
-  SingleConfigurationManager sm(v2, os);
+  SingleConfigurationManager sm(v2, os, false);
   std::vector<IConnectionPoint> pools;
   sm.run(pairs, pools, pools, NULL, 0);
-
-
+  sm.printLDRFile();
+  sm.printManualLDRFiles();
 
   /*
   uint64_t encoded1 = 1082724547;

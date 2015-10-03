@@ -555,8 +555,8 @@ namespace math {
   }
 
   IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(512+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
-    intervals = new Interval[intervalsSize];
-    indicators = new IntervalIndicator[indicatorSize];
+    intervals = new Interval[intervalsSize]; // Deleted in ~IntervalListVector()
+    indicators = new IntervalIndicator[indicatorSize]; // Deleted in ~IntervalListVector()
 #ifdef _DEBUG
     //std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
     for(unsigned int i = 0; i < indicatorSize; ++i)

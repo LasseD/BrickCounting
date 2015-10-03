@@ -3,7 +3,7 @@
 #include <windows.h>
 
 RectilinearConfigurationManager::RectilinearConfigurationManager() {
-  lists = new void*[6];
+  lists = new void*[6]; // Deleted in ~RectilinearConfigurationManager()
   lists[0] = &l1;
   lists[1] = &l2;
   lists[2] = &l3;

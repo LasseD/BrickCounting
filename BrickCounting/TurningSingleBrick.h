@@ -7,8 +7,6 @@
 #include "UnionFind.h" // TODO: Necessary?
 #include <vector>
 
-typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.
-
 namespace math {
   double angleToOriginalInterval(double a, const RadianInterval &interval);
   IntervalList intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval);
@@ -147,26 +145,27 @@ public:
     }
 
     // Add intervals for studs:
-    double studAngle, studDist;
-    bool anyStudAngles = block.getStudIntersectionWithMovingStud(radius, interval.P1, interval.P2, studAngle, studDist);
-    if(!anyStudAngles)
-      return;
+    std::vector<ClickInfo> foundClicks; // angle, dist
+    block.getStudIntersectionWithMovingStud(radius, interval.P1, interval.P2, foundClicks);
+    for(std::vector<ClickInfo>::const_iterator it = foundClicks.begin(); it != foundClicks.end(); ++it) {
+      double studAngle = it->first;
+      double studDist = it->second;
 #ifdef _TRACE
-    std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, interval) << std::endl;
+      std::cout << "  Adding stud at angle " << studAngle << ", in original interval: " << math::angleToOriginalInterval(studAngle, interval) << std::endl;
 #endif
-    double studAngleTransformed = math::angleToOriginalInterval(studAngle, interval);
+      double studAngleTransformed = math::angleToOriginalInterval(studAngle, interval);
 
-    const double b = radius;
-    const double c = studDist;
-    double A = acos((b*b+c*c-SNAP_DISTANCE*SNAP_DISTANCE)/(2*b*c)); // Cosine rule
-    // Ensure an even results interval:
-    if(studAngleTransformed+A > MAX_ANGLE_RADIANS)
-      A = MAX_ANGLE_RADIANS-studAngleTransformed;
-    else if(studAngleTransformed-A < -MAX_ANGLE_RADIANS)
-      A = MAX_ANGLE_RADIANS+studAngleTransformed;
+      const double b = radius;
+      const double c = studDist;
+      double A = acos((b*b+c*c-SNAP_DISTANCE*SNAP_DISTANCE)/(2*b*c)); // Cosine rule
+      // Ensure an even results interval:
+      if(studAngleTransformed+A > MAX_ANGLE_RADIANS)
+        A = MAX_ANGLE_RADIANS-studAngleTransformed;
+      else if(studAngleTransformed-A < -MAX_ANGLE_RADIANS)
+        A = MAX_ANGLE_RADIANS+studAngleTransformed;
 
-    clicks.push_back(ClickInfo(studAngleTransformed, A));
-    return;
+      clicks.push_back(ClickInfo(studAngleTransformed, A));
+    }
   }
 };
 

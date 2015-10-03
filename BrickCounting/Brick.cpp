@@ -179,12 +179,11 @@ bool Brick::outerStudIntersectsStudAtOrigin() const {
   return false;
 }
 
-bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &outStudAngle, double &outStudDist) const {
+void Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<ClickInfo> &found) const {
   Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
 
   // Handle four outer specially as they might cause connection:
-  bool foundAny = false;
   for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
     Point &stud = studs[i];
     double studDist = math::norm(stud);
@@ -192,20 +191,10 @@ bool Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, do
       continue;
     }
     double studAngle = math::angleOfPoint(stud);
-    if(!math::inRadianInterval(studAngle, RadianInterval(minAngle, maxAngle))) {
-      continue;
+    if(math::inRadianInterval(studAngle, RadianInterval(minAngle, maxAngle))) {
+      found.push_back(ClickInfo(studAngle, studDist));
     }
-    if(foundAny) {
-#ifdef _TRACE
-      std::cout << " More than one click! Skip!" << std::endl;
-#endif
-      return false;
-    }
-    foundAny = true;
-    outStudAngle = studAngle;
-    outStudDist = studDist;
   }
-  return foundAny;
 }
 
 bool Brick::operator < (const Brick &b) const {

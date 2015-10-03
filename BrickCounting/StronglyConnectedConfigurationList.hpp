@@ -33,7 +33,7 @@ public:
     ss << "\\hash" << hash << ".dat";
 
     fileName = ss.str();    
-    os = new std::ofstream;
+    os = new std::ofstream; // deleted in count()
     os->open(fileName.c_str(), std::ios::binary | std::ios::out);
   }
 
@@ -138,7 +138,7 @@ public:
   }
 
   void openForWrite() {
-    os = new std::ofstream;
+    os = new std::ofstream; // deleted in closeForWrite()
     os->open(fileName.c_str(), std::ios::binary | std::ios::out);
   }
   void writeConfiguration(const RectilinearConfiguration<ELEMENT_SIZE> &c) {
@@ -190,7 +190,7 @@ private:
   void createCombinationTypeLists(const std::vector<int> &combinationType, int remaining) {
     if(remaining == 0) {
       uint32_t encodedCombinationType = math::encodeCombinationType(combinationType);
-      CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType);
+      CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType); // deleted in ~RectilinearConfigurationList()
       combinationTypeLists.insert(std::make_pair(encodedCombinationType,list));
       return;
     }
@@ -232,7 +232,7 @@ public:
   }
   FatSCC* deserialize(std::ifstream &is, unsigned long &size) const {
     is.read((char*)&size, sizeof(unsigned long));
-    FatSCC* v = new FatSCC[size];
+    FatSCC* v = new FatSCC[size]; // Saved stream is never deleted.
     for(unsigned int i = 0; i < size; ++i) {
       RectilinearConfiguration<ELEMENT_SIZE> scc;
       scc.deserialize(is);
@@ -313,7 +313,7 @@ public:
         uint32_t encoding = math::encodeCombinationType(combinationType);
 
         assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
-        combinationTypeLists[encoding]->writeConfiguration(candidate); // Notize: Not minimized! This has to be done on read!
+        combinationTypeLists[encoding]->writeConfiguration(candidate); // Notize: Not minimized! rotateToMin has to be done on read!
       }
     }
   }

@@ -28,7 +28,7 @@ public:
   ConfigurationEncoder& operator=(const ConfigurationEncoder &) {
     assert(false); // Assignment operator should not be used.
     std::vector<FatSCC> c;
-    ConfigurationEncoder *cn = new ConfigurationEncoder(c);
+    ConfigurationEncoder *cn = new ConfigurationEncoder(c); // Not deleted - fails on invoce.
     return *cn;
   }
 

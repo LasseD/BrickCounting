@@ -24,6 +24,8 @@
 #define MOLDING_TOLERANCE_MULTIPLIER 1000
 #define EPSILON_TOLERANCE_MULTIPLIER 1
 
+typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.
+
 /*
 A Brick at any location and angle.
 Default same as a Rectilinear brick: vertical at 0,0,0 (angle 0)
@@ -98,7 +100,7 @@ public:
   }
 
   bool /*Brick::*/outerStudIntersectsStudAtOrigin() const;
-  bool /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, double &outStudAngle, double &outStudDist) const;
+  void /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<ClickInfo> &found) const;
 
   /*
     Returns the intersection between a rectangle defined by four points and a circle cutout (between minAngle and maxAngle).

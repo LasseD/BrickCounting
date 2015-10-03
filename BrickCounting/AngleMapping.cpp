@@ -81,9 +81,9 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
 #endif
 
   // S, M & L:
-  SS = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
-  MM = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
-  LL = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR);
+  SS = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
+  MM = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
+  LL = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
 }
 
 AngleMapping::~AngleMapping() {
@@ -368,7 +368,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 #ifdef _RM_DEBUG
     //std::cout << smlI << ": " << l << std::endl;
     const unsigned short steps = 2*angleSteps[angleI]+1;
-    bool *S = new bool[steps];
+    bool *S = new bool[steps]; // deleted further down.
     math::intervalToArray(l, S, steps);
 
     int numDisagreements = 0;
@@ -714,9 +714,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   for(unsigned int i = 0; i < numAngles-1; ++i) {
     sizes[i] = 2*angleSteps[i]+1;
   }
-  ufS = new UnionFind::IntervalUnionFind(numAngles, sizes, *SS);
-  ufM = new UnionFind::IntervalUnionFind(numAngles, sizes, *MM);
-  ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL);
+  ufS = new UnionFind::IntervalUnionFind(numAngles, sizes, *SS); // deleted further down
+  ufM = new UnionFind::IntervalUnionFind(numAngles, sizes, *MM); // deleted further down
+  ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL); // deleted further down
 
   // Find islands:
   std::vector<SIsland> sIslands;
@@ -755,7 +755,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       Configuration c = getConfiguration(mIsland.representative);
       if(!mIsland.isRectilinear) {
         ++models; // count all non-rectilinear as models.
-        //modelsToPrint.push_back(c); // Only print to models file when there is more than one - otherwise it is found in the NRC-file.
+        //modelsToPrint.push_back(c); // Only print to models file when there is more than one. 
       }
       else {
         newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));

@@ -8,7 +8,7 @@
 
 namespace UnionFind {
   UnionFindStructure::UnionFindStructure(uint32_t numUnions) : numUnions(numUnions), flattened(false) {
-    joins = new std::vector<uint32_t>[numUnions];
+    joins = new std::vector<uint32_t>[numUnions]; // Deleted in flatten()
   }
   UnionFindStructure::~UnionFindStructure() {
     assert(flattened);
@@ -56,10 +56,10 @@ namespace UnionFind {
 
   void UnionFindStructure::flatten() {
     assert(!flattened);
-    bool *handled = new bool[numUnions];
+    bool *handled = new bool[numUnions]; // Deleted further down
     for(uint32_t i = 0; i < numUnions; ++i)
       handled[i] = false;
-    minInUnions = new uint32_t[numUnions];
+    minInUnions = new uint32_t[numUnions]; // Deleted in ~UnionFindStructure()
 
     for(uint32_t i = 0; i < numUnions; ++i) {
       // Handle union with representative "i"
@@ -95,13 +95,13 @@ namespace UnionFind {
     flattened = true;
   }
 
-  IntervalUnionFind::IntervalUnionFind() : M(*new math::IntervalListVector(0, 0)) {
+  IntervalUnionFind::IntervalUnionFind() : M(*new math::IntervalListVector(0, 0)) { // New OK as this will fail
     assert(false);std::cerr << "DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
     int *die = NULL; die[0] = 42;
   }
 
   IntervalUnionFind& IntervalUnionFind::operator=(const IntervalUnionFind &) {
-    return *(new IntervalUnionFind());
+    return *(new IntervalUnionFind()); // New OK as this will fail
   }
 
   IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const math::IntervalListVector &M) : numStepDimensions(numDimensions-1), unionI(0), M(M) {
@@ -117,7 +117,7 @@ namespace UnionFind {
     buildIntervalIndicatorToUnion();
 
     // Perform joins:
-    ufs = new UnionFindStructure(unionI);
+    ufs = new UnionFindStructure(unionI); // Deleted in ~IntervalUnionFind()
     MixedPosition position;
     buildUnions(0, position);
 
@@ -139,8 +139,8 @@ namespace UnionFind {
   void IntervalUnionFind::buildIntervalIndicatorToUnion() {
     assert(unionI == 0);
     unionI = 1;
-    intervalIndicatorToUnion = new uint32_t[M.sizeIndicator()+1];
-    unionToInterval = new std::pair<uint32_t,unsigned short>[M.sizeNonEmptyIntervals()+1];
+    intervalIndicatorToUnion = new uint32_t[M.sizeIndicator()+1]; // Deletred in ~IntervalUnionFind()
+    unionToInterval = new std::pair<uint32_t,unsigned short>[M.sizeNonEmptyIntervals()+1]; // Deleted in ~IntervalUnionFind()
 
     for(uint32_t i = 0; i < M.sizeIndicator(); ++i) {
       unsigned short intervalSize = M.intervalSizeForIndicator(i);
@@ -272,151 +272,4 @@ namespace UnionFind {
   std::vector<uint32_t>::const_iterator IntervalUnionFind::rootsEnd() const {
     return ufs->roots.end();
   }
-
-  /*
-  SimpleUnionFind::SimpleUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, bool const * const M) : numDimensions(numDimensions), numUnions(0), sizeV(1) {
-    time_t startTime, endTime;
-    time(&startTime);
-
-    // Initialize members:
-    for(unsigned int i = 0; i < numDimensions; ++i) {
-      this->dimensionSizes[i] = dimensionSizes[i];
-      sizeV *= dimensionSizes[i];
-    }
-
-    // Initially fill v:
-    v = new uint32_t[sizeV];
-    initialFillV(M);
-
-    // Perform joins:
-    ufs = new UnionFindStructure(numUnions);
-    Position position;
-    buildUnions(0, position, M);
-
-    // Flatten:
-    ufs->flatten();
-
-    time(&endTime);
-    double seconds = difftime(endTime,startTime);
-    if(seconds > 2)
-      std::cout << "(Simple) Union find performed in " << seconds << " seconds." << std::endl;
-  }
-
-  SimpleUnionFind::~SimpleUnionFind() {
-    delete[] v;
-    delete ufs;
-  }
-
-  std::vector<uint32_t>::const_iterator SimpleUnionFind::rootsBegin() const {
-    return ufs->roots.begin();
-  }
-  std::vector<uint32_t>::const_iterator SimpleUnionFind::rootsEnd() const {
-    return ufs->roots.end();
-  }
-
-  uint32_t SimpleUnionFind::indexOf(const Position &position) const {
-    uint32_t index = position.p[0];
-    for(unsigned int i = 1; i < numDimensions; ++i)
-      index = (index * dimensionSizes[i]) + position.p[i];
-    return index;
-  }
-
-  void SimpleUnionFind::getPosition(uint32_t index, Position &position) const {
-#ifdef _DEBUG
-    const uint32_t save = index;
-#endif
-    for(unsigned int i = 0; i < numDimensions; ++i) {
-      int revDim = numDimensions-i-1;
-      position.p[revDim] = index % dimensionSizes[revDim];
-      index /= dimensionSizes[revDim];
-    }
-#ifdef _DEBUG
-    if(save != indexOf(position)) {
-      std::cerr << "Assertion error on index " << index << "!= " << indexOf(position) << std::endl;
-      assert(false);
-    }
-#endif
-  }
-
-  uint32_t SimpleUnionFind::get(const Position &position) const {
-    const uint32_t indexOfPosition = indexOf(position);
-    return get(indexOfPosition);
-  }
-
-  uint32_t SimpleUnionFind::get(uint32_t indexOfPosition) const {
-    assert(indexOfPosition < sizeV);
-    const uint32_t unionIndex = v[indexOfPosition];
-    assert(unionIndex < numUnions);
-    return ufs->getMinInUnion(unionIndex);
-  }
-
-  void SimpleUnionFind::getRepresentative(unsigned int unionI, Position &rep) const {
-    uint32_t representativeIndex = unionRepresentatives[unionI];
-    getPosition(representativeIndex, rep);
-  }
-
-  void SimpleUnionFind::initialFillV(bool const * const M) {
-    assert(numUnions == 0);
-    unsigned short lastDimensionSize = dimensionSizes[numDimensions-1];
-    for(uint32_t i = 0; i < sizeV; i+=lastDimensionSize) {
-      if(M[i]) {
-        v[i] = numUnions;
-        unionRepresentatives.push_back(i);
-        ++numUnions;
-      }
-
-      for(uint32_t j = 1; j < lastDimensionSize; ++j) {
-        if(!M[i+j]) 
-          continue;
-        if(M[i+j-1]) { 
-          v[i+j] = v[i+j-1];
-          continue;
-        }
-
-        v[i+j] = numUnions;
-        unionRepresentatives.push_back(i+j);
-        ++numUnions;
-      }
-    }
-  }
-
-  void SimpleUnionFind::buildUnions(unsigned int positionI, Position &position, bool const * const M) {
-    if(positionI < numDimensions-1) {
-      for(unsigned short i = 0; i < dimensionSizes[positionI]; ++i) {
-        position.p[positionI] = i;
-        buildUnions(positionI+1, position, M);
-      }
-      return;
-    }
-    assert(positionI == numDimensions-1);
-    position.p[positionI] = 0;
-
-    uint32_t positionIndex = indexOf(position);
-    assert(positionIndex < sizeV);
-
-    // Run and join for each lower dimension:
-
-    for(unsigned int i = 0; i < numDimensions-1; ++i) {
-      unsigned short oldPosition = position.p[i];
-      if(oldPosition == 0)
-        continue; // Can't further decrease in this dimension.
-      position.p[i] = oldPosition - 1;
-      uint32_t neighbourPositionIndex = indexOf(position);
-      position.p[i] = oldPosition;
-
-      // Join all in dimension:
-      for(unsigned short i = 0; i < dimensionSizes[numDimensions-1]; ++i) {
-        uint32_t pos = positionIndex + i;
-        if(!M[pos]) {
-          continue;
-        }
-        uint32_t lowerPos = neighbourPositionIndex + i;
-        if(!M[lowerPos]) {
-          continue;
-        }
-        if(i == 0 || !(M[lowerPos-1] && M[pos-1]))
-          ufs->join(v[lowerPos], v[pos]);
-      }
-    }
-  }*/
 }
