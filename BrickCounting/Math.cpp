@@ -557,11 +557,6 @@ namespace math {
   IntervalListVector::IntervalListVector(uint32_t indicatorSize, unsigned int maxLoadFactor) : intervalsSize(512+indicatorSize*maxLoadFactor), indicatorSize(indicatorSize), intervalsI(0) {
     intervals = new Interval[intervalsSize]; // Deleted in ~IntervalListVector()
     indicators = new IntervalIndicator[indicatorSize]; // Deleted in ~IntervalListVector()
-#ifdef _DEBUG
-    //std::cout << "Create IntervalListVector of size 4+" << indicatorSize << "*"<<maxLoadFactor << "=" << intervalsSize << std::endl;
-    for(unsigned int i = 0; i < indicatorSize; ++i)
-      indicators[i] = IntervalIndicator(9999, 9999);
-#endif
   }
   IntervalListVector::~IntervalListVector() {
     delete[] intervals;
@@ -607,33 +602,6 @@ namespace math {
   unsigned short IntervalListVector::intervalSizeForIndicator(uint32_t i) const {
     assert(i < indicatorSize);
     return indicators[i].second;
-  }
-  void IntervalListVector::validateAllIntervalsSet() const {
-    for(unsigned int i = 0; i < indicatorSize; ++i) {
-      if(indicators[i] == IntervalIndicator(9999, 9999)) {
-        std::cerr << "Indicator not set at position " << i << std::endl;
-        assert(false);
-      }
-      IntervalList list;
-      get(i, list);
-      if(list.empty())
-        continue;
-      Interval prev = *list.begin();
-      for(IntervalList::const_iterator it = list.begin(); it != list.end(); ++it) {
-        const Interval &interval = *it;
-        if(-0.7 > interval.first || interval.first > 0.7 || -0.7 > interval.second || interval.second > 0.7 || interval.first > interval.second) {
-          std::cerr << "Invalid interval: " << interval << std::endl;
-          assert(false);
-        }
-        if(it != list.begin()) {
-          if(prev.second > interval.first) {
-            std::cerr << "Invalid interval overlap. Prev: " << prev << ", current: " << interval << std::endl;
-            assert(false);
-          }
-        }
-        prev = interval;
-      }
-    }
   }
 
   /*

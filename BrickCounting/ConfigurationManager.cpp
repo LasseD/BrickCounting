@@ -8,6 +8,7 @@
 
 void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os) {
   if(combination.size() == combinationType.size()) {
+    
     SingleConfigurationManager mgr(combination, os, findExtremeAnglesOnly);
     mgr.run();
 

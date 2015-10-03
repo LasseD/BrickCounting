@@ -703,11 +703,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   // Evaluate SML:
   Configuration c(sccs[0]);
   evalSML(0, 0, c, false, false, false);
-#ifdef _DEBUG
-  SS->validateAllIntervalsSet();
-  MM->validateAllIntervalsSet();
-  LL->validateAllIntervalsSet();
-#endif
 
   // Evaluate union-find:
   unsigned short sizes[MAX_DIMENSIONS-1];
@@ -721,8 +716,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   // Find islands:
   std::vector<SIsland> sIslands;
   findIslands(sIslands);
-  if(sIslands.empty())
-    return;
 
   /* Perform analysis:
   Walk through islands in S and report M and L islands.

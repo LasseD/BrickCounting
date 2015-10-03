@@ -36,7 +36,6 @@ private:
 
 public:
   SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly);
-  ~SingleConfigurationManager();
   SingleConfigurationManager& operator=(const SingleConfigurationManager &tmp) {
     assert(false); // Assignment operator should not be used.
     std::vector<FatSCC> c;

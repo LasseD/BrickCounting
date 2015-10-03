@@ -27,13 +27,6 @@ SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC>
   }
 }
 
-SingleConfigurationManager::~SingleConfigurationManager() {
-  for(int i = 0; i < 6; ++i) {
-    above[i].clear();
-    below[i].clear(); 
-  }
-}
-
 void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConnectionPoint> &oldPool, const std::vector<IConnectionPoint>::const_iterator &itIgnoreFromOld, 
                 const std::set<ConnectionPoint> &newElements, unsigned long newSCCI, int newConfigurationSCCI) {
   for(std::vector<IConnectionPoint>::const_iterator it = oldPool.begin(); it != oldPool.end(); ++it) {
@@ -275,7 +268,6 @@ void SingleConfigurationManager::run() {
     std::cout << " BOOST LEVEL " << (i+1) << ": " << angleMappingBoosts[i] << std::endl;
   }
 #endif
-  //#ifdef _INFO
   if(seconds <= 1)
     return;
   std::cout << " Single configuration (sizes";
@@ -285,7 +277,6 @@ void SingleConfigurationManager::run() {
   for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << " " << combination[i].index;
   std::cout << ") handled in " << seconds << " seconds." << std::endl;
-  //#endif
 }
 
 void SingleConfigurationManager::printLDRFile() const {

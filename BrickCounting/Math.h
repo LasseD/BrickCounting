@@ -103,7 +103,6 @@ namespace math {
     uint32_t sizeIndicator() const;
     uint32_t sizeNonEmptyIntervals() const;
     unsigned short intervalSizeForIndicator(uint32_t i) const;
-    void validateAllIntervalsSet() const;
   };
 
   uint32_t encodeCombinationType(const std::vector<int> &l);
