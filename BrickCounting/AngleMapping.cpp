@@ -464,7 +464,6 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
     std::cout << sIsland << std::endl;
 #endif
 #ifdef _RM_DEBUG
-    // TODO: FIXME: DEBUGGING BELOW:
     MPDPrinter h;
     int mIslandI = 0;
     for(std::vector<MIsland>::const_iterator itM = sIsland.mIslands.begin(); itM != sIsland.mIslands.end(); ++itM, ++mIslandI) {

@@ -30,17 +30,17 @@ ConfigurationEncoder::ConfigurationEncoder(const std::vector<FatSCC> &combinatio
   }
 }
 
-void ConfigurationEncoder::rotateSCC(int i, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
+void ConfigurationEncoder::rotateSCC(int i, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
 #ifdef _TRACE
   std::cout << "ROTATE SCC " << i << std::endl;
 #endif
 
-  std::vector<ConnectionPoint> v(connectionPoints[i]);
+  util::TinyVector<ConnectionPoint, 5> v(connectionPoints[i]);
   std::map<ConnectionPoint,IConnectionPair> w(connectionMaps[i]);
   connectionPoints[i].clear();
   connectionMaps[i].clear();
 
-  for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
+  for(const ConnectionPoint* it = v.begin(); it != v.end(); ++it) {
     // Fix connection point:
     const ConnectionPoint &cp = *it;
     ConnectionPoint rcp(cp, fatSccs[i].rotationBrickPosition);
@@ -78,7 +78,7 @@ void ConfigurationEncoder::rotateSCC(int i, std::vector<ConnectionPoint> *connec
     connectionMaps[j].insert(std::make_pair(icp2.second, c));
   }
 
-  std::sort(connectionPoints[i].begin(), connectionPoints[i].end());
+  connectionPoints[i].sort();
 }
 
 /*
@@ -86,7 +86,7 @@ When encoding:
 - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
 - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
 */
-Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
+Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
   // Set up permutations and rotations:
   int perm[6];
   perm[baseIndex] = 0;
@@ -139,8 +139,8 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, std::
     std::cout << "Iterating from queue: " << fatSccI << std::endl;
 #endif
 
-    std::vector<ConnectionPoint> &v = connectionPoints[fatSccI];
-    for(std::vector<ConnectionPoint>::const_iterator it = v.begin(); it != v.end(); ++it) {
+    util::TinyVector<ConnectionPoint, 5> &v = connectionPoints[fatSccI];
+    for(const ConnectionPoint* it = v.begin(); it != v.end(); ++it) {
       IConnectionPair connection = connectionMaps[fatSccI][*it];
       if(connection.P1.first.configurationSCCI != (int)fatSccI)
         std::swap(connection.P1, connection.P2); // swap so first connection point is the current scc.
@@ -258,7 +258,7 @@ Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
   std::cout << " INIT encode(" << list << ")" << std::endl;
 #endif
   // Setup:
-  std::vector<ConnectionPoint> connectionPoints[6];
+  util::TinyVector<ConnectionPoint, 5> connectionPoints[6];
   std::map<ConnectionPoint,IConnectionPair> connectionMaps[6];
 
   // Assign connections to lists, then sort them:
@@ -280,7 +280,7 @@ Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
   }
   // Sort vectors:
   for(unsigned int i = 0; i < fatSccSize; ++i)
-    std::sort(connectionPoints[i].begin(), connectionPoints[i].end());
+    connectionPoints[i].sort();
 
   Encoding minEncoded(0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF);
   for(unsigned int i = 0; i < fatSccSize; ++i) {

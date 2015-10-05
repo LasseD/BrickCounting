@@ -4,7 +4,6 @@
 #include "Math.h"
 #include "Brick.h"
 #include "Configuration.hpp"
-#include "UnionFind.h" // TODO: Necessary?
 #include <vector>
 
 namespace math {

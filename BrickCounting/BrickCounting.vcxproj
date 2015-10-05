@@ -169,6 +169,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TurningSingleBrick.h" />
     <ClInclude Include="UnionFind.h" />
+    <ClInclude Include="Util.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AngleMapping.cpp" />

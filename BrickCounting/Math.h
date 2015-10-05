@@ -29,7 +29,7 @@ std::ostream& operator<<(std::ostream &os, const Point& p);
 
 typedef std::pair<double,double> Interval;
 typedef Interval RadianInterval; // Counter clockwise from P1 to P2.
-typedef util::TinyVector<Interval, 10> IntervalList;
+typedef util::TinyVector<Interval, 8> IntervalList;
 std::ostream& operator<<(std::ostream &os, const IntervalList& p);
 
 typedef std::pair<Point,Point> LineSegment;
@@ -68,7 +68,7 @@ namespace math {
   void intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax, IntervalList &result);
   void intervalOr(const IntervalList &a, const IntervalList &b, IntervalList &result);
   void intervalReverse(IntervalList &l);
-  void collapseIntervals(const IntervalList &l, IntervalList &result);
+  void collapseIntervals(IntervalList &l);
   void toIntervalsRadians(const RadianInterval &interval, IntervalList &result);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);

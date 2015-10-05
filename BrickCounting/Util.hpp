@@ -52,6 +52,9 @@ namespace util {
     inline void clear() {
       s = 0;
     }
+    inline void truncate(unsigned int size) {
+      s = size;
+    }
 
     void sort() {
       std::sort(elements, elements+s);

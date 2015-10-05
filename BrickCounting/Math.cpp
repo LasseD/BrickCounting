@@ -478,13 +478,13 @@ namespace math {
     }
   }
 
-  void collapseIntervals(const IntervalList &l, IntervalList &result) {
-    assert(result.empty());
-    if(l.empty()) {
+  void collapseIntervals(IntervalList &l) {
+    if(l.empty() || l.size() == 1) {
       return;
     }
 
     const Interval* it = l.begin();
+    unsigned int size = 0;
     Interval prev = *it;
     ++it;
     for(; it != l.end(); ++it) {
@@ -492,11 +492,12 @@ namespace math {
         prev.second = it->second;
       }
       else {
-        result.push_back(prev);
+        l[size++] = prev;
         prev = *it;
       }
     }
-    result.push_back(prev);
+    l[size++] = prev;
+    l.truncate(size);
   }
 
   void intervalReverse(IntervalList &l) {

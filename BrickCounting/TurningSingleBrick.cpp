@@ -27,8 +27,7 @@ namespace math {
       result.push_back(Interval(a,b));
     }
     result.sort();
-    IntervalList copyRet(result); result.clear();
-    math::collapseIntervals(copyRet, result);
+    math::collapseIntervals(result);
   }
 }
 

@@ -5,6 +5,7 @@
 #include "ConnectionPoint.h"
 #include "StronglyConnectedConfiguration.hpp"
 #include "Configuration.hpp"
+#include "Util.hpp"
 
 typedef std::pair<uint64_t,uint64_t> Encoding;
 
@@ -64,14 +65,14 @@ public:
   void writeFileName(std::ostream &ss, const std::vector<Connection> &l, bool includeAngles) const;
 
 private:
-  void rotateSCC(int i, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  void rotateSCC(int i, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
 
   /*
   When encoding:
   - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
   - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
   */
-  Encoding encode(unsigned int baseIndex, bool rotate, std::vector<ConnectionPoint> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  Encoding encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
   uint64_t encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const;
 };
 
