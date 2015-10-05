@@ -9,7 +9,7 @@
 
 namespace math {
   double angleToOriginalInterval(double a, const RadianInterval &interval);
-  IntervalList intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval);
+  void intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval, IntervalList &result);
 }
 
 /*
@@ -52,15 +52,10 @@ struct Fan {
     else {
       ret = block.blockIntersectionWithMovingPoint<ADD_XY>(radius, interval.P1, interval.P2);
     }
-#ifdef _TRACE
-    if(!ret.empty()) {
-      std::cout << "  FAN intersection with block " << block << ": " << ret << std::endl;
-      std::cout << "  FAN inverse: " << math::intervalInverseRadians(ret, interval) << std::endl;
-      std::cout << "  FAN orig interval: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, interval), interval) << std::endl;
-    }
-#endif
-    ret = math::intervalInverseRadians(ret, interval);
-    ret = math::intervalsToOriginalInterval(ret, interval);
+    IntervalList copyRet(ret); ret.clear();
+    math::intervalInverseRadians(copyRet, interval, ret);
+    copyRet = ret; ret.clear();
+    math::intervalsToOriginalInterval(copyRet, interval, ret);
   }
 };
 
@@ -120,19 +115,14 @@ public:
     }
     else
       ret = block.blockIntersectionWithMovingStud<ADD_XY>(radius, interval.P1, interval.P2);
-#ifdef _TRACE
-    if(!ret.empty()) {
-      std::cout << "  " << block << ":" << std::endl << "  Intersection: " << ret << std::endl;
-      std::cout << "  Inversed: " << math::intervalInverseRadians(ret, interval) << std::endl;
-      std::cout << "  Transformed: " << math::intervalsToOriginalInterval(math::intervalInverseRadians(ret, interval), interval) << std::endl;
-    }
-#endif
 
     // Find intersect between min/max and intersection points:
     // Inverse ret:
-    ret = math::intervalInverseRadians(ret, interval);
+    IntervalList copyRet(ret); ret.clear();
+    math::intervalInverseRadians(copyRet, interval, ret);
     // Transform ret to interval [-MAX_ANGLE_RADIANS;MAX_ANGLE_RADIANS[
-    ret = math::intervalsToOriginalInterval(ret, interval);
+    copyRet = ret; ret.clear();
+    math::intervalsToOriginalInterval(copyRet, interval, ret);
 
     if(!allowClick || radius <= SNAP_DISTANCE) {
 #ifdef _TRACE
@@ -198,22 +188,16 @@ struct TurningSingleBrick {
 
   template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrickTurningBelow(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
-    IntervalList ret;
-    ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
     // Turning below:
     for(int i = 0; i < NUMBER_OF_STUDS; ++i) {
       IntervalList listForStud;
       movingStuds[i].allowableAnglesForBlock<ADD_XY>(brick, i >= 4, listForStud, clicks); // The last 4 studs are outer and thus allowing clicking.
-#ifdef _TRACE
-      std::cout << "||| AAFB& " << movingStuds[i] << ": " << std::endl << "  " << ret << " & " << listForStud << " = " << std::endl << "  " <<  math::intervalAnd(ret, listForStud) << "|||" << std::endl;
-      if(!math::intervalEquals(math::intervalAnd(ret, listForStud), ret))
-        std::cout << "AAFB REDUCTION PERFORMED!" << std::endl;
-#endif
-      ret = math::intervalAnd(ret, listForStud);
-      if(ret.empty())
+      IntervalList copyL(l); l.clear();
+      math::intervalAnd(copyL, listForStud, l);
+      if(l.empty())
         break;
     }
-    l = ret;//math::intervalReverse(ret);
 #ifdef _TRACE
     std::cout << "AAFB BELOW returns " << l << std::endl;
 #endif
@@ -221,8 +205,8 @@ struct TurningSingleBrick {
 
   template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAbove(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
-    IntervalList ret;
-    ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
+    assert(l.empty());
+    l.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
 
     Point studsOfBrick[NUMBER_OF_STUDS];
     brick.getStudPositions(studsOfBrick);
@@ -244,9 +228,10 @@ struct TurningSingleBrick {
       for(std::vector<ClickInfo>::const_iterator it = reversedClicks.begin(); it != reversedClicks.end(); ++it) {
         clicks.push_back(ClickInfo(-(it->first), it->second));
       }
-      ret = math::intervalAnd(ret, listForStud);
+      IntervalList copyL(l); l.clear();
+      math::intervalAnd(copyL, listForStud, l);
     }
-    l = math::intervalReverse(ret);
+    math::intervalReverse(l);
 #ifdef _TRACE
     std::cout << "AAFB ABOVE returns " << l << std::endl;
 #endif
@@ -254,6 +239,7 @@ struct TurningSingleBrick {
 
   template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrickTurningAtSameLevel(const Brick &brick, IntervalList &l) const {
+    assert(l.empty());
 #ifdef _TRACE
     std::cout << "AAFBTSL brick " << brick << " VS TSB " << blocks[0] << "-->" << blocks[1] << std::endl;
 #endif
@@ -263,11 +249,8 @@ struct TurningSingleBrick {
     for(int i = 0; i < 6; ++i) {
       IntervalList listForFan;
       fans[i].allowableAnglesForBlock<ADD_XY>(brick, listForFan);
-#ifdef _TRACE
-      if(!math::intervalEquals(l, math::intervalAnd(l, math::intervalReverse(listForFan))))
-        std::cout << " AAFBTSL fan reduction: " << fans[i] << ", " << brick << ": " << listForFan << std::endl;
-#endif
-      l = math::intervalAnd(l, listForFan);
+      IntervalList copyL(l); l.clear();
+      math::intervalAnd(copyL, listForFan, l);
       if(l.empty())
         return;
     }
@@ -294,11 +277,11 @@ struct TurningSingleBrick {
 #ifdef _TRACE
       if(!math::intervalEquals(l, math::intervalAnd(l, listForFan))) {
         std::cout << " AAFBTSL REVERSE fan reduction: " << f << ", " << blockAbove << ": " << listForFan << std::endl;
-        std::cout << " AAFBTSL REVERSE fan reduction reversed: " << math::intervalReverse(listForFan) << std::endl;
       }
 #endif
-      listForFan = math::intervalReverse(listForFan);
-      l = math::intervalAnd(l, listForFan);
+      math::intervalReverse(listForFan);
+      IntervalList copyL(l); l.clear();
+      math::intervalAnd(copyL, listForFan, l);
       if(l.empty())
         return;
     }
@@ -309,6 +292,7 @@ struct TurningSingleBrick {
 
   template <int ADD_XY>
   void /*TurningSingleBrick::*/allowableAnglesForBrick(const Brick &brick, IntervalList &l, std::vector<ClickInfo> &clicks) const {
+    assert(l.empty());
 #ifdef _TRACE
     std::cout << "AAFB (allowableAnglesForBrick) " << brick << " STARTING!" << std::endl;
 #endif
@@ -417,7 +401,8 @@ struct TurningSCCInvestigator {
 #ifdef _TRACE
         std::cout << "Joining allowable angles for " << b << ": " << ret << " & " << joiner << " = " << math::intervalAnd(ret,joiner) << std::endl;
 #endif
-        ret = math::intervalAnd(ret, joiner);
+        IntervalList copyRet(ret); ret.clear();
+        math::intervalAnd(copyRet, joiner, ret);
         // Add clicks by investigating realizable on each info.
         for(std::vector<ClickInfo>::const_iterator it2 = clicks.begin(); it2 != clicks.end(); ++it2) {
 #ifdef _TRACE
@@ -437,7 +422,9 @@ struct TurningSCCInvestigator {
 #ifdef _TRACE
             std::cout << " AAFB RET " << ret << " | " << studInterval << " = " << math::intervalOr(ret, studInterval) << std::endl;
 #endif
-            ret = math::intervalOr(ret, studInterval);
+
+            IntervalList copyRet(ret); ret.clear();
+            math::intervalOr(copyRet, studInterval, ret);
           }
 #ifdef _TRACE
           else {

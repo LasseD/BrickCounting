@@ -19,16 +19,16 @@ namespace math {
     }
   }
 
-  IntervalList intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval) {
-    IntervalList ret;
+  void intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval, IntervalList &result) {
+    assert(result.empty());
     for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
       double a = angleToOriginalInterval(it->first, interval);
       double b = angleToOriginalInterval(it->second, interval);
-      ret.push_back(Interval(a,b));
+      result.push_back(Interval(a,b));
     }
-    std::sort(ret.begin(), ret.end());
-    ret = math::collapseIntervals(ret);
-    return ret;
+    std::sort(result.begin(), result.end());
+    IntervalList copyRet(result); result.clear();
+    math::collapseIntervals(copyRet, result);
   }
 }
 

@@ -21,7 +21,7 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
     }
 
 #ifdef _DEBUG
-    mgr.printLDRFile();
+//    mgr.printLDRFile();
 #endif
 
 #ifdef _COMPARE_ALGORITHMS
@@ -252,10 +252,10 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
 
 void ConfigurationManager::test() {
   std::vector<int> v;
-  v.push_back(3);
-  v.push_back(3);
-  //runForCombinationType(v, 6);
-
+  v.push_back(2);
+  v.push_back(2);
+  runForCombinationType(v, 4);
+/*
   // Investigate failure #76:
   std::vector<FatSCC> v2;
   v2.push_back(sccs[2][125]);

@@ -129,15 +129,8 @@ namespace math {
   Returns true if there is an intersection. 
   */
   bool findCircleHalfPlaneIntersection(double radius, const LineSegment &line, RadianInterval &intersection) {
-#ifdef _DEBUG
-    Point i1, i2;
-    int ni = math::findCircleLineIntersections(radius, line, i1, i2);
-#endif
     bool newIntersections = math::findCircleLineIntersections(radius, line, intersection.P1, intersection.P2);      
     if(!newIntersections) {// != 2) {
-#ifdef _DEBUG
-      assert(ni != 2);
-#endif
       if(math::rightTurn(line.P1, line.P2, Point(0,0))) { // Inside half plane
         intersection.P1 = -M_PI;
         intersection.P2 = M_PI;
@@ -146,18 +139,6 @@ namespace math {
       return false; // Ignore no intersection and intersection in a point.
     }
 
-#ifdef _DEBUG
-    double im1 = math::angleOfPoint(i1);
-    double im2 = math::angleOfPoint(i2);
-    if(!(eqEpsilon(im1, intersection.P1) || eqEpsilon(im1, intersection.P2))) {
-      std::cout << "im1=" << im1 << " != intersectionMin=" << intersection.P1 << ", intersectionMax=" << intersection.P2 << std::endl;
-      assert(false);
-    }
-    if(!(eqEpsilon(im2, intersection.P1) || eqEpsilon(im2, intersection.P2))) {
-      std::cout << "im2=" << im2 << " != intersectionMin=" << intersection.P1 << ", intersectionMax=" << intersection.P2 << std::endl;
-      assert(false);
-    }
-#endif
     if(intersection.P1 > intersection.P2)
       std::swap(intersection.P1, intersection.P2);
 
@@ -262,31 +243,31 @@ namespace math {
   /*
   Finds the (angle) intervals of the circle at O with radius r where it intersects with the circle at p and radius pr.
   */
-  IntervalList findCircleCircleIntersection(double r, const Point &p, double pr) {
+  void findCircleCircleIntersection(double r, const Point &p, double pr, IntervalList &result) {
+    assert(result.empty());
     double ai1, ai2;
     bool newIntersections = findCircleCircleIntersections(r, p, pr, ai1, ai2);
-    IntervalList ret;
     if(!newIntersections)// < 2)
-      return ret;
+      return;
 
     // Find the angle interval. Since the first assertion holds, the interval of intersection is less than PI in length:
     if(ai1 > ai2)
       std::swap(ai1, ai2);
 
     if(ai2-ai1 < M_PI) {
-      ret.push_back(Interval(ai1, ai2));
+      result.push_back(Interval(ai1, ai2));
     }
     else {
-      ret.push_back(Interval(-M_PI, ai1));
-      ret.push_back(Interval(ai2, M_PI));
+      result.push_back(Interval(-M_PI, ai1));
+      result.push_back(Interval(ai2, M_PI));
     }
-    return ret;
   }
 
   /*
   Handles splitting of a and b if they jump.
   */
-  IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b) {
+  void intervalAndRadians(const RadianInterval &a, const RadianInterval &b, IntervalList &result) {
+    assert(result.empty());
     const double &a1 = a.P1;
     const double &a2 = a.P2;
     const double &b1 = b.P1;
@@ -294,42 +275,40 @@ namespace math {
 
     bool aJumps = a1 > a2;
     bool bJumps = b1 > b2;
-    IntervalList ret;
     if(aJumps) {
       if(bJumps) {
         // a consists of [a1;M_PI] and [-M_PI;a2],
         // b consists of [b1;M_PI] and [-M_PI;b2]:
-        ret.push_back(Interval(-M_PI, MIN(a2, b2)));
+        result.push_back(Interval(-M_PI, MIN(a2, b2)));
         if(b1 < a2) {
-          ret.push_back(Interval(b1, a2));
+          result.push_back(Interval(b1, a2));
         }
         if(a1 < b2) {
-          ret.push_back(Interval(a1, b2));
+          result.push_back(Interval(a1, b2));
         }
-        ret.push_back(Interval(MAX(a1, b1), M_PI));
+        result.push_back(Interval(MAX(a1, b1), M_PI));
       }
       else {
         // a consists of [-M_PI;a2] and [a1;M_PI]:
         if(b1 < a2)
-          ret.push_back(Interval(b1, MIN(b2,a2)));
+          result.push_back(Interval(b1, MIN(b2,a2)));
         if(b2 > a1)
-          ret.push_back(Interval(MAX(b1,a1), b2));
+          result.push_back(Interval(MAX(b1,a1), b2));
       }
     }
     else {
       if(bJumps) {
         // b consists of [b1;M_PI] and [-M_PI;b2]:
         if(a1 < b2)
-          ret.push_back(Interval(a1, MIN(a2, b2)));
+          result.push_back(Interval(a1, MIN(a2, b2)));
         if(a2 > b1)
-          ret.push_back(Interval(MAX(a1,b1), a2));
+          result.push_back(Interval(MAX(a1,b1), a2));
       }
       else { // Normal case: No jumping anywhere:
         if(a2 > b1 && a1 < b2)
-          ret.push_back(Interval(MAX(a1, b1), MIN(a2, b2)));
+          result.push_back(Interval(MAX(a1, b1), MIN(a2, b2)));
       }
     }
-    return ret;
   }
 
   bool intervalEquals(const IntervalList &a, const IntervalList &b) {
@@ -361,8 +340,8 @@ namespace math {
     return eqEpsilon(interval.first, min) && eqEpsilon(interval.second, max);
   }
 
-  IntervalList intervalAnd(const IntervalList &a, const IntervalList &b) {
-    IntervalList ret;
+  void intervalAnd(const IntervalList &a, const IntervalList &b, IntervalList &result) {
+    assert(result.empty());
     IntervalList::const_iterator itA = a.begin();
     IntervalList::const_iterator itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
@@ -380,32 +359,31 @@ namespace math {
       const double min = MAX(itA->first, itB->first);
       if(itA->second < itB->second) {
         if(min < itA->second-EPSILON)
-          ret.push_back(Interval(min,itA->second));      
+          result.push_back(Interval(min,itA->second));      
         ++itA;
       }
       else {
         if(min < itB->second-EPSILON)
-          ret.push_back(Interval(min,itB->second));      
+          result.push_back(Interval(min,itB->second));      
         ++itB;
       }
     }
-    return ret;    
   }
 
-  IntervalList intervalOr(const IntervalList &a, const IntervalList &b) {
-    IntervalList ret;
+  void intervalOr(const IntervalList &a, const IntervalList &b, IntervalList &result) {
+    assert(result.empty());
     IntervalList::const_iterator itA = a.begin();
     IntervalList::const_iterator itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
       // B ends before A starts:
       if(itB->second < itA->first) {
-        ret.push_back(*itB);
+        result.push_back(*itB);
         ++itB;
         continue;
       }
       // A ends before B starts:
       if(itA->second < itB->first) {
-        ret.push_back(*itA);
+        result.push_back(*itA);
         ++itA;
         continue;
       }
@@ -428,83 +406,82 @@ namespace math {
           }
         }
       }
-      ret.push_back(Interval(min,max));      
+      result.push_back(Interval(min,max));      
     }
     // Clean up rest:
     while(itA != a.end()) {
-      ret.push_back(*itA);
+      result.push_back(*itA);
       ++itA;
     }
     while(itB != b.end()) {
-      ret.push_back(*itB);
+      result.push_back(*itB);
       ++itB;
     }
-    return ret;
   }
 
-  IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax) {
+  void intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax, IntervalList &result) {
+    assert(result.empty());
     const double &min = minmax.P1;
     const double &max = minmax.P2;
 
-    IntervalList ret;
     if(l.empty()) {
-      return toIntervalsRadians(minmax);
+      toIntervalsRadians(minmax, result);
+      return;
     }
 
     IntervalList::const_iterator it = l.begin();
     if(min < max) {
       if(it->first > min)
-        ret.push_back(Interval(min, it->first));
+        result.push_back(Interval(min, it->first));
       double last = it->second;
       ++it;
       for(; it != l.end(); ++it) {
-        ret.push_back(Interval(last, it->first));
+        result.push_back(Interval(last, it->first));
         last = it->second;
       }
       if(last != max)
-        ret.push_back(Interval(last, max));
+        result.push_back(Interval(last, max));
     }
     else {
       // First section:
       if(it->first >= min) // Nothing in first section:
-        ret.push_back(Interval(-M_PI, max));
+        result.push_back(Interval(-M_PI, max));
       else {
         if(it->first > -M_PI)
-          ret.push_back(Interval(-M_PI, it->first));
+          result.push_back(Interval(-M_PI, it->first));
         double last = it->second;
         ++it;
         for(; it != l.end() && it->first < max; ++it) {
-          ret.push_back(Interval(last, it->first));
+          result.push_back(Interval(last, it->first));
           last = it->second;
         }
         if(last != max)
-          ret.push_back(Interval(last, max));
+          result.push_back(Interval(last, max));
       }
 
       // Second section:
       if(it == l.end()) { // Nothing in second section:
-        ret.push_back(Interval(min, M_PI));
+        result.push_back(Interval(min, M_PI));
       }
       else {
         if(it->first > min)
-          ret.push_back(Interval(min, it->first));
+          result.push_back(Interval(min, it->first));
         double last = it->second;
         ++it;
         for(; it != l.end(); ++it) {
-          ret.push_back(Interval(last, it->first));
+          result.push_back(Interval(last, it->first));
           last = it->second;
         }
         if(last != M_PI)
-          ret.push_back(Interval(last, M_PI));
+          result.push_back(Interval(last, M_PI));
       }
     }
-    return ret;
   }
 
-  IntervalList collapseIntervals(const IntervalList &l) {
-    IntervalList ret;
+  void collapseIntervals(const IntervalList &l, IntervalList &result) {
+    assert(result.empty());
     if(l.empty()) {
-      return ret;
+      return;
     }
 
     IntervalList::const_iterator it = l.begin();
@@ -515,35 +492,44 @@ namespace math {
         prev.second = it->second;
       }
       else {
-        ret.push_back(prev);
+        result.push_back(prev);
         prev = *it;
       }
     }
-    ret.push_back(prev);
-    return ret;
+    result.push_back(prev);
   }
 
-  IntervalList intervalReverse(const IntervalList &l) {
-    IntervalList ret;
-    for(IntervalList::const_reverse_iterator it = l.rbegin(); it != l.rend(); ++it) {
-      ret.push_back(Interval(-it->second, -it->first));
+  void intervalReverse(IntervalList &l) {
+    if(l.empty())
+      return;
+    if(l.size() == 1) {
+      double sec = l[0].second;
+      l[0].second = -l[0].first;
+      l[0].first = -sec;
+      return;
     }
-    return ret;
+
+    for(unsigned int i = 0, j = l.size()-1; i <= j; ++i, --j) {
+      Interval ii = l[i];
+      l[i].second = -l[j].first;
+      l[i].first = -l[j].second;
+      l[j].second = -ii.first;
+      l[j].first = -ii.second;
+    }
   }
 
-  IntervalList toIntervalsRadians(const RadianInterval &interval) {
+  void toIntervalsRadians(const RadianInterval &interval, IntervalList &result) {
+    assert(result.empty());
     const double &min = interval.P1;
     const double &max = interval.P2;
 
-    IntervalList ret;
     if(min < max) {
-      ret.push_back(Interval(min, max));
+      result.push_back(Interval(min, max));
     }
     else {
-      ret.push_back(Interval(-M_PI, max));
-      ret.push_back(Interval(min, M_PI));
+      result.push_back(Interval(-M_PI, max));
+      result.push_back(Interval(min, M_PI));
     }
-    return ret;
   }
 
   IntervalListVector::IntervalListVector() : intervalsSize(0), indicatorSize(0) {

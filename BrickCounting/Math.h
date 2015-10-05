@@ -60,19 +60,20 @@ namespace math {
   bool intervalEquals(const IntervalList &a, const IntervalList &b);
   bool intervalContains(const IntervalList &a, double d);
   bool isFullInterval(const IntervalList &a, double min, double max);
-  IntervalList intervalAnd(const IntervalList &a, const IntervalList &b);
-  IntervalList intervalAndRadians(const RadianInterval &a, const RadianInterval &b);
-  IntervalList intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax);
-  IntervalList intervalOr(const IntervalList &a, const IntervalList &b);
-  IntervalList intervalReverse(const IntervalList &l);
-  IntervalList collapseIntervals(const IntervalList &l);
-  IntervalList toIntervalsRadians(const RadianInterval &interval);
+
+  void intervalAnd(const IntervalList &a, const IntervalList &b, IntervalList &result);
+  void intervalAndRadians(const RadianInterval &a, const RadianInterval &b, IntervalList &result);
+  void intervalInverseRadians(const IntervalList &l, const RadianInterval &minmax, IntervalList &result);
+  void intervalOr(const IntervalList &a, const IntervalList &b, IntervalList &result);
+  void intervalReverse(IntervalList &l);
+  void collapseIntervals(const IntervalList &l, IntervalList &result);
+  void toIntervalsRadians(const RadianInterval &interval, IntervalList &result);
 
   bool rightTurn(const Point &lineStart, const Point &lineEnd, const Point &p);
 
   int findCircleCircleIntersections(const double r, const Point &p, const double pr, Point &i1, Point &i2); // Actual primitive
   bool findCircleCircleIntersections(const double r, const Point &p, const double pr, double &ai1, double &ai2); // Actual primitive
-  IntervalList findCircleCircleIntersection(double r, const Point &p, double pr); // Returns intersections as IntervalList
+  void findCircleCircleIntersection(double r, const Point &p, double pr, IntervalList &result); // Returns intersections as IntervalList
 
   int findCircleLineIntersections(double r, const LineSegment &l, Point &i1, Point &i2);
   bool findCircleLineIntersections(double r, const LineSegment &l, double &ai1, double &ai2);

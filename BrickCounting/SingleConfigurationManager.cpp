@@ -103,7 +103,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       }
       rectilinear += newRectilinear.size();
 
-#ifdef _DEBUG
+#ifdef _RM_DEBUG
       MPDPrinter h;
       for(std::vector<std::pair<Configuration,MIsland> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
         const Configuration &c = it->first;

@@ -132,7 +132,7 @@ public:
         return empty;
       }
       if(!retInitiated) {
-        ret = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection);
+        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection, ret);
 #ifdef _TRACE
         const double &intersectionMin = intersection.P1;
         const double &intersectionMax = intersection.P2;
@@ -141,13 +141,15 @@ public:
         retInitiated = true;
       }
       else {
-        IntervalList toMerge = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection);
+        IntervalList toMerge;
+        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection, toMerge);
 #ifdef _TRACE
         const double &intersectionMin = intersection.P1;
         const double &intersectionMax = intersection.P2;
         std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << toMerge << " => " << math::intervalAnd(ret, toMerge) << std::endl;
 #endif
-        ret = math::intervalAnd(ret, toMerge);
+        IntervalList copyRet(ret); ret.clear();
+        math::intervalAnd(copyRet, toMerge, ret);
       }
       if(ret.empty())
         return ret;
@@ -194,21 +196,21 @@ public:
   IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle, bool allowClick) const {
     Point p(0,0);
     movePointSoThisIsAxisAlignedAtOrigin(p);
+    IntervalList ret;
     if(allowClick) {
       bool fakeConnected = false;
       ConnectionPoint fakeCP;
       RectilinearBrick fakeRB;
       if(boxIntersectsOuterStud<ADD_XY>(p, fakeConnected, fakeCP, fakeCP, fakeRB, fakeRB, 4)) {
-        return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
+        math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
       }
     }
     else {
       if(boxIntersectsInnerStud<ADD_XY>(p)) {
-        return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
+        math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
       }
     }
-    IntervalList empty;
-    return empty;
+    return ret;
   }
 
   /*
@@ -227,10 +229,10 @@ public:
     if(p.X < 0) p.X = -p.X;
     if(p.Y < 0) p.Y = -p.Y;
 
+    IntervalList ret;
     if(p.X < cornerX && p.Y < cornerY)
-      return math::toIntervalsRadians(RadianInterval(minAngle, maxAngle));
-    IntervalList empty;
-    return empty;
+      math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
+    return ret;
   }
 
   /*
@@ -261,7 +263,8 @@ public:
 
     Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
     IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
-    ret = math::intervalOr(ret, intersectionsWithRect2);
+    IntervalList copyRet(ret); ret.clear();
+    math::intervalOr(copyRet, intersectionsWithRect2, ret);
 #ifdef _TRACE
     if(!ret.empty()) {
       if(!spilled) {
@@ -281,10 +284,13 @@ public:
     getBoxPOIs<ADD_XY>(pois);
     for(int i = 0; i < 4; ++i) {
       // Find intersections:
-      IntervalList intervalFromCircle = math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS);
+      IntervalList intervalFromCircle;
+      math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS, intervalFromCircle);
       for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
-        IntervalList intervalFromCircleInCorrectInterval = math::intervalAndRadians(RadianInterval(minAngle, maxAngle), RadianInterval(it->first, it->second));
-        ret = math::intervalOr(ret, intervalFromCircleInCorrectInterval);
+        IntervalList intervalFromCircleInCorrectInterval; 
+        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), RadianInterval(it->first, it->second), intervalFromCircleInCorrectInterval);
+        IntervalList copyRet(ret); ret.clear();
+        math::intervalOr(copyRet, intervalFromCircleInCorrectInterval, ret);
 #ifdef _TRACE
         if(!ret.empty()) {
           if(!spilled) {

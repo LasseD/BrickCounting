@@ -319,7 +319,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   
   // First check quick clear:
   if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
-#ifdef _DEBUG
+#ifdef _RM_DEBUG
     // Check that algorithms agree:
     IntervalList l;
     tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
