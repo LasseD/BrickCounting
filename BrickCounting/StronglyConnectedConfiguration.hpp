@@ -68,7 +68,7 @@ public:
   }
 
   RectilinearConfiguration() {}
-  RectilinearConfiguration(const RectilinearConfiguration& c) {
+  RectilinearConfiguration(const RectilinearConfiguration<SIZE>& c) {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i] = c.otherBricks[i];
     }

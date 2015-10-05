@@ -22,8 +22,8 @@ namespace UnionFind {
   }
 
   void UnionFindStructure::join(const IntervalList &l1, const IntervalList &l2, uint32_t union1, uint32_t union2) {
-    IntervalList::const_iterator it1 = l1.begin();
-    IntervalList::const_iterator it2 = l2.begin();
+    const Interval* it1 = l1.begin();
+    const Interval* it2 = l2.begin();
 
     while(it1 != l1.end() && it2 != l2.end()) {
       if(it2->second < it1->first) {
@@ -234,7 +234,7 @@ namespace UnionFind {
     IntervalList l;
     M.get(indicatorIndex, l);
     uint32_t index = 0;
-    for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it, ++index) {
+    for(const Interval* it = l.begin(); it != l.end(); ++it, ++index) {
       if(it->first <= rep.lastAngle && rep.lastAngle <= it->second) {
         return ufs->getMinInUnion(firstUnion + index);
       }

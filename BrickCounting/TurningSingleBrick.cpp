@@ -21,12 +21,12 @@ namespace math {
 
   void intervalsToOriginalInterval(const IntervalList &l, const RadianInterval &interval, IntervalList &result) {
     assert(result.empty());
-    for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+    for(const Interval* it = l.begin(); it != l.end(); ++it) {
       double a = angleToOriginalInterval(it->first, interval);
       double b = angleToOriginalInterval(it->second, interval);
       result.push_back(Interval(a,b));
     }
-    std::sort(result.begin(), result.end());
+    result.sort();
     IntervalList copyRet(result); result.clear();
     math::collapseIntervals(copyRet, result);
   }

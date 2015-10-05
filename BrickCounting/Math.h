@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "Util.hpp"
+
 //#define _TRACE 1
 //#define _COMPARE_ALGORITHMS 1
 
@@ -27,7 +29,7 @@ std::ostream& operator<<(std::ostream &os, const Point& p);
 
 typedef std::pair<double,double> Interval;
 typedef Interval RadianInterval; // Counter clockwise from P1 to P2.
-typedef std::vector<Interval> IntervalList;
+typedef util::TinyVector<Interval, 10> IntervalList;
 std::ostream& operator<<(std::ostream &os, const IntervalList& p);
 
 typedef std::pair<Point,Point> LineSegment;

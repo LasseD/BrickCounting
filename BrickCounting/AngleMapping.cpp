@@ -8,7 +8,7 @@
 
 namespace math {
   void intervalToArray(const IntervalList &l, bool *array, unsigned int sizeArray) {
-    IntervalList::const_iterator it = l.begin();
+    const Interval* it = l.begin();
     for(unsigned int i = 0; i < sizeArray; ++i) {
       double v = -MAX_ANGLE_RADIANS + ((MAX_ANGLE_RADIANS+MAX_ANGLE_RADIANS)*i)/((double)sizeArray-1);
       if(it == l.end() || v < it->first) {
@@ -646,7 +646,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   }
 
   // Then handle the non-rectilinear:
-  for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+  for(const Interval* it = l.begin(); it != l.end(); ++it) {
     if(rectilinear && it->first <= 0 && 0 <= it->second)
       continue;
     double angle = (it->second + it->first)/2;

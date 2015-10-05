@@ -286,7 +286,7 @@ public:
       // Find intersections:
       IntervalList intervalFromCircle;
       math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS, intervalFromCircle);
-      for(IntervalList::const_iterator it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
+      for(const Interval* it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
         IntervalList intervalFromCircleInCorrectInterval; 
         math::intervalAndRadians(RadianInterval(minAngle, maxAngle), RadianInterval(it->first, it->second), intervalFromCircleInCorrectInterval);
         IntervalList copyRet(ret); ret.clear();

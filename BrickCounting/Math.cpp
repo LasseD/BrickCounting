@@ -315,8 +315,8 @@ namespace math {
     if(a.size() != b.size()) {
       return false;
     }
-    IntervalList::const_iterator itA = a.begin();
-    IntervalList::const_iterator itB = b.begin();
+    const Interval* itA = a.begin();
+    const Interval* itB = b.begin();
     for(;itA != a.end(); ++itA, ++itB) {
       if(*itA != *itB)
         return false;
@@ -325,7 +325,7 @@ namespace math {
   }
 
   bool intervalContains(const IntervalList &a, double d) {
-    for(IntervalList::const_iterator it = a.begin(); it != a.end(); ++it) {
+    for(const Interval* it = a.begin(); it != a.end(); ++it) {
       if(it->second < d)
         continue;
       return it->first <= d;
@@ -342,8 +342,8 @@ namespace math {
 
   void intervalAnd(const IntervalList &a, const IntervalList &b, IntervalList &result) {
     assert(result.empty());
-    IntervalList::const_iterator itA = a.begin();
-    IntervalList::const_iterator itB = b.begin();
+    const Interval* itA = a.begin();
+    const Interval* itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
       // B ends before A starts:
       if(itB->second < itA->first) {
@@ -372,8 +372,8 @@ namespace math {
 
   void intervalOr(const IntervalList &a, const IntervalList &b, IntervalList &result) {
     assert(result.empty());
-    IntervalList::const_iterator itA = a.begin();
-    IntervalList::const_iterator itB = b.begin();
+    const Interval* itA = a.begin();
+    const Interval* itB = b.begin();
     while(itA != a.end() && itB != b.end()) {
       // B ends before A starts:
       if(itB->second < itA->first) {
@@ -429,7 +429,7 @@ namespace math {
       return;
     }
 
-    IntervalList::const_iterator it = l.begin();
+    const Interval* it = l.begin();
     if(min < max) {
       if(it->first > min)
         result.push_back(Interval(min, it->first));
@@ -484,7 +484,7 @@ namespace math {
       return;
     }
 
-    IntervalList::const_iterator it = l.begin();
+    const Interval* it = l.begin();
     Interval prev = *it;
     ++it;
     for(; it != l.end(); ++it) {
@@ -557,7 +557,7 @@ namespace math {
     }
     indicators[location].first = intervalsI;
     indicators[location].second = (unsigned short)intervalList.size();
-    for(IntervalList::const_iterator it = intervalList.begin(); it != intervalList.end(); ++it)
+    for(const Interval* it = intervalList.begin(); it != intervalList.end(); ++it)
       intervals[intervalsI++] = *it;
   }
   void IntervalListVector::insertEmpty(uint32_t location) {
@@ -600,7 +600,7 @@ namespace math {
       assert(*it <= 6);
       ret = (ret << 3) + *it;
     }
-    ret = (ret << 3) + l.size();
+    ret = (ret << 3) + (uint32_t)l.size();
     return ret;
   }
 }
@@ -617,7 +617,7 @@ std::ostream& operator<<(std::ostream &os, const LineSegment& l) {
 
 std::ostream& operator<<(std::ostream &os, const IntervalList& l) {
   os << "{";
-  for(IntervalList::const_iterator it = l.begin(); it != l.end(); ++it) {
+  for(const Interval* it = l.begin(); it != l.end(); ++it) {
     os << "[" << *it << "]";
   }
   os << "}";
