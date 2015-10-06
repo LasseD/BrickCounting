@@ -747,7 +747,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       Configuration c = getConfiguration(mIsland.representative);
       if(!mIsland.isRectilinear) {
         ++models; // count all non-rectilinear as models.
-        //modelsToPrint.push_back(c); // Only print to models file when there is more than one. 
       }
       else {
         newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));
@@ -759,6 +758,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         --models; // Don't count anything problematic.
         reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
         anyMappingPrinted = true;
+      }
+      else if(!mIsland.isRectilinear) {
+        modelsToPrint.push_back(c); 
       }
 
       if(mIsland.isCyclic) {

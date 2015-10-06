@@ -479,7 +479,7 @@ namespace math {
   }
 
   void collapseIntervals(IntervalList &l) {
-    if(l.empty() || l.size() == 1) {
+    if(l.size() <= 1) {
       return;
     }
 

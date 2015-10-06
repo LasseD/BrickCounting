@@ -31,6 +31,8 @@ namespace util {
       return elements[pos];
     }
     inline const T& operator[](std::size_t pos) const { 
+      assert(pos >= 0);
+      assert(pos < s);
       return elements[pos]; 
     };
 
@@ -53,6 +55,8 @@ namespace util {
       s = 0;
     }
     inline void truncate(unsigned int size) {
+      assert(size >= 0);
+      assert(size <= s);
       s = size;
     }
 
