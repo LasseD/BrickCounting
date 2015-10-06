@@ -11,11 +11,21 @@ SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC>
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
+  std::stringstream ss;
+  ss << "  Combination type ";
+  for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) {
+    if(it != combination.begin())
+      ss << "/";
+    ss << it->size;
+  }
+  ss << ", combination";
+  for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
+    ss << " " << it->index;
+  pw.initReportName(ss.str());
+
 #ifdef _TRACE
   std::cout << "Building SingleConfigurationManager on combination of size " << combinationSize << ": " << std::endl;
-  for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
-    std::cout << *it << " ";
-  std::cout << std::endl;
+  std::cout << " " << ss.str() << std::endl;
 #endif
 
   for(unsigned int i = 0; i < combinationSize; ++i) {
@@ -68,7 +78,7 @@ bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList
   return true;
 }
 
-void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize) {
+void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw) {
   if(remainingSize == 0) {
     // First check that we have at least not run this combination before:
     // If the connections are not even rotationslly minimal, then bail:
@@ -93,6 +103,8 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
     }
 
     ++attempts;
+    if(countForPw)
+      return; // Early return for count.
     AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
 
     if(!findExtremeAnglesOnly) {
@@ -184,6 +196,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       }
 #endif
     }
+    pw.reportProgress();
 
     return;
   }
@@ -201,7 +214,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         std::vector<IConnectionPoint> newAbovePool, newBelowPool;
         mergePools(newAbovePool, abovePool, it_cp1, above[i], combination[i].index, i);
         mergePools(newBelowPool, belowPool, it_cp2, below[i], combination[i].index, i);
-        run(l, newAbovePool, newBelowPool, remaining, remainingSize-1);
+        run(l, newAbovePool, newBelowPool, remaining, remainingSize-1, countForPw);
         l.pop_back();
       }
     }
@@ -214,7 +227,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
         std::vector<IConnectionPoint> newAbovePool, newBelowPool;
         mergePools(newBelowPool, belowPool, it_cp1, below[i], combination[i].index, i);
         mergePools(newAbovePool, abovePool, it_cp2, above[i], combination[i].index, i);
-        run(l, newAbovePool, newBelowPool, remaining, remainingSize-1);
+        run(l, newAbovePool, newBelowPool, remaining, remainingSize-1, countForPw);
         l.pop_back();
       }
     }
@@ -224,10 +237,19 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
 }
 
 void SingleConfigurationManager::run() {
+  run(true);
+  pw.initSteps(attempts);
+  pw.initTime();
+  attempts = 0;
+  investigatedConnectionPairListsEncoded.clear();
+  run(false);
+}
+
+void SingleConfigurationManager::run(bool countForPw) {
   time_t startTime, endTime;
   time(&startTime);
 
-#ifdef _DEBUG
+#ifdef _RM_DEBUG
   std::cout << "INIT SingleConfigurationManager::run(";
   for(unsigned int i = 0; i < combinationSize; ++i)
     std::cout << combination[i] << " ";
@@ -250,7 +272,9 @@ void SingleConfigurationManager::run() {
   for(std::set<ConnectionPoint>::const_iterator it = below[0].begin(); it != below[0].end(); ++it)
     belowPool.push_back(IConnectionPoint(BrickIdentifier(combination[0].index, it->brickI, 0), *it));
 
-  run(l, abovePool, belowPool, remaining, remainingSize);
+  run(l, abovePool, belowPool, remaining, remainingSize, countForPw);
+  if(countForPw)
+    return;
   // Print:
   printManualLDRFiles();
   printLDRFile();

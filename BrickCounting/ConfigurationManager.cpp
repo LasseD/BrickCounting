@@ -9,6 +9,7 @@
 void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os) {
   if(combination.size() == combinationType.size()) {
     
+    pw.reportProgress();
     SingleConfigurationManager mgr(combination, os, findExtremeAnglesOnly);
     mgr.run();
 
@@ -84,28 +85,38 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   std::cout << "RCs to be found: " << correct.size() << std::endl;
 #endif
 
-  //if(findExtremeAnglesOnly && combinationType.size() <= 2)
-  //  return; // Don't run extreme angles for combinatoins that can be handled using the normal algorithm.
+  if(findExtremeAnglesOnly && combinationType.size() <= 2)
+    return; // Don't run extreme angles for combinatoins that can be handled better using the normal algorithm.
   time_t startTime, endTime;
   time(&startTime);
 
   std::ofstream os;
-  std::stringstream ss;
+  std::stringstream ss, ss2;
 
   ss << "manual\\manual_size_" << combinedSize << "_sccsizes";
+  ss2 << " Combination type ";
 
-  std::cout << "Computing all models for combination type ";
   for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
-    if(it != combinationType.begin())
-      std::cout << "/";
-    std::cout << *it;
+    if(it != combinationType.begin()) {
+      ss2 << "/";
+    }
+    ss2 << *it;
     ss << "_" << *it;
   }
+  std::cout << "Computing all models for" << ss2.str();
   ss << ".txt";
   os.open(ss.str().c_str(), std::ios::out);
   if(findExtremeAnglesOnly)
     std::cout << " (extreme angles only)";
   std::cout << "." << std::endl;
+  pw.initReportName(ss2.str());
+
+  unsigned long steps = 1;
+  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+    steps *= sccsSize[*it-1];
+  }
+  pw.initSteps(steps);
+  pw.initTime();
 
   // Store counters:
   counter storeAttempts = attempts;

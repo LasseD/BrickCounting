@@ -12,6 +12,7 @@ private:
   counter attempts, rectilinear, models, problematic;
   counter angleMappingBoosts[BOOST_STAGES];
   bool findExtremeAnglesOnly;
+  util::ProgressWriter pw;
 
   void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os);
 

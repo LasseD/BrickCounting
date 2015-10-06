@@ -148,7 +148,22 @@ bool BrickIdentifier::operator==(const BrickIdentifier &bi) const {
 }
 
 std::ostream& operator<<(std::ostream &os, const BrickIdentifier& bi) {
-  os << "fileI=" << bi.sccInFile << ",brickI=" << bi.brickIndexInScc << ",sccI=" << bi.configurationSCCI;
+  bool first = true;
+  if(bi.sccInFile != 0) {
+    os << "fileI=" << bi.sccInFile;
+    first = false;
+  }
+  if(bi.brickIndexInScc != 0) {
+    if(!first)
+      os << ",";
+    os << "brickI=" << bi.brickIndexInScc;
+    first = false;
+  }
+  if(bi.configurationSCCI != 0) {
+    if(!first)
+      os << ",";
+    os << "sccI=" << bi.configurationSCCI;
+  }
   return os;
 }
 

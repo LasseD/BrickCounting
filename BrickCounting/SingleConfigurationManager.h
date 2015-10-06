@@ -29,10 +29,14 @@ private:
   FatSCC combination[6];
   ConfigurationEncoder encoder;
   std::ofstream &os;
-  
+  util::ProgressWriter pw;
+
   // Used only for construction:
   std::set<ConnectionPoint> above[6], below[6]; 
   bool prevMustBeChosen[6], findExtremeAnglesOnly;
+
+  void run(bool countForPw);
+  void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw);
 
 public:
   SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly);
@@ -43,7 +47,6 @@ public:
     return *ret;
   }
 
-  void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize);
   void run();
   void printLDRFile() const;
   void printManualLDRFiles() const;
