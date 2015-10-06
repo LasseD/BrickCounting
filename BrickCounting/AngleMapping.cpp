@@ -745,22 +745,19 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         continue; // Already found. This can happen when there are cycles.
 
       Configuration c = getConfiguration(mIsland.representative);
-      if(!mIsland.isRectilinear) {
-        ++models; // count all non-rectilinear as models.
-      }
-      else {
+      if(mIsland.isRectilinear) {
         newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));
       }
 
       // Multiple M-islands inside => problematic. Count only this M-island.
       // No L-islands => problematic, but still count.
-      if(sIsland.mIslands.size() != 1 || (numAngles != 1 && mIsland.lIslands != 1) || (numAngles == 1 && mIsland.lIslands > 1) ) {
-        --models; // Don't count anything problematic.
+      if(sIsland.mIslands.size() != 1 || mIsland.lIslands != 1) {
         reportProblematic(mIsland.representative, mIslandI, (int)sIsland.mIslands.size(), mIsland.lIslands, manual, !anyMappingPrinted);
         anyMappingPrinted = true;
       }
       else if(!mIsland.isRectilinear) {
         modelsToPrint.push_back(c); 
+        ++models;
       }
 
       if(mIsland.isCyclic) {
