@@ -214,7 +214,8 @@ public:
     }
   }
   ~RectilinearConfigurationList() {
-    for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it) {
+    typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::iterator it;
+    for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it) {
       CombinationTypeList<ELEMENT_SIZE>* list = it->second;
       delete list;
     }
@@ -320,7 +321,8 @@ public:
 
   void addAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
     if(ELEMENT_SIZE > 2) {
-      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
+      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
         it->second->openForWrite();
     }
 
@@ -330,7 +332,8 @@ public:
     }
 
     if(ELEMENT_SIZE > 2) {
-      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
+      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
         it->second->closeForWrite();
     }
   }
@@ -359,7 +362,8 @@ private:
 public:
   unsigned long countAllFor(RectilinearConfigurationList<ELEMENT_SIZE-1> &smaller, bool includeNonSCCs) {
     if(ELEMENT_SIZE > 2) {
-      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
+      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
         it->second->openForWrite();
     }
 
@@ -378,7 +382,8 @@ public:
     std::cout << "Number of RectilinearConfigurations of size " << ELEMENT_SIZE << ": " << sum << std::endl;
 
     if(ELEMENT_SIZE > 2) {
-      for(std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
+      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
         it->second->closeForWrite();
     }
 

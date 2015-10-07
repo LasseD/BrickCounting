@@ -31,37 +31,37 @@ LDRPrinter.o:  LDRPrinter.h LDRPrinter.cpp
 ConnectionPoint.o: ConnectionPoint.h ConnectionPoint.cpp
 	$(CC) $(CFLAGS) -c ConnectionPoint.cpp
 
-Math.o:  Math.h Math.cpp
+Math.o:  Util.hpp Math.h Math.cpp
 	$(CC) $(CFLAGS) -c Math.cpp
 
 RectilinearBrick.o: LDRPrinter.h ConnectionPoint.h RectilinearBrick.h RectilinearBrick.cpp
 	$(CC) $(CFLAGS) -c RectilinearBrick.cpp
 
-Brick.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h Brick.cpp
+Brick.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h Brick.cpp
 	$(CC) $(CFLAGS) -c Brick.cpp
 
 UnionFind.o: Brick.h UnionFind.h UnionFind.cpp
 	$(CC) $(CFLAGS) -c UnionFind.cpp
 
-StronglyConnectedConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
+StronglyConnectedConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h StronglyConnectedConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c StronglyConnectedConfigurationManager.cpp
 
-ConfigurationEncoder.o: LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h ConfigurationEncoder.cpp
+ConfigurationEncoder.o: LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h ConfigurationEncoder.cpp
 	$(CC) $(CFLAGS) -c ConfigurationEncoder.cpp
 
-TurningSingleBrick.o: LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h UnionFind.h TurningSingleBrick.h TurningSingleBrick.cpp
+TurningSingleBrick.o: LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h UnionFind.h TurningSingleBrick.h TurningSingleBrick.cpp
 	$(CC) $(CFLAGS) -c TurningSingleBrick.cpp
 
-AngleMapping.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h UnionFind.h TurningSingleBrick.h AngleMapping.h AngleMapping.cpp
+AngleMapping.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h UnionFind.h TurningSingleBrick.h AngleMapping.h AngleMapping.cpp
 	$(CC) $(CFLAGS) -c AngleMapping.cpp
 
-SingleConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h SingleConfigurationManager.cpp
+SingleConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h SingleConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c SingleConfigurationManager.cpp
 
-ConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h ConfigurationManager.h ConfigurationManager.cpp
+ConfigurationManager.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h ConfigurationManager.h ConfigurationManager.cpp
 	$(CC) $(CFLAGS) -c ConfigurationManager.cpp
 
-main.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h ConfigurationManager.h main.cpp
+main.o:  LDRPrinter.h ConnectionPoint.h RectilinearBrick.h Util.hpp Math.h Brick.h StronglyConnectedConfiguration.hpp StronglyConnectedConfigurationList.hpp StronglyConnectedConfigurationManager.h Configuration.hpp ConfigurationEncoder.h TurningSingleBrick.h AngleMapping.h SingleConfigurationManager.h ConfigurationManager.h main.cpp
 	$(CC) $(CFLAGS) -c main.cpp
 
 # To start over from scratch, type 'make clean'.  This
