@@ -24,7 +24,7 @@ namespace math {
   }
 }
 
-AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
+AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
     numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly) {
   // Boosts:
   for(int i = 0; i < BOOST_STAGES; ++i)
@@ -36,7 +36,7 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const std::vec
   }
   // Connection info:
   unsigned int i = 0;
-  for(std::vector<IConnectionPair>::const_iterator it = cs.begin(); it != cs.end(); ++it) {
+  for(const IConnectionPair* it = cs.begin(); it != cs.end(); ++it) {
     const IConnectionPair &c = *it;
     const IConnectionPoint &icp1 = c.first;
     const IConnectionPoint &icp2 = c.second;
@@ -219,21 +219,18 @@ Configuration AngleMapping::getConfiguration(const Configuration &baseConfigurat
   return c;
 }
 
-std::vector<Connection> AngleMapping::getConfigurationConnections(const MixedPosition &p) const {
-  std::vector<Connection> res;
+void AngleMapping::getConfigurationConnections(const MixedPosition &p, util::TinyVector<Connection, 5> &result) const {
   for(unsigned int i = 0; i < numAngles-1; ++i) {
     const IConnectionPoint &ip1 = points[2*i];
     const IConnectionPoint &ip2 = points[2*i+1];
     const StepAngle angle((short)p.p[i]-(short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
-    res.push_back(Connection(ip1, ip2, angle));
+    result.push_back(Connection(ip1, ip2, angle));
   }
 
   const IConnectionPoint &ip1 = points[2*(numAngles-1)];
   const IConnectionPoint &ip2 = points[2*(numAngles-1)+1];
   const StepAngle angle(p.lastAngle);
-  res.push_back(Connection(ip1, ip2, angle));
-
-  return res;
+  result.push_back(Connection(ip1, ip2, angle));
 }
 
 /*
@@ -249,7 +246,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   const IConnectionPoint &ip1 = points[2*angleI];
   const IConnectionPoint &ip2 = points[2*angleI+1];
   unsigned int ip2I = ip2.first.configurationSCCI;
-  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2));
+  util::TinyVector<int, 5> possibleCollisions;
+  c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2), possibleCollisions);
 
   // Recursion:
   if(angleI < numAngles-1) {
@@ -472,21 +470,24 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
       Configuration c = getConfiguration(mIsland.representative);
       std::stringstream ss;
       ss << "fail_" << mIslandI << "_" << mIsland << "_";
-      std::vector<Connection> cc = getConfigurationConnections(mIsland.representative);
+      util::TinyVector<Connection, 5> cc;
+      getConfigurationConnections(mIsland.representative, cc);
       encoder.writeFileName(ss, cc, false);
       h.add(ss.str(), new Configuration(c)); // OK Be cause we are about to die.
     }
     std::stringstream ss;
     ss << "S-Island_";
-    std::vector<Connection> cc = getConfigurationConnections(sIsland.representative);
+    util::TinyVector<Connection, 5> cc;
+    getConfigurationConnections(sIsland.representative, cc);
     encoder.writeFileName(ss, cc, true);
     h.print(ss.str());
 #endif
   }
 }
 
-void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const {
-  std::vector<Connection> cc = getConfigurationConnections(p);
+void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const {
+  util::TinyVector<Connection, 5> cc;
+  getConfigurationConnections(p, cc);
 
   manual.push_back(cc);
   // Report
@@ -553,7 +554,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
 }
 
 void AngleMapping::add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
-  std::vector<IConnectionPair> found;
+  util::TinyVector<IConnectionPair, 8> found;
   bool checkRealizable = c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
   if(!checkRealizable) {
     MPDPrinter h;
@@ -595,7 +596,8 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   const IConnectionPoint &ip1 = points[2*angleI];
   const IConnectionPoint &ip2 = points[2*angleI+1];
   unsigned int ip2I = ip2.first.configurationSCCI;
-  std::vector<int> possibleCollisions = c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2));
+  util::TinyVector<int, 5> possibleCollisions;
+  c.getPossibleCollisions(sccs[ip2I], IConnectionPair(ip1, ip2), possibleCollisions);
 
   // Recursion:
   if(angleI+1 < numAngles) {
@@ -684,7 +686,7 @@ void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, s
   }
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
   assert(!findExtremeAnglesOnly);
   time_t startTime, endTime;
   time(&startTime);
@@ -757,7 +759,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       }
       else if(!mIsland.isRectilinear) {
 #ifdef _DEBUG
-        modelsToPrint.push_back(c); 
+        //modelsToPrint.push_back(c);
 #endif
         ++models;
       }

@@ -20,7 +20,7 @@ public:
   std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!
 #endif
 
-  std::vector<std::vector<Connection> > manual;
+  std::vector<util::TinyVector<Connection, 5> > manual;
 private:
   std::vector<Configuration> nrcToPrint; // Used when there are non-rectilinear models, but not multiple non-rectilinear models for a given connection set.
   std::vector<Configuration> modelsToPrint; // Used when there are multiple models for a given connection set then include all models in it - including the RC!
@@ -36,13 +36,13 @@ private:
   bool prevMustBeChosen[6], findExtremeAnglesOnly;
 
   void run(bool countForPw);
-  void run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw);
+  void run(util::TinyVector<IConnectionPair, 5> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw);
 
 public:
-  SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly);
+  SingleConfigurationManager(const util::TinyVector<FatSCC, 6> &combination, std::ofstream &os, bool findExtremeAnglesOnly);
   SingleConfigurationManager& operator=(const SingleConfigurationManager &tmp) {
     assert(false); // Assignment operator should not be used.
-    std::vector<FatSCC> c;
+    util::TinyVector<FatSCC, 6> c;
     SingleConfigurationManager *ret = new SingleConfigurationManager(c, tmp.os, false); // Not deleted - fails on invoce.
     return *ret;
   }
@@ -51,7 +51,7 @@ public:
   void printLDRFile() const;
   void printManualLDRFiles() const;
   void printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const;
-  bool isRotationallyMinimal(const IConnectionPairList &l) const;
+  bool isRotationallyMinimal(const IConnectionPairSet &l) const;
 
   counter attempts, models, rectilinear;//, nonRectilinearConfigurations, 
   counter angleMappingBoosts[BOOST_STAGES];

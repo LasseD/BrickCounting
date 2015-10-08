@@ -254,7 +254,7 @@ public:
     return res;
   }
 
-  void getCombinationType(std::vector<int> &l) const {
+  void getCombinationType(util::TinyVector<int, 6> &l) const {
     assert(l.empty());
     // Create initial sccs:
     bool linked[36];
@@ -339,21 +339,21 @@ public:
     rotationBrickPosition = scc.rotationBrickPosition();
   }
 
-  FatSCC(std::vector<Brick> v) : size((int)v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
+  FatSCC(util::TinyVector<Brick, 6> v) : size((int)v.size()), index(NO_INDEX), isRotationallySymmetric(false), rotationBrickPosition(std::make_pair(0,0)) {
     // Ensure level starts at 0:
     int8_t minLv = 99;
-    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+    for(const Brick* it = v.begin(); it != v.end(); ++it) {
       if(it->level < minLv)
         minLv = it->level;
     }
-    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+    for(Brick* it = v.begin(); it != v.end(); ++it) {
       it->level-=minLv; // OK because v is not used by reference.
     }
 
     // Turn into RectilinearBricks and find min:
-    std::vector<RectilinearBrick> rbricks;
+    util::TinyVector<RectilinearBrick, 6> rbricks;
     RectilinearBrick min = v.begin()->toRectilinearBrick();
-    for(std::vector<Brick>::iterator it = v.begin(); it != v.end(); ++it) {
+    for(const Brick* it = v.begin(); it != v.end(); ++it) {
       RectilinearBrick rb = it->toRectilinearBrick();
       if(rb < min)
         min = rb;
@@ -362,7 +362,7 @@ public:
 
     // Turn 90 degrees if min is horixzontal:
     if(min.horizontal()) {
-      for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+      for(RectilinearBrick* it = rbricks.begin(); it != rbricks.end(); ++it) {
         int8_t oldX = it->x;
         it->x = it->y;
         it->y = -oldX;
@@ -371,7 +371,7 @@ public:
 
       // Find the origin:
       min = *rbricks.begin();
-      for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+      for(const RectilinearBrick* it = rbricks.begin(); it != rbricks.end(); ++it) {
         if(*it < min) {
           min = *it;
         }
@@ -381,7 +381,7 @@ public:
     // Move all according to the origin:
     int8_t moveX = min.x;
     int8_t moveY = min.y;
-    for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it) {
+    for(RectilinearBrick* it = rbricks.begin(); it != rbricks.end(); ++it) {
       it->x -= moveX;
       it->y -= moveY;
     }
@@ -389,7 +389,7 @@ public:
     // Sort and save bricks:
     std::sort(rbricks.begin(), rbricks.end());
     int i = -1;
-    for(std::vector<RectilinearBrick>::iterator it = rbricks.begin(); it != rbricks.end(); ++it, ++i) {
+    for(const RectilinearBrick* it = rbricks.begin(); it != rbricks.end(); ++it, ++i) {
       if(i == -1)
         continue; // don't save origin.
       otherBricks[i] = *it;
@@ -451,17 +451,17 @@ public:
     }
   }
 
-  bool isRotationallyMinimal(const std::vector<ConnectionPoint> &pointsForSccs) const {
+  bool isRotationallyMinimal(const util::TinyVector<ConnectionPoint, 5> &pointsForSccs) const {
     if(!isRotationallySymmetric)
       return true; // not applicaple.
-    std::vector<ConnectionPoint> rotatedPoints;
-    for(std::vector<ConnectionPoint>::const_iterator it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
+    util::TinyVector<ConnectionPoint, 5> rotatedPoints;
+    for(const ConnectionPoint* it = pointsForSccs.begin(); it != pointsForSccs.end(); ++it) {
       ConnectionPoint rotatedPoint(*it, rotationBrickPosition);
       rotatedPoints.push_back(rotatedPoint);
     }
     std::sort(rotatedPoints.begin(), rotatedPoints.end());
 
-    for(std::vector<ConnectionPoint>::const_iterator it1 = pointsForSccs.begin(), it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
+    for(const ConnectionPoint *it1 = pointsForSccs.begin(), *it2 = rotatedPoints.begin(); it1 != pointsForSccs.end(); ++it1, ++it2) {
       if(*it2 < *it1) {
         return false;
       }
@@ -504,19 +504,6 @@ public:
   }
   bool operator==(const FatSCC &c) const {
     return size == c.size && index == c.index;
-  }
-  bool check(const FatSCC &c) const {
-    if(size != c.size)
-      return true;
-    bool indicesSame = index == c.index;
-    bool otherBricksSame = true;
-    for(int i = 0; i < size-1; ++i) {
-      if(otherBricks[i] != c.otherBricks[i]) {
-        otherBricksSame = false;
-        break;
-      }
-    }
-    return indicesSame == otherBricksSame;
   }
 
   bool ensureOriginIsSmallest() {

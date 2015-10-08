@@ -25,10 +25,10 @@ class ConfigurationEncoder {
   unsigned int duplicateMapping[6];
 
 public:
-  ConfigurationEncoder(const std::vector<FatSCC> &combination);
+  ConfigurationEncoder(const util::TinyVector<FatSCC, 6> &combination);
   ConfigurationEncoder& operator=(const ConfigurationEncoder &) {
     assert(false); // Assignment operator should not be used.
-    std::vector<FatSCC> c;
+    util::TinyVector<FatSCC, 6> c;
     ConfigurationEncoder *cn = new ConfigurationEncoder(c); // Not deleted - fails on invoce.
     return *cn;
   }
@@ -56,24 +56,24 @@ public:
   - If multiple min(size,diskI): Try all min.
   - If min is rotationally symmetric, try turned 180.
   */
-  Encoding encode(const IConnectionPairList &list) const;
+  Encoding encode(const IConnectionPairSet &list) const;
 
-  void decode(Encoding encoded, IConnectionPairList &list) const;
-  void decode(uint64_t encoded, IConnectionPairList &list) const;
+  void decode(Encoding encoded, IConnectionPairSet &list) const;
+  void decode(uint64_t encoded, IConnectionPairSet &list) const;
 
-  void testCodec(const IConnectionPairList &list1) const;
-  void writeFileName(std::ostream &ss, const std::vector<Connection> &l, bool includeAngles) const;
+  void testCodec(const IConnectionPairSet &list1) const;
+  void writeFileName(std::ostream &ss, const util::TinyVector<Connection, 5> &l, bool includeAngles) const;
 
 private:
-  void rotateSCC(int i, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  void rotateSCC(int i, util::TinyVector<ConnectionPoint, 8> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
 
   /*
   When encoding:
   - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
   - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
   */
-  Encoding encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
-  uint64_t encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const;
+  Encoding encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 8> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
+  uint64_t encodeList(const util::TinyVector<IConnectionPair, 5> &toEncode, int * const perm) const;
 };
 
 #endif // CONFIGURATION_ENCODER_H

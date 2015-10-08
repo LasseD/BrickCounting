@@ -3,6 +3,7 @@
 
 #include "LDRPrinter.h"
 #include "StronglyConnectedConfiguration.hpp"
+#include "Util.hpp"
 
 #include <set>
 #include <map>
@@ -98,7 +99,7 @@ public:
       s.insert(candidate);
 
       if(ELEMENT_SIZE > 2) {
-        std::vector<int> combinationType;
+        util::TinyVector<int, 6> combinationType;
         candidate.getCombinationType(combinationType);
         uint32_t encoding = math::encodeCombinationType(combinationType);
 
@@ -121,15 +122,15 @@ public:
   std::ofstream *os;
   std::string fileName;
   unsigned long written;
-  std::vector<int> combinationType;
+  util::TinyVector<int, 6> combinationType;
 
   CombinationTypeList() : written(0) {} // to satisfy array constructor.
 
-  CombinationTypeList(const std::vector<int> &combinationType) : written(0), combinationType(combinationType) {
+  CombinationTypeList(const util::TinyVector<int, 6> &combinationType) : written(0), combinationType(combinationType) {
     std::stringstream ss;
     ss << "scc\\" << ELEMENT_SIZE;
     ss << "\\combination_type";
-    for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+    for(const int* it = combinationType.begin(); it != combinationType.end(); ++it)
       ss << "_" << *it;
     ss << ".dat";
     //std::cout << " Creating combination type list for combination type " << ss.str() << std::endl;
@@ -147,7 +148,7 @@ public:
   }
   void closeForWrite() {
     std::cout << "Written " << written << " configurations of combination type ";
-    for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it)
+    for(const int* it = combinationType.begin(); it != combinationType.end(); ++it)
       std::cout << " " << *it;
     std::cout << std::endl;
 
@@ -187,7 +188,7 @@ private:
   std::map<unsigned int,RectilinearConfigurationHashList<ELEMENT_SIZE> > hashLists; // Only used in countAllFor, that is, when we can't store all.
   std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* > combinationTypeLists;
 
-  void createCombinationTypeLists(const std::vector<int> &combinationType, int remaining) {
+  void createCombinationTypeLists(const util::TinyVector<int, 6> &combinationType, int remaining) {
     if(remaining == 0) {
       uint32_t encodedCombinationType = math::encodeCombinationType(combinationType);
       CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType); // deleted in ~RectilinearConfigurationList()
@@ -195,7 +196,7 @@ private:
       return;
     }
     for(int i = MIN(remaining,combinationType[combinationType.size()-1]); i > 0; --i) {
-      std::vector<int> ct(combinationType);
+      util::TinyVector<int, 6> ct(combinationType);
       ct.push_back(i);
       createCombinationTypeLists(ct, remaining-i);
     }
@@ -208,7 +209,7 @@ public:
     //std::cout << "Creating RectilinearConfigurationList of size " << ELEMENT_SIZE << std::endl;
     // Create combinationTypeLists:
     for(int i = ELEMENT_SIZE; i > 0; --i) {
-      std::vector<int> combinationType;
+      util::TinyVector<int, 6> combinationType;
       combinationType.push_back(i);
       createCombinationTypeLists(combinationType, ELEMENT_SIZE-i);
     }
@@ -309,7 +310,7 @@ public:
       }
       s.insert(candidate);
       if(ELEMENT_SIZE > 2) {
-        std::vector<int> combinationType;
+        util::TinyVector<int, 6> combinationType;
         candidate.getCombinationType(combinationType);
         uint32_t encoding = math::encodeCombinationType(combinationType);
 

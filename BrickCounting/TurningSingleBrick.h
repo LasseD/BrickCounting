@@ -373,7 +373,7 @@ struct TurningSCCInvestigator {
   }
 
   template <int ADD_XY>
-  void /*TurningSCCInvestigator::*/allowableAnglesForBricks(const std::vector<int> &possibleCollisions, IntervalList &l) const {
+  void /*TurningSCCInvestigator::*/allowableAnglesForBricks(const util::TinyVector<int, 5> &possibleCollisions, IntervalList &l) const {
     IntervalList ret;
     ret.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
 
@@ -389,7 +389,7 @@ struct TurningSCCInvestigator {
       tsb.createMovingStuds();
 
       // Check all possible collision bricks:
-      for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
+      for(const int* it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
         Brick b = baseConfiguration.bricks[*it].b;
         b.center.X -= tsb.studTranslation.X;
         b.center.Y -= tsb.studTranslation.Y;
@@ -447,7 +447,7 @@ struct TurningSCCInvestigator {
   The TSB is clear form the bricks indicated in possibleCollisions if none of these bricks intersect the TSB. 
   */
   template <int ADD_XY>
-  bool /*TurningSCCInvestigator::*/isClear(const std::vector<int> &possibleCollisions) const {
+  bool /*TurningSCCInvestigator::*/isClear(const util::TinyVector<int, 5> &possibleCollisions) const {
     RectilinearBrick b;
     for(int i = 0; i < scc.size; b = scc.otherBricks[i++]) {
       // Create TurningSingleBrick:
@@ -457,7 +457,7 @@ struct TurningSCCInvestigator {
       tsb.createMovingStuds();
 
       // Check all possible collision bricks:
-      for(std::vector<int>::const_iterator it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
+      for(const int* it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
         Brick b = baseConfiguration.bricks[*it].b;
         b.center.X -= tsb.studTranslation.X;
         b.center.Y -= tsb.studTranslation.Y;

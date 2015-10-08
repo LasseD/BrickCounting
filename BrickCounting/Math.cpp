@@ -594,10 +594,10 @@ namespace math {
   /*
   The combination type consists of 1 to 6 integers in the range [1;6]. 3 bits are used per integer, finally three bits contain the number of integers.
    */
-  uint32_t encodeCombinationType(const std::vector<int> &l) {
+  uint32_t encodeCombinationType(const util::TinyVector<int, 6> &l) {
     assert(l.size() <= 6);
     uint32_t ret = 0;
-    for(std::vector<int>::const_iterator it = l.begin(); it != l.end(); ++it) {
+    for(const int* it = l.begin(); it != l.end(); ++it) {
       assert(*it <= 6);
       ret = (ret << 3) + *it;
     }

@@ -110,18 +110,20 @@ inline std::ostream& operator<<(std::ostream &os, const Connection& c) {
   return os;
 }
 
-struct IConnectionPairList {
+struct IConnectionPairSet {
 private:
   std::set<IConnectionPair> v;
 public:
-  IConnectionPairList() {}
-  IConnectionPairList(const IConnectionPairList &l) : v(l.v) {}
-  IConnectionPairList(const std::vector<IConnectionPair> &l) {
-    for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
+  IConnectionPairSet() {}
+  IConnectionPairSet(const IConnectionPairSet &l) : v(l.v) {}
+
+  template <unsigned int SIZE>
+  IConnectionPairSet(const util::TinyVector<IConnectionPair, SIZE> &l) {
+    for(const IConnectionPair* it = l.begin(); it != l.end(); ++it)
       insert(*it);
   }
 
-  bool operator<(const IConnectionPairList &l) const {
+  bool operator<(const IConnectionPairSet &l) const {
     if(v.size() != l.v.size())      
       return v.size() < l.v.size();
     for(std::set<IConnectionPair>::const_iterator it1 = v.begin(), it2 = l.v.begin(); it1 != v.end(); ++it1, ++it2) {
@@ -152,7 +154,7 @@ public:
     return v.size();
   }
 };
-inline std::ostream& operator<<(std::ostream &os, const IConnectionPairList& l) {
+inline std::ostream& operator<<(std::ostream &os, const IConnectionPairSet& l) {
   for(std::set<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it) {
     os << it->first << "/" << it->second << " ";
   }
@@ -186,7 +188,7 @@ struct Configuration : public LDRPrintable {
   }
 
   template <int ADD_XY>
-  bool isRealizable(std::vector<IConnectionPair> &found) const {
+  bool isRealizable(util::TinyVector<IConnectionPair, 8> &found) const {
     for(int i = 0; i < bricksSize; ++i) {
       const IBrick &ib = bricks[i];
       for(int j = i+1; j < bricksSize; ++j) {
@@ -211,8 +213,8 @@ struct Configuration : public LDRPrintable {
   }
 
   template <int ADD_XY>
-  bool isRealizable(const std::vector<int> &possibleCollisions, int end) const {
-    for(int i = 0; i < possibleCollisions.size(); ++i) {
+  bool isRealizable(const util::TinyVector<int, 5> &possibleCollisions, int end) const {
+    for(unsigned int i = 0; i < possibleCollisions.size(); ++i) {
       const IBrick &ib = bricks[possibleCollisions[i]];
       for(int j = 0; j < end; ++j) {
         const IBrick &jb = bricks[j+bricksSize-end];
@@ -227,9 +229,7 @@ struct Configuration : public LDRPrintable {
     return true;
   }
 
-  std::vector<int> getPossibleCollisions(const FatSCC &scc, const IConnectionPair &connectionPair) const {
-    std::vector<int> ret;
-
+  void getPossibleCollisions(const FatSCC &scc, const IConnectionPair &connectionPair, util::TinyVector<int, 5> &result) const {
     int prevBrickI = connectionPair.P1.first.configurationSCCI;
     const Brick &prevOrigBrick = origBricks[prevBrickI];
     const ConnectionPoint &prevPoint = connectionPair.P1.second;
@@ -246,13 +246,12 @@ struct Configuration : public LDRPrintable {
       for(int j = 0; j < scc.size; sccBrick = scc.otherBricks[j], ++j) {
         const int8_t levelJ = level + sccBrick.level();
         if(levelI == levelJ || levelI+1 == levelJ || levelJ+1 == levelI) {
-          ret.push_back(i);
+          result.push_back(i);
           //std::cout << "Possible collision: " << i << ": " << b << std::endl;
           break;
         }
       }
     }
-    return ret;
   }
 
   void initSCC(const FatSCC &scc) {
@@ -300,10 +299,10 @@ struct Configuration : public LDRPrintable {
     }
   }
 
-  Configuration(FatSCC const * const sccs, const std::vector<Connection> &cs) : bricksSize(0) {
+  Configuration(FatSCC const * const sccs, const util::TinyVector<Connection, 5> &cs) : bricksSize(0) {
     initSCC(sccs[0]);
     std::set<Connection> remainingConnections;
-    for(std::vector<Connection>::const_iterator it = cs.begin(); it != cs.end(); ++it) {
+    for(const Connection* it = cs.begin(); it != cs.end(); ++it) {
       remainingConnections.insert(*it);
     }
 
@@ -352,7 +351,7 @@ struct Configuration : public LDRPrintable {
   }
 
   FatSCC toMinSCC() const {
-    std::vector<Brick> v;
+    util::TinyVector<Brick, 6> v;
     for(int i = 0; i < bricksSize; ++i)
       v.push_back(bricks[i].b);
     FatSCC ret(v);

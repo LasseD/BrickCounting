@@ -26,7 +26,7 @@ namespace math {
       double b = angleToOriginalInterval(it->second, interval);
       result.push_back(Interval(a,b));
     }
-    result.sort();
+    std::sort(result.begin(), result.end());
     math::collapseIntervals(result);
   }
 }

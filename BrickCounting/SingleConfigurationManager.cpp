@@ -6,20 +6,20 @@
 #include <algorithm>
 #include <time.h>
 
-SingleConfigurationManager::SingleConfigurationManager(const std::vector<FatSCC> &combination, std::ofstream &os, bool findExtremeAnglesOnly) : 
+SingleConfigurationManager::SingleConfigurationManager(const util::TinyVector<FatSCC, 6> &combination, std::ofstream &os, bool findExtremeAnglesOnly) : 
     combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), rectilinear(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
   std::stringstream ss;
   ss << "  Combination type ";
-  for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) {
+  for(const FatSCC* it = combination.begin(); it != combination.end(); ++it) {
     if(it != combination.begin())
       ss << "/";
     ss << it->size;
   }
   ss << ", combination";
-  for(std::vector<FatSCC>::const_iterator it = combination.begin(); it != combination.end(); ++it) 
+  for(const FatSCC* it = combination.begin(); it != combination.end(); ++it) 
     ss << " " << it->index;
   pw.initReportName(ss.str());
 
@@ -58,10 +58,10 @@ void mergePools(std::vector<IConnectionPoint> &newPool, const std::vector<IConne
   }
 }
 
-bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList &l) const {
-  // Find out if IConnectionPairList created on rotated SCC is "smaller":
+bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairSet &l) const {
+  // Find out if IConnectionPairSet created on rotated SCC is "smaller":
   // Step one: Divide ConnectionPoints for the SCCs:
-  std::vector<ConnectionPoint> pointsForSccs[6];
+  util::TinyVector<ConnectionPoint, 5> pointsForSccs[6];
   for(std::set<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it) {
     const IConnectionPoint &cp1 = it->first;
     const IConnectionPoint &cp2 = it->second;
@@ -78,12 +78,12 @@ bool SingleConfigurationManager::isRotationallyMinimal(const IConnectionPairList
   return true;
 }
 
-void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw) {
+void SingleConfigurationManager::run(util::TinyVector<IConnectionPair, 5> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw) {
   if(remainingSize == 0) {
     // First check that we have at least not run this combination before:
     // If the connections are not even rotationslly minimal, then bail:
-    IConnectionPairList list;
-    for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
+    IConnectionPairSet list;
+    for(const IConnectionPair* it = l.begin(); it != l.end(); ++it)
       list.insert(*it);
     if(!isRotationallyMinimal(list))
       return;
@@ -94,13 +94,15 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
       return;
     investigatedConnectionPairListsEncoded.insert(encoded);
 
+#ifdef _DEBUG
     // Report status if combination starts with a single brick SCC:
     if(combination[0].size == 1) {
       std::cout << "Single brick string run";
-      for(std::vector<IConnectionPair>::const_iterator it = l.begin(); it != l.end(); ++it)
+      for(const IConnectionPair* it = l.begin(); it != l.end(); ++it)
         std::cout << " " << *it;
       std::cout << std::endl;
     }
+#endif
 
     ++attempts;
     if(countForPw)
@@ -139,7 +141,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
           std::vector<IConnectionPair> found;
           it->first.isRealizable<0>(found);
           Encoding encoding = encoder.encode(found);
-          IConnectionPairList decodeFound;
+          IConnectionPairSet decodeFound;
           encoder.decode(foundSCCs.find(min)->second, decodeFound);
 
           // Output Error:
@@ -238,7 +240,7 @@ void SingleConfigurationManager::run(std::vector<IConnectionPair> &l, const std:
 
 void SingleConfigurationManager::run() {
   run(true);
-  pw.initSteps(attempts);
+  pw.initSteps((unsigned long)attempts);
   pw.initTime();
   attempts = 0;
   investigatedConnectionPairListsEncoded.clear();
@@ -258,7 +260,7 @@ void SingleConfigurationManager::run(bool countForPw) {
 
   // Try all combinations!
   std::vector<IConnectionPoint> abovePool, belowPool;
-  std::vector<IConnectionPair> l;
+  util::TinyVector<IConnectionPair, 5> l;
   bool remaining[6];
   int remainingSize = combinationSize-1;
 
@@ -351,7 +353,7 @@ void SingleConfigurationManager::printManualLDRFiles() const {
   std::vector<std::pair<std::string,Configuration> > v;
 
   // Actual printing:
-  for(std::vector<std::vector<Connection> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
+  for(std::vector<util::TinyVector<Connection, 5> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
     Configuration c(combination, *it);
     std::stringstream ss1, ss2;
     ss1 << "manual\\" << size << "\\";

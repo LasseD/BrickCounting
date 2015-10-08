@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <time.h>
 
-void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os) {
+void ConfigurationManager::runForCombination(const util::TinyVector<FatSCC, 6> &combination, const util::TinyVector<int, 6> &combinationType, int prevSCCIndex, std::ofstream &os) {
   if(combination.size() == combinationType.size()) {
     
     pw.reportProgress();
@@ -69,16 +69,14 @@ void ConfigurationManager::runForCombination(const std::vector<FatSCC> &combinat
   int prevSccSize = combinationType[combination.size()-1];
   unsigned int i = prevSccSize == sccSize ? prevSCCIndex : 0;
   for(; i < sccsSize[sccSize-1]; ++i) {
-    std::vector<FatSCC> v(combination);
+    util::TinyVector<FatSCC, 6> v(combination);
     FatSCC &fatSCC = sccs[sccSize-1][i];
-    if(prevSccSize == sccSize && v.back().index != i)
-      assert(v.back().check(fatSCC));
     v.push_back(fatSCC);
     runForCombination(v, combinationType, i, os);
   }
 }
 
-void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int combinedSize) {
+void ConfigurationManager::runForCombinationType(const util::TinyVector<int, 6> &combinationType, int combinedSize) {
 #ifdef _COMPARE_ALGORITHMS
   RectilinearConfigurationManager sccMgr;
   sccMgr.loadFromFile(correct, combinationType);
@@ -96,7 +94,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   ss << "manual\\manual_size_" << combinedSize << "_sccsizes";
   ss2 << " Combination type ";
 
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+  for(const int* it = combinationType.begin(); it != combinationType.end(); ++it) {
     if(it != combinationType.begin()) {
       ss2 << "/";
     }
@@ -112,7 +110,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   pw.initReportName(ss2.str());
 
   unsigned long steps = 1;
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+  for(const int* it = combinationType.begin(); it != combinationType.end(); ++it) {
     steps *= sccsSize[*it-1];
   }
   pw.initSteps(steps);
@@ -127,7 +125,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 
   int firstSCCSize = combinationType[0];
   for(unsigned int i = 0; i < sccsSize[firstSCCSize-1]; ++i) {
-    std::vector<FatSCC> v;
+    util::TinyVector<FatSCC, 6> v;
     v.push_back(sccs[firstSCCSize-1][i]);
     runForCombination(v, combinationType, i, os);
   }
@@ -142,7 +140,7 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
 
   std::cout << std::endl;
   std::cout << "Results for combination type ";
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+  for(const int* it = combinationType.begin(); it != combinationType.end(); ++it) {
     if(it != combinationType.begin())
       std::cout << "/";
     std::cout << *it;
@@ -185,14 +183,14 @@ void ConfigurationManager::runForCombinationType(const std::vector<int> &combina
   problematic+=storeProblematic;
 }
 
-void ConfigurationManager::runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize) {
+void ConfigurationManager::runForCombinationType(const util::TinyVector<int, 6> &combinationType, int remaining, int prevSize, int combinedSize) {
   if(remaining == 0) {
     runForCombinationType(combinationType, combinedSize);
     return;
   }
     
   for(int i = MIN(prevSize,remaining); i > 0; --i) {
-    std::vector<int> v(combinationType);
+    util::TinyVector<int, 6> v(combinationType);
     v.push_back(i);
     runForCombinationType(v, remaining-i, i, combinedSize);
   }
@@ -204,7 +202,7 @@ void ConfigurationManager::runForSize(int size) {
 
   // For base being 1..size-1:
   for(int base = size-1; base > 0; --base) {
-    std::vector<int> combination;
+    util::TinyVector<int, 6> combination;
     combination.push_back(base);
     runForCombinationType(combination, size-base, base, size);
   }
@@ -213,7 +211,7 @@ void ConfigurationManager::runForSize(int size) {
   time(&endTime);
   double seconds = difftime(endTime,startTime);
 
-  std::vector<int> fakeCombination;
+  util::TinyVector<int, 6> fakeCombination;
   fakeCombination.push_back(size);
   printResults(fakeCombination, seconds);
 
@@ -262,13 +260,14 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
 }
 
 void ConfigurationManager::test() {
-  std::vector<int> v;
+  util::TinyVector<int, 6> v;
   v.push_back(2);
-  v.push_back(2);
+  v.push_back(1);
+  v.push_back(1);
   runForCombinationType(v, 4);
 /*
   // Investigate failure #76:
-  std::vector<FatSCC> v2;
+  util::TinyVector<FatSCC, 6> v2;
   v2.push_back(sccs[2][125]);
   v2.push_back(sccs[2][934]);
 
@@ -277,7 +276,7 @@ void ConfigurationManager::test() {
 
   //runForCombination(v2, v, -1, os);
 
-  std::vector<IConnectionPair> pairs;
+  util::TinyVector<IConnectionPair, 5> pairs;
   RectilinearBrick b0;
   RectilinearBrick &b1 = sccs[2][125].otherBricks[0];
   RectilinearBrick &b2 = sccs[2][934].otherBricks[1];
@@ -292,78 +291,13 @@ void ConfigurationManager::test() {
   sm.run(pairs, pools, pools, NULL, 0);
   sm.printLDRFile();
   sm.printManualLDRFiles();
-
-  /*
-  uint64_t encoded1 = 1082724547;
-  uint64_t encoded2 = 1111896211;
-  IConnectionPairList list1, list2;
-  std::vector<IConnectionPair> list1x, list2x;
-  encoder.decode(encoded1, list1);
-  encoder.decode(encoded2, list2);
-
-  std::cout << "1082724547: " << std::endl;
-  std::vector<Connection> cs1, cs2;
-  for(std::set<IConnectionPair>::const_iterator it2 = list1.begin(); it2 != list1.end(); ++it2) {
-    cs1.push_back(Connection(*it2, StepAngle()));
-    list1x.push_back(*it2);
-    std::cout << *it2 << std::endl;
-  }
-  std::cout << "1111896211: " << std::endl;
-  for(std::set<IConnectionPair>::const_iterator it2 = list2.begin(); it2 != list2.end(); ++it2) {
-    cs2.push_back(Connection(*it2, StepAngle()));
-    list2x.push_back(*it2);
-    std::cout << *it2 << std::endl;
-  }
-  Configuration c1(&(v2[0]), cs1);
-  Configuration c2(&(v2[0]), cs2);
-  FatSCC min = c1.toMinSCC();
-
-  std::vector<IConnectionPair> found1, found2;
-  c1.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found1);
-  uint64_t encoding1 = encoder.encode(found1).first;
-  std::cout << "Encoding 1: " << encoding1 << std::endl;
-  c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found2);
-  uint64_t encoding2 = encoder.encode(found2).first;
-  std::cout << "Encoding 2: " << encoding2 << std::endl;
-
-  std::ofstream os;
-  os.open("temp.txt", std::ios::out);
-  std::vector<IConnectionPoint> pool;
-  SingleConfigurationManager singleMgr(v2, os);
-  singleMgr.run(list1x, pool, pool, NULL, 0);
-  singleMgr.run(list2x, pool, pool, NULL, 0);
-
-  MPDPrinter h;
-  Configuration cf(min);
-  h.add("abe1", &cf);
-  h.print("abe1");
-
-  /*
-  runForCombination(v2, v, -1, os);//*/
-  /*
-  SingleConfigurationManager sm(v2, os);
-  std::vector<IConnectionPoint> pools;
-
-  std::vector<IConnectionPair> pairs;
-  RectilinearBrick b0;
-  RectilinearBrick &b1 = sccs[1][2].otherBricks[0];
-
-  IConnectionPoint icp1(BrickIdentifier(2,0,0),ConnectionPoint(NE,b0,false,0));
-  IConnectionPoint icp2(BrickIdentifier(0,0,1),ConnectionPoint(SW,b0,true ,0));
-  IConnectionPoint icp3(BrickIdentifier(0,0,1),ConnectionPoint(NW,b0,true ,0));
-  IConnectionPoint icp4(BrickIdentifier(0,0,2),ConnectionPoint(NE,b0,false,0));
-  // ICP[BI[scc=3,1,0],ASW]<>ICP[BI[scc=0,0,1],BSW] ICP[BI[scc=0,0,1],BNW]<>ICP[BI[scc=0,0,2],ANW]
-
-  pairs.push_back(IConnectionPair(icp1,icp2));
-  pairs.push_back(IConnectionPair(icp3,icp4));
-
-  sm.run(pairs, pools, pools, NULL, 0);//*/
+  */
 }
 
-void ConfigurationManager::printResults(const std::vector<int> &combinationType, double seconds) const {
+void ConfigurationManager::printResults(const util::TinyVector<int, 6> &combinationType, double seconds) const {
   std::stringstream ssFileName;
   ssFileName << "results";
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+  for(const int* it = combinationType.begin(); it != combinationType.end(); ++it) {
     ssFileName << "_" << *it;
   }
   ssFileName << ".txt";
@@ -371,7 +305,7 @@ void ConfigurationManager::printResults(const std::vector<int> &combinationType,
   ss.open(ssFileName.str().c_str(), std::ios::out);
 
   ss << "Results for combination type ";
-  for(std::vector<int>::const_iterator it = combinationType.begin(); it != combinationType.end(); ++it) {
+  for(const int* it = combinationType.begin(); it != combinationType.end(); ++it) {
     if(it != combinationType.begin())
       ss << "/";
     ss << *it;

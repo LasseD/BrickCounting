@@ -108,7 +108,7 @@ namespace math {
     unsigned short intervalSizeForIndicator(uint32_t i) const;
   };
 
-  uint32_t encodeCombinationType(const std::vector<int> &l);
+  uint32_t encodeCombinationType(const util::TinyVector<int, 6> &l);
 }
 
 #endif // MATH_H

@@ -6,6 +6,7 @@
 #include "Configuration.hpp"
 #include "ConfigurationEncoder.h"
 #include "UnionFind.h"
+#include "Util.hpp"
 
 #define STEPS_0 0
 #define STEPS_1 203
@@ -50,10 +51,10 @@ private:
   std::ofstream &os;
 
 public:
-  AngleMapping(FatSCC const * const sccs, int numScc, const std::vector<IConnectionPair> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly);
+  AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly);
   AngleMapping& operator=(const AngleMapping &tmp) {
     assert(false); // Assignment operator should not be used.
-    std::vector<IConnectionPair> cs;
+    util::TinyVector<IConnectionPair, 5> cs;
     AngleMapping *ret = new AngleMapping(NULL, 0, cs, tmp.encoder, tmp.os, false); // Not deleted - fails.
     return *ret;
   }
@@ -63,12 +64,12 @@ public:
   1) For all possible angles: Comput S,M,L.
   2) Combine regions in S,M,L in order to determine new models.
   */
-  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<std::vector<Connection> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
+  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
   void findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   Configuration getConfiguration(const MixedPosition &p) const;
 
 private:
-  void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<std::vector<Connection> > &manual, bool includeMappingFile) const;
+  void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const;
   void add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
@@ -76,7 +77,7 @@ private:
   void setupAngleTypes();
   Configuration getConfiguration(const Configuration &baseConfiguration, double lastAngle) const;
   Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
-  std::vector<Connection> getConfigurationConnections(const MixedPosition &p) const;
+  void getConfigurationConnections(const MixedPosition &p, util::TinyVector<Connection, 5> &result) const;
 };
 
 struct MIsland {
@@ -94,7 +95,7 @@ struct MIsland {
     isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == unionFindIndex;
     if(isRectilinear) {
       // Update members to ensure correct encoding:
-      std::vector<IConnectionPair> found;
+      util::TinyVector<IConnectionPair, 8> found;
       a->getConfiguration(a->rectilinearPosition).isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
       this->encoding = a->encoder.encode(found);
       this->isCyclic = found.size() > a->numAngles;
@@ -113,7 +114,7 @@ struct MIsland {
       if(a->ufM->getRootForPosition(rep) == unionFindIndex) {
         if(!encodingUpdated) {
           // Update members to ensure correct encoding:
-          std::vector<IConnectionPair> found;
+          util::TinyVector<IConnectionPair, 8> found;
           a->getConfiguration(rep).isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
           this->encoding = a->encoder.encode(found);
           this->isCyclic = found.size() > a->numAngles;
@@ -158,7 +159,7 @@ struct SIsland {
       a->ufM->getRepresentativeOfUnion(unionI, rep);
 
       Configuration c = a->getConfiguration(rep);
-      std::vector<IConnectionPair> found;
+      util::TinyVector<IConnectionPair, 8> found;
       c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
       bool isCyclic = found.size() > a->numAngles;
       Encoding encoding = a->encoder.encode(found);

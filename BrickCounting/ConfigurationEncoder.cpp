@@ -1,6 +1,6 @@
 #include "ConfigurationEncoder.h"
 
-ConfigurationEncoder::ConfigurationEncoder(const std::vector<FatSCC> &combination) :  fatSccSize((unsigned int)combination.size()) { 
+ConfigurationEncoder::ConfigurationEncoder(const util::TinyVector<FatSCC, 6> &combination) :  fatSccSize((unsigned int)combination.size()) { 
 #ifdef _TRACE
   std::cout << "INIT ConfigurationEncoder(";
   for(unsigned int i = 0; i < fatSccSize; ++i)
@@ -30,12 +30,12 @@ ConfigurationEncoder::ConfigurationEncoder(const std::vector<FatSCC> &combinatio
   }
 }
 
-void ConfigurationEncoder::rotateSCC(int i, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
+void ConfigurationEncoder::rotateSCC(int i, util::TinyVector<ConnectionPoint, 8> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
 #ifdef _TRACE
   std::cout << "ROTATE SCC " << i << std::endl;
 #endif
 
-  util::TinyVector<ConnectionPoint, 5> v(connectionPoints[i]);
+  util::TinyVector<ConnectionPoint, 8> v(connectionPoints[i]);
   std::map<ConnectionPoint,IConnectionPair> w(connectionMaps[i]);
   connectionPoints[i].clear();
   connectionMaps[i].clear();
@@ -78,7 +78,7 @@ void ConfigurationEncoder::rotateSCC(int i, util::TinyVector<ConnectionPoint, 5>
     connectionMaps[j].insert(std::make_pair(icp2.second, c));
   }
 
-  connectionPoints[i].sort();
+  std::sort(connectionPoints[i].begin(), connectionPoints[i].end());
 }
 
 /*
@@ -86,7 +86,7 @@ When encoding:
 - perform permutation so that SCC of same size,diskIndex are ordered by visiting order.
 - Rotate rotationally symmetric SCCs so that they are initially visited at the minimally rotated position.
 */
-Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 5> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
+Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util::TinyVector<ConnectionPoint, 8> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const {
   // Set up permutations and rotations:
   int perm[6];
   perm[baseIndex] = 0;
@@ -113,7 +113,7 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util:
   std::cout << "  Connections:" << std::endl;
   for(unsigned int i = 0; i < fatSccSize; ++i) {
     std::cout << "   " << i << ": " << std::endl;
-    for(std::vector<ConnectionPoint>::const_iterator it = connectionPoints[i].begin(); it != connectionPoints[i].end(); ++it) {
+    for(const ConnectionPoint* it = connectionPoints[i].begin(); it != connectionPoints[i].end(); ++it) {
       assert(connectionMaps[i].find(*it) != connectionMaps[i].end());
       IConnectionPair connection = connectionMaps[i][*it];
       std::cout << "    " << *it << ": " << connection << std::endl;
@@ -127,8 +127,8 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util:
   for(int i = 0; i < 36; ++i)
     unusedConnections[i] = true;
   unencoded[baseIndex] = false;
-  std::vector<IConnectionPair> requiredConnectionsToEncode; // to output in first component
-  std::vector<IConnectionPair> additionalConnectionsToEncode; // to output in second component
+  util::TinyVector<IConnectionPair, 5> requiredConnectionsToEncode; // to output in first component
+  util::TinyVector<IConnectionPair, 5> additionalConnectionsToEncode; // to output in second component
   std::queue<unsigned int> queue; // SCC ready to be visited.
   queue.push(baseIndex);
 
@@ -139,7 +139,7 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util:
     std::cout << "Iterating from queue: " << fatSccI << std::endl;
 #endif
 
-    util::TinyVector<ConnectionPoint, 5> &v = connectionPoints[fatSccI];
+    util::TinyVector<ConnectionPoint, 8> &v = connectionPoints[fatSccI];
     for(const ConnectionPoint* it = v.begin(); it != v.end(); ++it) {
       IConnectionPair connection = connectionMaps[fatSccI][*it];
       if(connection.P1.first.configurationSCCI != (int)fatSccI)
@@ -192,7 +192,7 @@ Encoding ConfigurationEncoder::encode(unsigned int baseIndex, bool rotate, util:
   return Encoding(encodedFirstComponent, encodedSecondComponent);
 }
 
-uint64_t ConfigurationEncoder::encodeList(const std::vector<IConnectionPair> &toEncode, int * const perm) const {
+uint64_t ConfigurationEncoder::encodeList(const util::TinyVector<IConnectionPair, 5> &toEncode, int * const perm) const {
   /*
   Encoding algorithm for a connection: 
   -- aboveBrickI(3 bit), 
@@ -200,7 +200,7 @@ uint64_t ConfigurationEncoder::encodeList(const std::vector<IConnectionPair> &to
   -- -||- below
   */
   uint64_t encoded = 0;
-  for(std::vector<IConnectionPair>::const_iterator it = toEncode.begin(); it != toEncode.end(); ++it) {
+  for(const IConnectionPair* it = toEncode.begin(); it != toEncode.end(); ++it) {
     // Ensure above, then below
     IConnectionPair c = *it;
     if(!c.first.second.above)
@@ -253,12 +253,12 @@ Additions:
 - If multiple min(size,diskI): Try all min.
 - If min is rotationally symmetric, try turned 180.    
 */
-Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
+Encoding ConfigurationEncoder::encode(const IConnectionPairSet &list) const {
 #ifdef _TRACE
   std::cout << " INIT encode(" << list << ")" << std::endl;
 #endif
   // Setup:
-  util::TinyVector<ConnectionPoint, 5> connectionPoints[6];
+  util::TinyVector<ConnectionPoint, 8> connectionPoints[6];
   std::map<ConnectionPoint,IConnectionPair> connectionMaps[6];
 
   // Assign connections to lists, then sort them:
@@ -280,7 +280,7 @@ Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
   }
   // Sort vectors:
   for(unsigned int i = 0; i < fatSccSize; ++i)
-    connectionPoints[i].sort();
+    std::sort(connectionPoints[i].begin(), connectionPoints[i].end());
 
   Encoding minEncoded(0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF);
   for(unsigned int i = 0; i < fatSccSize; ++i) {
@@ -300,12 +300,12 @@ Encoding ConfigurationEncoder::encode(const IConnectionPairList &list) const {
   return minEncoded;
 }
 
-void ConfigurationEncoder::decode(Encoding encoded, IConnectionPairList &list) const {
+void ConfigurationEncoder::decode(Encoding encoded, IConnectionPairSet &list) const {
   decode(encoded.first, list);
   decode(encoded.second, list);
 }
 
-void ConfigurationEncoder::decode(uint64_t encoded, IConnectionPairList &list) const {
+void ConfigurationEncoder::decode(uint64_t encoded, IConnectionPairSet &list) const {
 #ifdef _TRACE
   std::cout << "..ConfigurationEncoder::decode(" << encoded << "):" << std::endl;
 #endif
@@ -340,12 +340,12 @@ void ConfigurationEncoder::decode(uint64_t encoded, IConnectionPairList &list) c
 #endif
 }
 
-void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
+void ConfigurationEncoder::testCodec(const IConnectionPairSet &list1) const {
 #ifdef _DEBUG
 #ifdef _TRACE
   std::cout << "INIT testCodec(" << list1 << ")" << std::endl;
 #endif
-  std::vector<Connection> cs;
+  util::TinyVector<Connection, 5> cs;
   for(std::set<IConnectionPair>::const_iterator it = list1.begin(); it != list1.end(); ++it)
     cs.push_back(Connection(*it, StepAngle()));
   Configuration c1(fatSccs, cs);
@@ -362,7 +362,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 #ifdef _TRACE
   std::cout << " encoded: " << encoded.first << std::endl;
 #endif
-  IConnectionPairList list2, list3;
+  IConnectionPairSet list2, list3;
   decode(encoded.first, list2);
   decode(encoded.second, list3);
   assert(list1.size() == list2.size() + list3.size());
@@ -388,10 +388,10 @@ void ConfigurationEncoder::testCodec(const IConnectionPairList &list1) const {
 #endif
 }
 
-void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Connection> &l, bool includeAngles) const {
+void ConfigurationEncoder::writeFileName(std::ostream &ss, const util::TinyVector<Connection, 5> &l, bool includeAngles) const {
   Configuration c(fatSccs, l);
-  IConnectionPairList icpl;
-  for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
+  IConnectionPairSet icpl;
+  for(const Connection* it = l.begin(); it != l.end(); ++it)
     icpl.insert(*it);
 
   Encoding encoded = encode(icpl);
@@ -407,7 +407,7 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const std::vector<Con
   if(!includeAngles)
     return;
   ss << "_angles";
-  for(std::vector<Connection>::const_iterator it = l.begin(); it != l.end(); ++it)
+  for(const Connection* it = l.begin(); it != l.end(); ++it)
     ss << "_" << it->angle.n;
 }
 

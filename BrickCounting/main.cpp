@@ -135,7 +135,7 @@ int main(int numArgs, char** argV) {
 
   int combinedSize = 0;
   int maxSccSize = 1;
-  std::vector<int> combinationType;
+  util::TinyVector<int, 6> combinationType;
   for(int i = 1; i < numArgs; ++i) {
     int sccSize = argV[i][0]-'0';
 #ifdef _DEBUG

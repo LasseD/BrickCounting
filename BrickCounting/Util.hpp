@@ -1,7 +1,6 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
-#include <algorithm>
 #include <time.h>
 #include <iostream>
 #include <string>
@@ -52,6 +51,13 @@ namespace util {
       return &elements[s];
     }
 
+    T * begin() {
+      return &elements[0];
+    }
+    T * end() {
+      return &elements[s];
+    }
+
     inline bool empty() const {
       return s == 0;
     }
@@ -64,15 +70,15 @@ namespace util {
       assert(size <= s);
       s = size;
     }
-
-    void sort() {
-      std::sort(elements, elements+s);
+    inline void pop_back() {
+      assert(s > 0);
+      --s;
     }
 
     inline void push_back(const T &element) {
       assert(s < CAPACITY);
       elements[s++] = element;
-      if(s >= CAPACITY) {
+      if(s > CAPACITY) {
         int* die = NULL;
         std::cerr << "TinyVector over capacity! " << CAPACITY << std::endl;
         die[666] = 666;

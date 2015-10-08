@@ -14,11 +14,11 @@ private:
   bool findExtremeAnglesOnly;
   util::ProgressWriter pw;
 
-  void runForCombination(const std::vector<FatSCC> &combination, const std::vector<int> &combinationType, int prevSCCIndex, std::ofstream &os);
+  void runForCombination(const util::TinyVector<FatSCC, 6> &combination, const util::TinyVector<int, 6> &combinationType, int prevSCCIndex, std::ofstream &os);
 
-  void runForCombinationType(const std::vector<int> &combinationType, int remaining, int prevSize, int combinedSize);
+  void runForCombinationType(const util::TinyVector<int, 6> &combinationType, int remaining, int prevSize, int combinedSize);
 public:
-  void runForCombinationType(const std::vector<int> &combinationType, int combinedSize);
+  void runForCombinationType(const util::TinyVector<int, 6> &combinationType, int combinedSize);
 #ifdef _COMPARE_ALGORITHMS
   std::set<FatSCC> correct; // For debugging only!
 #endif
@@ -27,7 +27,7 @@ public:
   void runForSize(int size);
 
   void test();
-  void printResults(const std::vector<int> &combinationType, double seconds) const;
+  void printResults(const util::TinyVector<int, 6> &combinationType, double seconds) const;
 };
 
 #endif // CONFIGURATION_MANAGER_H
