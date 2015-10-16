@@ -24,11 +24,55 @@ namespace math {
   }
 }
 
-AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
-    numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly) {
+void AngleMapping::init() {
   // Boosts:
   for(int i = 0; i < BOOST_STAGES; ++i)
     boosts[i] = 0;
+
+  setupAngleTypes();
+  int numFreeAngles = 0;
+  // Set up angle steps:
+  for(unsigned int i = 0; i < numAngles; ++i) {
+    switch(angleTypes[i]) {
+    case 0:
+      angleSteps[i] = STEPS_0;
+      break;
+    case 1:
+      angleSteps[i] = STEPS_1 * (doublePrecision ? 2 : 1);
+      ++numFreeAngles;
+      break;
+    case 2:
+      angleSteps[i] = STEPS_2 * (doublePrecision ? 2 : 1);
+      ++numFreeAngles;
+      break;
+    case 3:
+      angleSteps[i] = STEPS_3 * (doublePrecision ? 2 : 1);
+      ++numFreeAngles;
+      break;
+    }
+  }
+  singleFreeAngle = numFreeAngles == 1;
+
+  if(findExtremeAnglesOnly)
+    return; // no setup of smappings.
+
+  // sizeMappings:
+  sizeMappings = 1;
+  for(unsigned int i = 0; i < numAngles-1; ++i) {
+    sizeMappings *= (2*angleSteps[i]+1);
+  }
+#ifdef _TRACE
+  std::cout << "SML size " << sizeMappings << std::endl;
+#endif
+
+  // S, M & L:
+  SS = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping() and setDoublePrecision()
+  MM = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping() and setDoublePrecision()
+  LL = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping() and setDoublePrecision()
+}
+
+AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
+    numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly), doublePrecision(false) {
   // Simple copying:
   for(int i = 0; i < numScc; ++i) {
     this->sccs[i] = sccs[i];
@@ -43,52 +87,13 @@ AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const util::Ti
     points[i++] = icp1;
     points[i++] = icp2;
   }
-
-  setupAngleTypes();
-  int numFreeAngles = 0;
-  // Set up angle steps:
-  for(i = 0; i < numAngles; ++i) {
-    switch(angleTypes[i]) {
-    case 0:
-      angleSteps[i] = STEPS_0;
-      break;
-    case 1:
-      angleSteps[i] = STEPS_1;
-      ++numFreeAngles;
-      break;
-    case 2:
-      angleSteps[i] = STEPS_2;
-      ++numFreeAngles;
-      break;
-    case 3:
-      angleSteps[i] = STEPS_3;
-      ++numFreeAngles;
-      break;
-    }
-  }
-  singleFreeAngle = numFreeAngles == 1;
-
-  if(findExtremeAnglesOnly)
-    return; // no setup of smappings.
-
-  // sizeMappings:
-  sizeMappings = 1;
-  for(i = 0; i < numAngles-1; ++i) {
-    sizeMappings *= (2*angleSteps[i]+1);
-  }
-#ifdef _TRACE
-  std::cout << "SML size " << sizeMappings << std::endl;
-#endif
-
-  // S, M & L:
-  SS = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
-  MM = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
-  LL = new math::IntervalListVector(sizeMappings, MAX_LOAD_FACTOR); // deleted in ~AngleMapping()
+  // initialize rest:
+  init();
 }
 
 AngleMapping::~AngleMapping() {
   if(findExtremeAnglesOnly)
-    return; // no setup of smappings.
+    return; // no setup of mappings.
   delete SS;
   delete MM;
   delete LL;
@@ -233,6 +238,16 @@ void AngleMapping::getConfigurationConnections(const MixedPosition &p, util::Tin
   result.push_back(Connection(ip1, ip2, angle));
 }
 
+void AngleMapping::setDoublePrecision() {
+  assert(!findExtremeAnglesOnly);
+  delete SS;
+  delete MM;
+  delete LL;
+
+  doublePrecision = true;
+  init();
+}
+
 /*
 Evaluate the SML matrix.
 Parameters:
@@ -258,9 +273,13 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
-      bool noS2 = noS || !(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
+      bool noS2 = noS || !(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
+                          (doublePrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                                             c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size)));
       bool noM2 = noM || !c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size);
-      bool noL2 = noL || !(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
+      bool noL2 = noL || !(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
+                          (doublePrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                                             c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size)));
 
       evalSML(angleI+1, smlI + i, c2, noS2, noM2, noL2);
     }
@@ -291,7 +310,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     full.push_back(Interval(-EPSILON,EPSILON));
 
     if(!sDone) {
-      if(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size))
+      bool realizable = singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
+                       (doublePrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                                          c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
+      if(realizable)
         SS->insert(smlI, full);
       else
         SS->insertEmpty(smlI);
@@ -303,7 +325,10 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
         MM->insertEmpty(smlI);
     }
     if(!lDone) {
-      if(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size))
+      bool realizable = singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
+                       (doublePrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                                          c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
+      if(realizable)
         LL->insert(smlI, full);
       else
         LL->insertEmpty(smlI);
@@ -316,7 +341,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   TurningSCCInvestigator tsbInvestigator(c, sccs[ip2I], ip2I, icp);
   
   // First check quick clear:
-  if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
+  if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : 
+               (doublePrecision ? tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions) : 
+                                  tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions)))) {
 #ifdef _RM_DEBUG
     // Check that algorithms agree:
     IntervalList l;
@@ -343,7 +370,9 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     MM->insert(smlI, full);
     mDone = true;
   }
-  if(!lDone && (singleFreeAngle ? tsbInvestigator.isClear<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions))) {
+  if(!lDone && (singleFreeAngle ? tsbInvestigator.isClear<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : 
+               (doublePrecision ? tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions) : 
+                                  tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions)))) {
     IntervalList full;
     full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
     LL->insert(smlI, full);
@@ -359,6 +388,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     IntervalList l;
     if(singleFreeAngle)
       tsbInvestigator.allowableAnglesForBricks<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
+    else if(doublePrecision)
+      tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, l);
     else
       tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
     SS->insert(smlI, l);
@@ -440,6 +471,8 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     IntervalList l;
     if(singleFreeAngle)
       tsbInvestigator.allowableAnglesForBricks<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
+    else if(doublePrecision)
+      tsbInvestigator.allowableAnglesForBricks<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, l);
     else
       tsbInvestigator.allowableAnglesForBricks<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
     LL->insert(smlI, l);
@@ -447,15 +480,17 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   ++boosts[3];
 }
 
-void AngleMapping::findIslands(std::vector<SIsland> &sIslands) {
+void AngleMapping::findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) {
   // Add all S-islands:
-  for(std::vector<uint32_t>::const_iterator it = ufS->rootsBegin(); it != ufS->rootsEnd(); ++it) {
+  for(std::vector<uint32_t>::const_iterator it = ufS.rootsBegin(); it != ufS.rootsEnd(); ++it) {
     const uint32_t unionI = *it;
     MixedPosition rep;
-    ufS->getRepresentativeOfUnion(unionI, rep);
+    ufS.getRepresentativeOfUnion(unionI, rep);
 
-    assert(ufS->getRootForPosition(rep) == unionI);
-    SIsland sIsland(this, unionI, rep);
+    assert(ufS.getRootForPosition(rep) == unionI);
+    SIsland sIsland(this, unionI, rep, ufS, ufM, ufL);
+    if(sIsland.isProblematic())
+      anyProblematic = true;
     sIslands.push_back(sIsland);
 
 #ifdef _TRACE
@@ -686,7 +721,7 @@ void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, s
   }
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic) {
   assert(!findExtremeAnglesOnly);
   time_t startTime, endTime;
   time(&startTime);
@@ -710,13 +745,18 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   for(unsigned int i = 0; i < numAngles-1; ++i) {
     sizes[i] = 2*angleSteps[i]+1;
   }
-  ufS = new UnionFind::IntervalUnionFind(numAngles, sizes, *SS); // deleted further down
-  ufM = new UnionFind::IntervalUnionFind(numAngles, sizes, *MM); // deleted further down
-  ufL = new UnionFind::IntervalUnionFind(numAngles, sizes, *LL); // deleted further down
+  UnionFind::IntervalUnionFind ufS(numAngles, sizes, *SS);
+  UnionFind::IntervalUnionFind ufM(numAngles, sizes, *MM);
+  UnionFind::IntervalUnionFind ufL(numAngles, sizes, *LL);
 
   // Find islands:
   std::vector<SIsland> sIslands;
-  findIslands(sIslands);
+  anyProblematic = false;
+  findIslands(sIslands, anyProblematic, ufS, ufM, ufL);
+
+  if(stopEarlyIfAnyProblematic && anyProblematic) {
+    return;
+  }
 
   /* Perform analysis:
   Walk through islands in S and report M and L islands.
@@ -781,11 +821,6 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
   for(std::set<uint64_t>::const_iterator it = newNonCyclic.begin(); it != newNonCyclic.end(); ++it) {
     nonCyclic.insert(*it);
   }
-
-  // Cleanup:
-  delete ufS;
-  delete ufM;
-  delete ufL;
 
   time(&endTime);
   double seconds = difftime(endTime,startTime);

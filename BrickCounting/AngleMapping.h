@@ -38,7 +38,6 @@ public:
   FatSCC sccs[6];
   math::IntervalListVector *SS, *MM, *LL;
 
-  UnionFind::IntervalUnionFind *ufS, *ufM, *ufL;
   IConnectionPoint points[10];
   unsigned int angleTypes[5]; // Connection(aka. angle) -> 0, 1, 2, or 3.
   unsigned short angleSteps[5]; // Connection(aka. angle) -> 1, 203, 370, or 538.
@@ -49,6 +48,7 @@ public:
 private:
   bool singleFreeAngle, findExtremeAnglesOnly;
   std::ofstream &os;
+  bool doublePrecision;
 
 public:
   AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly);
@@ -64,20 +64,22 @@ public:
   1) For all possible angles: Comput S,M,L.
   2) Combine regions in S,M,L in order to determine new models.
   */
-  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear);
+  void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic);
   void findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   Configuration getConfiguration(const MixedPosition &p) const;
+  void setDoublePrecision();
 
 private:
   void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const;
   void add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
-  void findIslands(std::vector<SIsland> &sIslands);
+  void findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL);
   void setupAngleTypes();
   Configuration getConfiguration(const Configuration &baseConfiguration, double lastAngle) const;
   Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
   void getConfigurationConnections(const MixedPosition &p, util::TinyVector<Connection, 5> &result) const;
+  void init();
 };
 
 struct MIsland {
@@ -87,12 +89,12 @@ struct MIsland {
   MixedPosition representative;
   Encoding encoding;
 
-  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
-    assert(unionFindIndex == a->ufM->getRootForPosition(p));
+  MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
+    assert(unionFindIndex == ufM.getRootForPosition(p));
     bool encodingUpdated = false;
     IntervalList rectilinearList;
     a->MM->get(a->rectilinearIndex, rectilinearList);
-    isRectilinear = math::intervalContains(rectilinearList, 0) && a->ufM->getRootForPosition(a->rectilinearPosition) == unionFindIndex;
+    isRectilinear = math::intervalContains(rectilinearList, 0) && ufM.getRootForPosition(a->rectilinearPosition) == unionFindIndex;
     if(isRectilinear) {
       // Update members to ensure correct encoding:
       util::TinyVector<IConnectionPair, 8> found;
@@ -107,11 +109,11 @@ struct MIsland {
     }
 
     // Add all L-islands:
-    for(std::vector<uint32_t>::const_iterator it = a->ufL->rootsBegin(); it != a->ufL->rootsEnd(); ++it) {
+    for(std::vector<uint32_t>::const_iterator it = ufL.rootsBegin(); it != ufL.rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
-      a->ufL->getRepresentativeOfUnion(unionI, rep);
-      if(a->ufM->getRootForPosition(rep) == unionFindIndex) {
+      ufL.getRepresentativeOfUnion(unionI, rep);
+      if(ufM.getRootForPosition(rep) == unionFindIndex) {
         if(!encodingUpdated) {
           // Update members to ensure correct encoding:
           util::TinyVector<IConnectionPair, 8> found;
@@ -150,13 +152,23 @@ struct SIsland {
   unsigned int sizeRep;
   MixedPosition representative;
 
-  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p) : sizeRep(a->numAngles), representative(p) {
-    assert(unionFindIndex == a->ufS->getRootForPosition(p));
+  bool isProblematic() {
+    if(mIslands.size() != 1)
+      return true;
+    for(std::vector<MIsland>::const_iterator it = mIslands.begin(); it != mIslands.end(); ++it) {
+      if(it->lIslands != 1)
+        return true;
+    }
+    return false;
+  }
+
+  SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) : sizeRep(a->numAngles), representative(p) {
+    assert(unionFindIndex == ufS.getRootForPosition(p));
     // Add all M-islands:
-    for(std::vector<uint32_t>::const_iterator it = a->ufM->rootsBegin(); it != a->ufM->rootsEnd(); ++it) {
+    for(std::vector<uint32_t>::const_iterator it = ufM.rootsBegin(); it != ufM.rootsEnd(); ++it) {
       const uint32_t unionI = *it;
       MixedPosition rep;
-      a->ufM->getRepresentativeOfUnion(unionI, rep);
+      ufM.getRepresentativeOfUnion(unionI, rep);
 
       Configuration c = a->getConfiguration(rep);
       util::TinyVector<IConnectionPair, 8> found;
@@ -164,8 +176,8 @@ struct SIsland {
       bool isCyclic = found.size() > a->numAngles;
       Encoding encoding = a->encoder.encode(found);
 
-      if(a->ufS->getRootForPosition(rep) == unionFindIndex) {
-        MIsland mIsland(a, unionI, rep, encoding, isCyclic);
+      if(ufS.getRootForPosition(rep) == unionFindIndex) {
+        MIsland mIsland(a, unionI, rep, encoding, isCyclic, ufM, ufL);
         mIslands.push_back(mIsland);
       }
     }

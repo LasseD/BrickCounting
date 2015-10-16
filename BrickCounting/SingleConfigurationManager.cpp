@@ -107,11 +107,22 @@ void SingleConfigurationManager::run(util::TinyVector<IConnectionPair, 5> &l, co
     ++attempts;
     if(countForPw)
       return; // Early return for count.
-    AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
 
     if(!findExtremeAnglesOnly) {
+      AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
+
       std::vector<std::pair<Configuration,MIsland> > newRectilinear;
-      angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear);
+      bool anyProblematic = false;
+      angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear, true, anyProblematic);
+      if(anyProblematic) {
+        std::cout << "Problematic configurations found. Attempting double precision!" << std::endl;
+        anyProblematic = false;
+        angleMapping.setDoublePrecision();
+        angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear, false, anyProblematic); // Try again with higher precision.
+        if(anyProblematic)
+          std::cout << " Problematic configurations found even with double precision!" << std::endl;
+      }
+
       for(int i = 0; i < BOOST_STAGES; ++i) {
         angleMappingBoosts[i] += angleMapping.boosts[i];
       }
@@ -173,6 +184,8 @@ void SingleConfigurationManager::run(util::TinyVector<IConnectionPair, 5> &l, co
 #endif
     }
     else {
+      AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
+
       std::vector<std::pair<Configuration,Encoding> > newRectilinear;
       angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, models, rectilinear, newRectilinear);
 #ifdef _COMPARE_ALGORITHMS
