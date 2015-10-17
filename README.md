@@ -21,7 +21,7 @@ This is a work in progress, so the results are still incomplete. The tables belo
 |  Number of bricks             | 1 |  2 |     3 |       4 |          5 |           6 | 
 |:-----------------------------:|--:|---:|------:|--------:|-----------:|------------:|
 | **RC's (previous results)**   | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
-| **Models (our main results)** | 0 |  0 |     0 |  1.108* |   161.724* | 26.417.316* |
+| **Models (our main results)** | 0 |  0 |     0 |  1.140* |   209.603* | 26.417.316* |
 
 See the detailed [findings page](http://c-mt.dk/counting/findings.php) for a breakdown of these numbers, and the [full paper](http://c-mt.dk/counting/?view=paper) for all details of the theory behind the numbers, as well as the software used to find them.
 
