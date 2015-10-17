@@ -38,15 +38,15 @@ void AngleMapping::init() {
       angleSteps[i] = STEPS_0;
       break;
     case 1:
-      angleSteps[i] = STEPS_1 * (doublePrecision ? 2 : 1);
+      angleSteps[i] = STEPS_1 * (boostPrecision ? PRECISION_BOOST_MULTIPLIER : 1);
       ++numFreeAngles;
       break;
     case 2:
-      angleSteps[i] = STEPS_2 * (doublePrecision ? 2 : 1);
+      angleSteps[i] = STEPS_2 * (boostPrecision ? PRECISION_BOOST_MULTIPLIER : 1);
       ++numFreeAngles;
       break;
     case 3:
-      angleSteps[i] = STEPS_3 * (doublePrecision ? 2 : 1);
+      angleSteps[i] = STEPS_3 * (boostPrecision ? PRECISION_BOOST_MULTIPLIER : 1);
       ++numFreeAngles;
       break;
     }
@@ -72,7 +72,7 @@ void AngleMapping::init() {
 }
 
 AngleMapping::AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly) : 
-    numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly), doublePrecision(false) {
+    numAngles(numScc-1), numBricks(0), encoder(encoder), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly), boostPrecision(false) {
   // Simple copying:
   for(int i = 0; i < numScc; ++i) {
     this->sccs[i] = sccs[i];
@@ -238,13 +238,13 @@ void AngleMapping::getConfigurationConnections(const MixedPosition &p, util::Tin
   result.push_back(Connection(ip1, ip2, angle));
 }
 
-void AngleMapping::setDoublePrecision() {
+void AngleMapping::setBoostPrecision() {
   assert(!findExtremeAnglesOnly);
   delete SS;
   delete MM;
   delete LL;
 
-  doublePrecision = true;
+  boostPrecision = true;
   init();
 }
 
@@ -274,11 +274,11 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     for(unsigned short i = 0; i < steps; ++i) {
       Configuration c2 = getConfiguration(c, angleI, i);
       bool noS2 = noS || !(singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
-                          (doublePrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                          (boostPrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
                                              c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size)));
       bool noM2 = noM || !c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size);
       bool noL2 = noL || !(singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
-                          (doublePrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                          (boostPrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
                                              c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size)));
 
       evalSML(angleI+1, smlI + i, c2, noS2, noM2, noL2);
@@ -311,7 +311,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 
     if(!sDone) {
       bool realizable = singleFreeAngle ? c2.isRealizable<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
-                       (doublePrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                       (boostPrecision ? c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
                                           c2.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
       if(realizable)
         SS->insert(smlI, full);
@@ -326,7 +326,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     }
     if(!lDone) {
       bool realizable = singleFreeAngle ? c2.isRealizable<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
-                       (doublePrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, sccs[ip2I].size) : 
+                       (boostPrecision ? c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions, sccs[ip2I].size) : 
                                           c2.isRealizable<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, sccs[ip2I].size));
       if(realizable)
         LL->insert(smlI, full);
@@ -342,7 +342,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
   
   // First check quick clear:
   if(!sDone && (singleFreeAngle ? tsbInvestigator.isClear<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : 
-               (doublePrecision ? tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions) : 
+               (boostPrecision ? tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions) : 
                                   tsbInvestigator.isClear<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions)))) {
 #ifdef _RM_DEBUG
     // Check that algorithms agree:
@@ -371,7 +371,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     mDone = true;
   }
   if(!lDone && (singleFreeAngle ? tsbInvestigator.isClear<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions) : 
-               (doublePrecision ? tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions) : 
+               (boostPrecision ? tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER/PRECISION_BOOST_MULTIPLIER>(possibleCollisions) : 
                                   tsbInvestigator.isClear<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions)))) {
     IntervalList full;
     full.push_back(Interval(-MAX_ANGLE_RADIANS,MAX_ANGLE_RADIANS));
@@ -388,7 +388,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     IntervalList l;
     if(singleFreeAngle)
       tsbInvestigator.allowableAnglesForBricks<-EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
-    else if(doublePrecision)
+    else if(boostPrecision)
       tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, l);
     else
       tsbInvestigator.allowableAnglesForBricks<-MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
@@ -471,7 +471,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
     IntervalList l;
     if(singleFreeAngle)
       tsbInvestigator.allowableAnglesForBricks<EPSILON_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
-    else if(doublePrecision)
+    else if(boostPrecision)
       tsbInvestigator.allowableAnglesForBricks<MOLDING_TOLERANCE_MULTIPLIER/2>(possibleCollisions, l);
     else
       tsbInvestigator.allowableAnglesForBricks<MOLDING_TOLERANCE_MULTIPLIER>(possibleCollisions, l);
@@ -798,9 +798,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         anyMappingPrinted = true;
       }
       else if(!mIsland.isRectilinear) {
-#ifdef _DEBUG
-        //modelsToPrint.push_back(c);
-#endif
+//#ifdef _DEBUG
+        modelsToPrint.push_back(c);
+//#endif
         ++models;
       }
 

@@ -147,6 +147,7 @@ void ConfigurationManager::runForCombinationType(const util::TinyVector<int, 6> 
   }
   std::cout << " (Accumulated totals):" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
+  std::cout << " Precision boost multiplier:               " << PRECISION_BOOST_MULTIPLIER << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   if(findExtremeAnglesOnly && combinationType.size() > 2) {
     std::cout << " NRCs:                                     " << models << std::endl;
@@ -217,6 +218,7 @@ void ConfigurationManager::runForSize(int size) {
 
   std::cout << "Results for size " << size << ":" << std::endl;
   std::cout << " Attempts:                                 " << attempts << std::endl;
+  std::cout << " Precision boost multiplier:               " << PRECISION_BOOST_MULTIPLIER << std::endl;
   std::cout << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   if(findExtremeAnglesOnly) {
     std::cout << " NRCs/models:                              " << models << std::endl;
@@ -312,6 +314,7 @@ void ConfigurationManager::printResults(const util::TinyVector<int, 6> &combinat
   }
   ss << ":" << std::endl;
   ss << " Attempts:                                 " << attempts << std::endl;
+  ss << " Precision boost multiplier:               " << PRECISION_BOOST_MULTIPLIER << std::endl;
   ss << " Rectilinear corner connected SCCs:        " << rectilinear << std::endl;
   if(findExtremeAnglesOnly && combinationType.size() > 2) {
     ss << " NRCs:                                     " << models << std::endl;

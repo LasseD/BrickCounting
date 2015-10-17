@@ -14,6 +14,7 @@
 #define STEPS_3 538
 #define BOOST_STAGES 4
 #define MAX_LOAD_FACTOR 4
+#define PRECISION_BOOST_MULTIPLIER 100
 
 typedef unsigned long long counter;
 
@@ -48,7 +49,7 @@ public:
 private:
   bool singleFreeAngle, findExtremeAnglesOnly;
   std::ofstream &os;
-  bool doublePrecision;
+  bool boostPrecision;
 
 public:
   AngleMapping(FatSCC const * const sccs, int numScc, const util::TinyVector<IConnectionPair, 5> &cs, const ConfigurationEncoder &encoder, std::ofstream &os, bool findExtremeAnglesOnly);
@@ -67,7 +68,7 @@ public:
   void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration,MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic);
   void findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   Configuration getConfiguration(const MixedPosition &p) const;
-  void setDoublePrecision();
+  void setBoostPrecision();
 
 private:
   void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const;

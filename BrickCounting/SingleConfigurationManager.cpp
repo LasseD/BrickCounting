@@ -115,12 +115,12 @@ void SingleConfigurationManager::run(util::TinyVector<IConnectionPair, 5> &l, co
       bool anyProblematic = false;
       angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear, true, anyProblematic);
       if(anyProblematic) {
-        std::cout << "Problematic configurations found. Attempting double precision!" << std::endl;
+        std::cout << "Problematic configurations found. Running again with boosted precision!" << std::endl;
         anyProblematic = false;
-        angleMapping.setDoublePrecision();
+        angleMapping.setBoostPrecision();
         angleMapping.findNewConfigurations(nonCyclicConfigurations, cyclicConfigurations, manual, modelsToPrint, models, newRectilinear, false, anyProblematic); // Try again with higher precision.
         if(anyProblematic)
-          std::cout << " Problematic configurations found even with double precision!" << std::endl;
+          std::cout << " Problematic configurations found even with boosted precision!" << std::endl;
       }
 
       for(int i = 0; i < BOOST_STAGES; ++i) {
