@@ -101,7 +101,7 @@ int main(int numArgs, char** argV) {
     ConfigurationManager mgr(3, false);
     mgr.test();
 
-    return 1;
+    return 0;
   }
   ensureFoldersAreCreated();
 
@@ -109,7 +109,7 @@ int main(int numArgs, char** argV) {
     if(argV[1][0] == 'R') {
       RectilinearConfigurationManager sccMgr;
       sccMgr.createOld();
-      return 9;
+      return 0;
     }
 
     int sccSize = argV[numArgs-1][0]-'0';
@@ -121,7 +121,7 @@ int main(int numArgs, char** argV) {
 
     if(sccSize < 3 || sccSize > 6) {
       printUsage();
-      return 2;
+      return 0;
     }
 
 #ifdef _COMPARE_ALGORITHMS
@@ -133,10 +133,12 @@ int main(int numArgs, char** argV) {
     return 0;
   }
 
+  bool extreme = numArgs >= 2 && argV[1][0] == 'X';
+
   int combinedSize = 0;
   int maxSccSize = 1;
   util::TinyVector<int, 6> combinationType;
-  for(int i = 1; i < numArgs; ++i) {
+  for(int i = 1 + (extreme?1:0); i < numArgs; ++i) {
     int sccSize = argV[i][0]-'0';
 #ifdef _DEBUG
     std::cout << " SCC SIZE: " << sccSize << std::endl;
@@ -148,7 +150,7 @@ int main(int numArgs, char** argV) {
   }
   if(combinedSize < 4 || combinedSize > 6) {
     printUsage();
-    return 3;
+    return 0;
   }
 
   if(!sccFilesExist(maxSccSize)) { // Create SCC data files:
@@ -158,9 +160,9 @@ int main(int numArgs, char** argV) {
 
   std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
 #ifdef _COMPARE_ALGORITHMS
-  ConfigurationManager mgr(combinedSize, false);
+  ConfigurationManager mgr(combinedSize, extreme);
 #else
-  ConfigurationManager mgr(maxSccSize, false);
+  ConfigurationManager mgr(maxSccSize, extreme);
 #endif
   mgr.runForCombinationType(combinationType, combinedSize);
   return 0;

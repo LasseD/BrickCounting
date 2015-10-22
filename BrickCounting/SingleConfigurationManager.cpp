@@ -7,7 +7,7 @@
 #include <time.h>
 
 SingleConfigurationManager::SingleConfigurationManager(const util::TinyVector<FatSCC, 6> &combination, std::ofstream &os, bool findExtremeAnglesOnly) : 
-    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), attempts(0), models(0), rectilinear(0), findExtremeAnglesOnly(findExtremeAnglesOnly) {
+    combinationSize((unsigned int)combination.size()), encoder(combination), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly), attempts(0), models(0), rectilinear(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
     angleMappingBoosts[i] = 0;
   }
@@ -187,7 +187,7 @@ void SingleConfigurationManager::run(util::TinyVector<IConnectionPair, 5> &l, co
       AngleMapping angleMapping(combination, combinationSize, l, encoder, os, findExtremeAnglesOnly);
 
       std::vector<std::pair<Configuration,Encoding> > newRectilinear;
-      angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, models, rectilinear, newRectilinear);
+      angleMapping.findNewExtremeConfigurations(nonCyclicConfigurations, cyclicConfigurations, modelsToPrint, models, rectilinear, newRectilinear);
 #ifdef _COMPARE_ALGORITHMS
       for(std::vector<std::pair<Configuration,Encoding> >::const_iterator it = newRectilinear.begin(); it != newRectilinear.end(); ++it) {
         FatSCC min = it->first.toMinSCC();
