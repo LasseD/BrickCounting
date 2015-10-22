@@ -1,12 +1,26 @@
-# Counting all LEGO Models
+# All Combinations of Six 2x4 LEGO Bricks
 
-By Lasse Deleuran, <last_updated>
+[Main project page](http://c-mt.dk/counting) | [Findings](http://c-mt.dk/counting/findings.php) | **Full paper** | [Project on GitHub](https://github.com/LasseD/BrickCounting) | [Updates on Eurobricks](http://www.eurobricks.com/forum/index.php?showtopic=71971)
+
+By Lasse Deleuran<,> <last_updated>
 
 ## Abstract
 
-The answer to the question "Take six eight-stud LEGO bricks (2x4) - how many ways can they be combined?" is currently accepted as being 915,103,765. This is how many ways the bricks can be combined when we restrict them to be at straight angles, that is, as if placed on a grid. This limitation is extremely useful when finding an answer to the question as it limits all but the most basic of geometrical considerations. In this paper we find the answer without imposing the limitation. That is. We allow bricks to be connected at odd angles at their corners.
+The answer to the question "Take six eight-stud LEGO bricks (2x4) - how many ways can they be combined?" is currently accepted as being 915.103.765. This is how many ways the bricks can be combined when we restrict them to be placed as if on a grid. This limitation is extremely useful when finding an answer to the question as it limits all but the most basic of geometrical considerations. 
 
-Our theoretical contribution is a natural method for distinguishing when two models of LEGO bricks are the same. We present our aswer to the original question using this method for up to six LEGO bricks. Our result is that using sic bricks, one can combine them into <todo> different models.
+![Bricks connected at right angles](http://c-mt.dk/counting/images/rectilinearintrosmall.png "There are 915.103.765 ways to combine 6 bricks as if on a grid.")
+
+In this paper we find the answer without imposing the limitation on the angles of the bricks.
+
+![Bricks connected at odd angles](http://c-mt.dk/counting/images/modelsintrosmall.png "It is currently unknown how many ways 6 bricks can be combined at other angles.")
+
+Our theoretical contribution is a natural method for distinguishing when two models of LEGO bricks are the same. We present our answer to the original question using this method for up to six LEGO bricks. Our result are complete for models of four bricks, while all models of five or six bricks have still to be discovered.
+
+|  Number of bricks                 | 1 |  2 |     3 |       4 |          5 |           6 | 
+|:---------------------------------:|--:|---:|------:|--------:|-----------:|------------:|
+| **Previous results**              | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
+| **New models (our main results)** | 0 |  0 |     0 |   1.144 |   209.603* | 26.417.316* |
+
 
 ## Introduction
 
