@@ -36,6 +36,7 @@ private:
   bool prevMustBeChosen[6], findExtremeAnglesOnly;
 
   void run(bool countForPw);
+public: // TODO: Only public for testing.
   void run(util::TinyVector<IConnectionPair, 5> &l, const std::vector<IConnectionPoint> &abovePool, const std::vector<IConnectionPoint> &belowPool, bool *remaining, int remainingSize, bool countForPw);
 
 public:

@@ -14,7 +14,8 @@
 #define STEPS_3 538
 #define BOOST_STAGES 4
 #define MAX_LOAD_FACTOR 4
-#define PRECISION_BOOST_MULTIPLIER 100
+// Precision boost multiplier can at most be 60 as UF-structure uses unsigned shorts to manage union-find indices: 65535/(538*2+1) ~= 60.8
+#define PRECISION_BOOST_MULTIPLIER 2
 
 typedef unsigned long long counter;
 
@@ -72,7 +73,7 @@ public:
 
 private:
   void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const;
-  void add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
+  void addFoundConfiguration(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear);
   void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
   void findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL);

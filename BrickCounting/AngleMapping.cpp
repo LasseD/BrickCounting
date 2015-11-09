@@ -588,7 +588,7 @@ void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int m
   mappingFile.close();
 }
 
-void AngleMapping::add(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
+void AngleMapping::addFoundConfiguration(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration,Encoding> > &newRectilinear) {
   util::TinyVector<IConnectionPair, 8> found;
   bool checkRealizable = c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
   if(!checkRealizable) {
@@ -668,14 +668,14 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
     Configuration c2 = getConfiguration(c, 0);
     if(!c2.isRealizable<0>(possibleCollisions, sccs[ip2I].size))
       return;
-    add(c2, rectilinear, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
+    addFoundConfiguration(c2, rectilinear, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
     return;
   }
 
   // First check quick clear:
   if(tsbInvestigator.isClear<0>(possibleCollisions)) {
     Configuration c2 = getConfiguration(c, 0);
-    add(c2, rectilinear, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
+    addFoundConfiguration(c2, rectilinear, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
     return;
   }
 
@@ -686,7 +686,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
   // First check rectilinear:
   if(rectilinear && math::intervalContains(l, 0)) {
     Configuration c2 = getConfiguration(c, 0);
-    add(c2, true, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
+    addFoundConfiguration(c2, true, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
   }
 
   // Then handle the non-rectilinear:
@@ -703,7 +703,7 @@ void AngleMapping::evalExtremeConfigurations(unsigned int angleI, const Configur
     }
     else
       c2 = getConfiguration(c, angle);
-    add(c2, false, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
+    addFoundConfiguration(c2, false, nonCyclic, cyclic, modelsToPrint, models, rect, newRectilinear);
   }
 }
 

@@ -264,20 +264,41 @@ ConfigurationManager::ConfigurationManager(int maxSccSize, bool findExtremeAngle
 void ConfigurationManager::test() {
   util::TinyVector<int, 6> v;
   v.push_back(2);
+  v.push_back(2);
   v.push_back(1);
-  v.push_back(1);
-  runForCombinationType(v, 4);
-/*
-  // Investigate failure #76:
+  //runForCombinationType(v, 6);
+
   util::TinyVector<FatSCC, 6> v2;
-  v2.push_back(sccs[2][125]);
-  v2.push_back(sccs[2][934]);
+  v2.push_back(sccs[1][0]);
+  v2.push_back(sccs[1][0]);
+  v2.push_back(sccs[1][2]);
 
   std::ofstream os;
   os.open("temp.txt", std::ios::out);//
 
   //runForCombination(v2, v, -1, os);
+  // encoding (17307906, 0) std::pair<unsigned __int64,unsigned __int64>
 
+  uint64_t encoded = 17307906;
+  IConnectionPairSet list;
+  util::TinyVector<IConnectionPair, 5> listx;
+  ConfigurationEncoder encoder(v2);
+  encoder.decode(encoded, list);
+
+  std::vector<Connection> cs;
+  for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
+    cs.push_back(Connection(*it2, StepAngle()));
+    listx.push_back(*it2);
+    std::cout << *it2 << std::endl;
+  }
+
+  std::vector<IConnectionPoint> pool;
+  SingleConfigurationManager singleMgr(v2, os, false);
+  singleMgr.run(listx, pool, pool, NULL, 0, false);
+  singleMgr.printManualLDRFiles();
+  singleMgr.printLDRFile();
+
+  /*
   util::TinyVector<IConnectionPair, 5> pairs;
   RectilinearBrick b0;
   RectilinearBrick &b1 = sccs[2][125].otherBricks[0];

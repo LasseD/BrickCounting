@@ -1,30 +1,39 @@
 # All Combinations of Six 2x4 LEGO Bricks
 
-[Main project page](http://c-mt.dk/counting) | [Findings](http://c-mt.dk/counting/findings.php) | **Full paper** | [Project on GitHub](https://github.com/LasseD/BrickCounting) | [Updates on Eurobricks](http://www.eurobricks.com/forum/index.php?showtopic=71971)
+[Main project page](http://c-mt.dk/counting) | [Findings](http://c-mt.dk/counting/findings.php) | **Full paper** | [Models](http://c-mt.dk/counting/models.php) | [Project on GitHub](https://github.com/LasseD/BrickCounting) | [Updates on Eurobricks](http://www.eurobricks.com/forum/index.php?showtopic=71971)
 
-By Lasse Deleuran<,> <last_updated>
+By Lasse Deleuran, <last_updated>
 
 ## Abstract
 
-The answer to the question "Take six eight-stud LEGO bricks (2x4) - how many ways can they be combined?" is currently accepted as being 915.103.765. This is how many ways the bricks can be combined when we restrict them to be placed as if on a grid. This limitation is extremely useful when finding an answer to the question as it limits all but the most basic of geometrical considerations. 
+The answer to the question "Take six eight-stud LEGO bricks (2x4) - how many ways can they be combined?" is currently accepted as being 915.103.765. This is how many distinct configurations of bricks there are when we restrict the bricks to be placed as if on a grid where the studs of the bricks are located on integer coordinates. This limitation is extremely useful when using a computer to find an answer to the question as it limits all but the most basic of geometrical considerations. 
 
-![Bricks connected at right angles](http://c-mt.dk/counting/images/rectilinearintrosmall.png "There are 915.103.765 ways to combine 6 bricks as if on a grid.")
+![Bricks connected at right angles](http://c-mt.dk/counting/images/rectilinearintrosmall.png "There are 915.103.765 distinct configurations of six bricks when the bricks are placed as if on a grid.")
 
-In this paper we find the answer without imposing the limitation on the angles of the bricks.
+In this paper we seek to find the answer without imposing the limitation on the angles of the bricks.
 
-![Bricks connected at odd angles](http://c-mt.dk/counting/images/modelsintrosmall.png "It is currently unknown how many ways 6 bricks can be combined at other angles.")
+![Bricks connected at odd angles](http://c-mt.dk/counting/images/modelsintrosmall.png "It is currently unknown how many ways six bricks can be combined at other angles.")
 
-Our theoretical contribution is a natural method for distinguishing when two models of LEGO bricks are the same. We present our answer to the original question using this method for up to six LEGO bricks. Our result are complete for models of four bricks, while all models of five or six bricks have still to be discovered.
+We present a framework for identifying and classifying models of bricks. Using this framework we are able to identify all models of 4 bricks, and provide lower bounds for models of 5 and 6 bricks. The use of lower bounds is currently caused by software limitations.
 
 |  Number of bricks                 | 1 |  2 |     3 |       4 |          5 |           6 | 
 |:---------------------------------:|--:|---:|------:|--------:|-----------:|------------:|
 | **Previous results**              | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
 | **New models (our main results)** | 0 |  0 |     0 |   1.144 |   209.603* | 26.417.316* |
 
+* The best known lower bounds
 
 ## Introduction
 
-Previous results in counting how many ways basic two-by-four LEGO bricks can be assembled only count combinations where the bricks are in places as in a grid. This limitation makes computation of the number of combinations easy. In this paper we wish to include all combinations where bricks are in general position, that is, are allowed to be connected at non-rectilinear angles.
+## Previous Results
+
+Previous results, for counting how many ways 2x4 (two-by-four) LEGO bricks can be assembled, count distinct fonfigurations where the bricks are placed as if on a grid where the studs of the bricks have integer coordinates. This limitation on the placement of bricks makes for a simple and clean model of computation.
+
+ where the placement of a brick can be described by three integers (x, y, z) and a flag (IsHorizontal). Verification for , and verifying if a configuration is valid.
+
+
+
+This limitation makes computation of the number of combinations easy. In this paper we wish to include all combinations where bricks are in general position, that is, are allowed to be connected at non-rectilinear angles.
 
 <TODO: Insert previous results here>
 
