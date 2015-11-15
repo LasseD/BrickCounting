@@ -23,7 +23,7 @@ This is a work in progress, so the results are still incomplete. The tables belo
 | **RC's (previous results)**   | 1 | 24 | 1.560 | 119.580 | 10.166.403 | 915.103.765 |
 | **Models (our main results)** | 0 |  0 |     0 |   1.144 |   213.221* | 26.417.316* |
 
-See the detailed [findings page](http://c-mt.dk/counting/findings.php) for a breakdown of these numbers, and the [full paper](http://c-mt.dk/counting/?view=paper) for all details of the theory behind the numbers, as well as the software used to find them.
+See the detailed [findings page](http://c-mt.dk/counting/findings.php) for a breakdown of these numbers, or go directly to the [models page](http://c-mt.dk/counting/models.php) so see the models. The [full paper](http://c-mt.dk/counting/?view=paper) is currently under construction, and will contain all details of the theory behind the numbers, as well as the software used to find them.
 
 
 ## Terminology
@@ -39,3 +39,6 @@ In this section we define the terms used in the table of our current findings ab
 
 We typically use colors to highlight the individual sub-configurations that can be turned. This is, however, only for illustrative purposes. Our results, as well as previous results, assume that all bricks have the same color and are thus interchangeable. 
 
+## What now?
+
+If you have read the terminology above and want to see more details, then the [findings page](http://c-mt.dk/counting/findings.php) is the place to continue. If you want to see the models that the software has found, then you might appreciate the [models page](http://c-mt.dk/counting/models.php). The [full paper](http://c-mt.dk/counting/?view=paper) is currently under construction, and we are working on improving the algorithm to find models using the software. The [GitHub project](https://github.com/LasseD/BrickCounting) is open for ideas of improvement.
