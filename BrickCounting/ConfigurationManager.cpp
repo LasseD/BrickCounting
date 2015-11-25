@@ -22,7 +22,7 @@ void ConfigurationManager::runForCombination(const util::TinyVector<FatSCC, 6> &
     }
 
 #ifdef _DEBUG
-//    mgr.printLDRFile();
+//    mgr.printMPDFile();
 #endif
 
 #ifdef _COMPARE_ALGORITHMS
@@ -296,7 +296,7 @@ void ConfigurationManager::test() {
   SingleConfigurationManager singleMgr(v2, os, false);
   singleMgr.run(listx, pool, pool, NULL, 0, false);
   singleMgr.printManualLDRFiles();
-  singleMgr.printLDRFile();
+  singleMgr.printMPDFile();
 
   /*
   util::TinyVector<IConnectionPair, 5> pairs;
@@ -312,7 +312,7 @@ void ConfigurationManager::test() {
   SingleConfigurationManager sm(v2, os, false);
   std::vector<IConnectionPoint> pools;
   sm.run(pairs, pools, pools, NULL, 0);
-  sm.printLDRFile();
+  sm.printMPDFile();
   sm.printManualLDRFiles();
   */
 }

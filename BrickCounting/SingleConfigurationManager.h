@@ -49,7 +49,7 @@ public:
   }
 
   void run();
-  void printLDRFile() const;
+  void printMPDFile() const;
   void printManualLDRFiles() const;
   void printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const;
   bool isRotationallyMinimal(const IConnectionPairSet &l) const;

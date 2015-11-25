@@ -292,7 +292,7 @@ void SingleConfigurationManager::run(bool countForPw) {
     return;
   // Print:
   printManualLDRFiles();
-  printLDRFile();
+  printMPDFile();
   time(&endTime);
   double seconds = difftime(endTime,startTime);
 #ifdef _TRACE
@@ -318,7 +318,7 @@ void SingleConfigurationManager::run(bool countForPw) {
   std::cout << ") handled in " << seconds << " seconds." << std::endl;
 }
 
-void SingleConfigurationManager::printLDRFile() const {
+void SingleConfigurationManager::printMPDFile() const {
   if(modelsToPrint.empty())
     return;
 

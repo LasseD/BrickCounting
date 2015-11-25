@@ -15,7 +15,7 @@
 #define BOOST_STAGES 4
 #define MAX_LOAD_FACTOR 4
 // Precision boost multiplier can at most be 60 as UF-structure uses unsigned shorts to manage union-find indices: 65535/(538*2+1) ~= 60.8
-#define PRECISION_BOOST_MULTIPLIER 2
+#define PRECISION_BOOST_MULTIPLIER 10
 
 typedef unsigned long long counter;
 

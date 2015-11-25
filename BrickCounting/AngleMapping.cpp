@@ -806,9 +806,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
         anyMappingPrinted = true;
       }
       else if(!mIsland.isRectilinear) {
-//#ifdef _DEBUG
+#ifdef _DEBUG
         modelsToPrint.push_back(c);
-//#endif
+#endif
         ++models;
       }
 

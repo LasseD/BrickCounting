@@ -43,7 +43,7 @@ public:
     ++written;
   }
 
-  void printLDRFile(const unsigned long hash, std::set<RectilinearConfiguration<ELEMENT_SIZE> > &s) {
+  void printMPDFile(const unsigned long hash, std::set<RectilinearConfiguration<ELEMENT_SIZE> > &s) {
     MPDPrinter h;
 
     typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
@@ -110,7 +110,7 @@ public:
     infile.close();
     unsigned int res = (unsigned int)s.size();
     std::cout << "Read " << res << " sorted elements of hash " << hash << std::endl;
-    //printLDRFile(hash, s); // Comment in for great visual debugging!
+    //printMPDFile(hash, s); // Comment in for great visual debugging!
     s.clear();
     return res;    
   }
@@ -391,7 +391,7 @@ public:
     return sum;
   }
 
-  void printLDRFile(bool includeNonSCCs = false) {
+  void printMPDFile(bool includeNonSCCs = false) {
     MPDPrinter h;
 
     typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
