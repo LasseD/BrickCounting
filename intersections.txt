@@ -1,0 +1,38 @@
+Idea 1:
+-------
+ rectangle / circle:
+ - Circle with diameter d.
+ - Move rectangle to origin.
+ - axis align rectangle.
+ - If abs(x) and abs(y) on point because of symmetry.
+ - If point outside bounding box, no intersection.
+ - If point not inside corner box (with side length d), intersection.
+ - Intersection if distance of inside edge of intersecting corner box to circle center is less than d.
+
+ Cost: 
+ 1 translation (2 add)
+ 1 planar rotation (1 cos, 1 sin, 1 matrix mult(4 mult, 4 add))
+ 2 < for abs
+ 2 < (center box)
+ 2 < (corner box)
+ 1 point-point-distance (2 add, 3 mult, 1 <)
+ Total:
+ 8 add, 7 mult, 7 <, 1 cos, 1 sin (reusable for rectangle)
+
+
+rectangle / rectangle:
+----------------------
+Idea 1: Using rectangle/point idea 1 on six POIs (points instead of circles, so no point-point dist calc) of each rectangle:
+Reduction (move rectangle first, then compute POIs:
+ 2 x {
+  pre-compute sin/cos: 2 sin, 2 cos
+  translation (2 add)
+  planar rotation (1 matrix mult(4 mult, 4 add))
+  6 x {
+   2 add
+   2 mult    
+   2 < for abs
+   2 < (center box)
+  } 
+ = 4 cos + 4 sin + 2 x (2 add + 4 mult + 4 add + 12 add + 12 mult + 24 <)
+ = 4 cos + 4 sin + 36 add + 32 mult + 48 < = 124 operations

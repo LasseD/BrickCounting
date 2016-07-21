@@ -391,11 +391,11 @@ public:
     return sum;
   }
 
-  void printMPDFile(bool includeNonSCCs = false) {
+  void printMPDFile(bool includeNonSCCs = false, int limitSubModelsInFile = 2147483647) {
     MPDPrinter h;
 
     typename std::set<RectilinearConfiguration<ELEMENT_SIZE> >::const_iterator it = s.begin();
-    for(int i = 0; it != s.end(); ++it, ++i) {
+    for(int i = 0; it != s.end() && i < limitSubModelsInFile; ++it, ++i) {
       LDRPrintable const * p = &(*it);
       std::stringstream ss;
       ss << "scc_" << i;

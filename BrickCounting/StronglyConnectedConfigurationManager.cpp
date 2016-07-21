@@ -51,6 +51,7 @@ void RectilinearConfigurationManager::create(int maxSccSize) {
   l3.s.clear();
   std::cout << l4 << std::endl;
   writeToFile(3);
+  l4.printMPDFile(false, 2048);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 4" << std::endl << std::endl;
   if(maxSccSize <= 4) return;
 
@@ -59,6 +60,7 @@ void RectilinearConfigurationManager::create(int maxSccSize) {
   l4.s.clear();
   std::cout << l5 << std::endl;
   writeToFile(4);
+  l5.printMPDFile(false, 2048);
   std::cout << "DONE STRONGLY CONNECTED CONFIGURATIONS OF SIZE 5" << std::endl << std::endl;
   if(maxSccSize <= 5) return;
 
@@ -66,6 +68,7 @@ void RectilinearConfigurationManager::create(int maxSccSize) {
   std::cout << "NOW STARTING TO COUNT ALL STRONGLY CONNECTED CONFIGURATIONS OF SIZE 6. RESTART TO SKIP!" << std::endl << std::endl;
   l6.countAllFor(l5, false);
   l5.s.clear();
+  l6.printMPDFile(false, 2048);
   l6.s.clear();
 }
 
@@ -94,7 +97,7 @@ void RectilinearConfigurationManager::createOld() {
   std::cout << l3 << std::endl;
   writeToFile(2, true);
 
-  l3.printMPDFile(true);
+  l3.printMPDFile(true, 2048);
   std::cout << "DONE OLD OF SIZE 3" << std::endl << std::endl;
 
   // 4:
@@ -102,6 +105,7 @@ void RectilinearConfigurationManager::createOld() {
   l3.s.clear();
   std::cout << l4 << std::endl;
   writeToFile(3, true);
+  l4.printMPDFile(true, 2048);
   std::cout << "DONE OLD OF SIZE 4" << std::endl << std::endl;
 
   // 5:
@@ -109,12 +113,14 @@ void RectilinearConfigurationManager::createOld() {
   l4.s.clear();
   std::cout << l5 << std::endl;
   writeToFile(4, true);
+  l5.printMPDFile(true, 2048);
   std::cout << "DONE OLD OF SIZE 5" << std::endl << std::endl;
 
   // 6:
   std::cout << "NOW STARTING TO COUNT ALL RECTILINEAR CONFIGURATIONS OF SIZE 6. RESTART TO SKIP!" << std::endl << std::endl;
   l6.countAllFor(l5, true);
   l5.s.clear();
+  l6.printMPDFile(true, 2048);
   l6.s.clear();
   std::cout << "DONE OLD OF SIZE 6" << std::endl << std::endl;
 }
