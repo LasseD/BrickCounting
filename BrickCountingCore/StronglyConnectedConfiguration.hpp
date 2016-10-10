@@ -319,7 +319,7 @@ public:
   unsigned long index;
   RectilinearBrick otherBricks[5];
   bool isRotationallySymmetric;
-  std::pair<int,int> rotationBrickPosition;
+  std::pair<int,int> rotationBrickPosition; // if isRotationallySymmetric
 
   FatSCC() : size(1), index(0), isRotationallySymmetric(true), rotationBrickPosition(std::pair<int,int>(0, 0)) {}
   FatSCC(const FatSCC &f) : size(f.size), index(f.index), isRotationallySymmetric(f.isRotationallySymmetric), rotationBrickPosition(f.rotationBrickPosition) {

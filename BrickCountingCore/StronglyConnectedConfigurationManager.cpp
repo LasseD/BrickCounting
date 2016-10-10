@@ -1,6 +1,6 @@
 #include "StronglyConnectedConfigurationManager.h"
 #include <sstream>
-#include <windows.h>
+//#include <windows.h>
 
 RectilinearConfigurationManager::RectilinearConfigurationManager() {
   lists = new void*[6]; // Deleted in ~RectilinearConfigurationManager()

@@ -8,7 +8,7 @@
 #include "targetver.h"
 
 #include <stdio.h>
-#include <tchar.h>
+//#include <tchar.h>
 
 #include <iostream>
 #include <fstream>
@@ -16,4 +16,7 @@
 #include <algorithm>
 
 // Reference additional headers your program requires here
+//#include "RectilinearBrick.h"
+//#include "ConnectionPoint.h"
+//#include "Math.h"
 
