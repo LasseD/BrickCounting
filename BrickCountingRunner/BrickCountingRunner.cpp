@@ -85,8 +85,7 @@ int main(int numArgs, char** argV) {
 #endif
 	if (numArgs <= 1) {
 		printUsage();
-		ConfigurationManager mgr(3, false);
-		mgr.test();
+		//ConfigurationManager mgr(3, false); mgr.test();
 
 		return 0;
 	}

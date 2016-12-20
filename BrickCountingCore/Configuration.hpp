@@ -31,7 +31,7 @@ struct StepAngle {
   unsigned short d; // denominator
 
   StepAngle() : n(0), d(1) {}
-  StepAngle(double n) : n((short)math::round(n*10000/MAX_ANGLE_RADIANS)), d(10000) {}
+  StepAngle(double n) : n((short)geometry::round(n*10000/MAX_ANGLE_RADIANS)), d(10000) {}
   StepAngle(short n, unsigned short d) : n(n), d(d) {
     assert(d != 0);
     assert(-d <= n);
@@ -49,12 +49,12 @@ struct StepAngle {
     }
 
     // Compute the angle difference while taking the conection points into account:
-    double angleDiff = math::normalizeAngle(-b1.angle + M_PI/2*(p2.type-p1.type-2) + b2.angle);
+    double angleDiff = geometry::normalizeAngle(-b1.angle + M_PI/2*(p2.type-p1.type-2) + b2.angle);
 
     // Transform to n:
     assert(angleDiff >= -MAX_ANGLE_RADIANS);
     assert(angleDiff <= MAX_ANGLE_RADIANS);
-    n = (short)math::round((angleDiff/MAX_ANGLE_RADIANS)*d);
+    n = (short)geometry::round((angleDiff/MAX_ANGLE_RADIANS)*d);
   }
 
   double toRadians() const {
@@ -283,7 +283,7 @@ struct Configuration : public LDRPrintable {
     const ConnectionPoint &prevPoint = c.p1.second;
     const ConnectionPoint &currPoint = c.p2.second;
     Brick prevBrick(prevOrigBrick, c.p1.second.brick);
-    Point prevStud = prevBrick.getStudPosition(prevPoint.type);
+    geometry::Point prevStud = prevBrick.getStudPosition(prevPoint.type);
 
     // Compute position of bricks:
     double angle = prevBrick.angle + M_PI/2*(currPoint.type-prevPoint.type-2) + c.angleToRadians();

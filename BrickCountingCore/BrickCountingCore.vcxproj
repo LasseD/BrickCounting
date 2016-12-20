@@ -21,13 +21,14 @@
   <ItemGroup>
     <ClInclude Include="AngleMapping.h" />
     <ClInclude Include="Brick.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Configuration.hpp" />
     <ClInclude Include="ConfigurationEncoder.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="ConnectionPoint.h" />
+    <ClInclude Include="geometry\BasicGeometry.h" />
     <ClInclude Include="geometry\RobotArmMotionPrimitives.h" />
     <ClInclude Include="LDRPrinter.h" />
-    <ClInclude Include="Math.h" />
     <ClInclude Include="RectilinearBrick.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
     <ClInclude Include="stdafx.h" />
@@ -46,9 +47,9 @@
     <ClCompile Include="ConfigurationEncoder.cpp" />
     <ClCompile Include="ConfigurationManager.cpp" />
     <ClCompile Include="ConnectionPoint.cpp" />
+    <ClCompile Include="geometry\BasicGeometry.cpp" />
     <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp" />
     <ClCompile Include="LDRPrinter.cpp" />
-    <ClCompile Include="Math.cpp" />
     <ClCompile Include="RectilinearBrick.cpp" />
     <ClCompile Include="SingleConfigurationManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
@@ -153,6 +154,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+      <DisableSpecificWarnings>4127</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

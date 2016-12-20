@@ -1,4 +1,4 @@
-#include "Math.h"
+#include "geometry/BasicGeometry.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
 
@@ -104,14 +104,14 @@ void RectilinearBrick::deserialize(std::ifstream &is) {
 }
 
 void RectilinearBrick::toLDR(std::ofstream &os, int ldrColor) const {
-  int x = this->x;
-  int y = this->y;
+  int _x = this->x;
+  int _y = this->y;
 
-  x *= 20;
-  y *= 20;
+  _x *= 20;
+  _y *= 20;
   int z = -24*level();
 
-  os << "1 " << ldrColor << " " << x << " " << z << " " << y << " ";
+  os << "1 " << ldrColor << " " << _x << " " << z << " " << _y << " ";
 
   if(!horizontal()) {
     os << "0 0 1 0 1 0 -1 0 0 3001.dat" << std::endl;
@@ -159,12 +159,12 @@ bool RectilinearBrick::angleLocks(const ConnectionPoint &p) const {
   // Angle locks when touching a side of the brick:
   if(horizontal()) {
     return 
-      ((p.y4x4() == y   || p.y4x4() == y+3) && math::inInterval(x,x+3,p.x4x4())) ||
+      ((p.y4x4() == y   || p.y4x4() == y+3) && geometry::inInterval(x,x+3,p.x4x4())) ||
       ((p.y4x4() == y+1 || p.y4x4() == y+2) && (p.x4x4() == x-1 || p.x4x4() == x+4));
   }
   else {
     return 
-      ((p.x4x4() == x   || p.x4x4() == x+3) && math::inInterval(y,y+3,p.y4x4())) ||
+      ((p.x4x4() == x   || p.x4x4() == x+3) && geometry::inInterval(y,y+3,p.y4x4())) ||
       ((p.x4x4() == x+1 || p.x4x4() == x+2) && (p.y4x4() == y-1 || p.y4x4() == y+4));
   }  
 }
@@ -177,8 +177,8 @@ bool RectilinearBrick::isStronglyConnectedWith(const RectilinearBrick &b) const 
   if(!(level() == b.level()+1 || level()+1 == b.level()))
     return false; // Not at connecting levels.
 
-  unsigned int diffX = math::diff(x, b.x);
-  unsigned int diffY = math::diff(y, b.y);
+  unsigned int diffX = geometry::diff(x, b.x);
+  unsigned int diffY = geometry::diff(y, b.y);
 
   if(horizontal() != b.horizontal()) { // One horizontal, one vertical:
     if(diffX > 2 || diffY > 2)

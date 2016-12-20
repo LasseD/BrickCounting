@@ -1,7 +1,7 @@
 #ifndef GEOMETRY_ROBOT_ARM_MOTION_PRIMITIVES_H
 #define GEOMETRY_ROBOT_ARM_MOTION_PRIMITIVES_H
 
-#include "../Math.h"
+#include "BasicGeometry.h"
 #include <vector>
 
 namespace geometry {

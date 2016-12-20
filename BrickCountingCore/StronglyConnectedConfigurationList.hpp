@@ -80,7 +80,7 @@ public:
       }
       if(candidate.canTurn90()) {
         bool found = false;
-        for(int i = 0; i < 3; ++i) {
+        for(int j = 0; j < 3; ++j) {
           candidate.turn90();
           if(s.find(candidate) != s.end()) {
             found = true;
@@ -101,7 +101,7 @@ public:
       if(ELEMENT_SIZE > 2) {
         util::TinyVector<int, 6> combinationType;
         candidate.getCombinationType(combinationType);
-        uint32_t encoding = math::encodeCombinationType(combinationType);
+        uint32_t encoding = geometry::encodeCombinationType(combinationType);
 
         assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
         combinationTypeLists[encoding]->writeConfiguration(candidate);
@@ -190,7 +190,7 @@ private:
 
   void createCombinationTypeLists(const util::TinyVector<int, 6> &combinationType, int remaining) {
     if(remaining == 0) {
-      uint32_t encodedCombinationType = math::encodeCombinationType(combinationType);
+      uint32_t encodedCombinationType = geometry::encodeCombinationType(combinationType);
       CombinationTypeList<ELEMENT_SIZE> *list = new CombinationTypeList<ELEMENT_SIZE>(combinationType); // deleted in ~RectilinearConfigurationList()
       combinationTypeLists.insert(std::make_pair(encodedCombinationType,list));
       return;
@@ -312,7 +312,7 @@ public:
       if(ELEMENT_SIZE > 2) {
         util::TinyVector<int, 6> combinationType;
         candidate.getCombinationType(combinationType);
-        uint32_t encoding = math::encodeCombinationType(combinationType);
+        uint32_t encoding = geometry::encodeCombinationType(combinationType);
 
         assert(combinationTypeLists.find(encoding) != combinationTypeLists.end());
         combinationTypeLists[encoding]->writeConfiguration(candidate); // Notize: Not minimized! rotateToMin has to be done on read!
@@ -333,9 +333,9 @@ public:
     }
 
     if(ELEMENT_SIZE > 2) {
-      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
-      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
-        it->second->closeForWrite();
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it2;
+      for(it2 = combinationTypeLists.begin(); it2 != combinationTypeLists.end(); ++it2)
+        it2->second->closeForWrite();
     }
   }
 
@@ -383,9 +383,9 @@ public:
     std::cout << "Number of RectilinearConfigurations of size " << ELEMENT_SIZE << ": " << sum << std::endl;
 
     if(ELEMENT_SIZE > 2) {
-      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it;
-      for(it = combinationTypeLists.begin(); it != combinationTypeLists.end(); ++it)
-        it->second->closeForWrite();
+      typename std::map<uint32_t,CombinationTypeList<ELEMENT_SIZE>* >::const_iterator it3;
+      for(it3 = combinationTypeLists.begin(); it3 != combinationTypeLists.end(); ++it3)
+        it3->second->closeForWrite();
     }
 
     return sum;

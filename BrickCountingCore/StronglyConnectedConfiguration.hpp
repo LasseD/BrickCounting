@@ -20,7 +20,7 @@
 template <unsigned int SIZE>
 class RectilinearConfiguration : public LDRPrintable {
 public:
-  RectilinearBrick otherBricks[SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
+  RectilinearBrick otherBricks[SIZE == 1 ? 1 : SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
   bool verify() const {
     const RectilinearBrick origin;
@@ -68,6 +68,7 @@ public:
   }
 
   RectilinearConfiguration() {}
+
   RectilinearConfiguration(const RectilinearConfiguration<SIZE>& c) {
     for(int i = 0; i < SIZE-1; ++i) {
       otherBricks[i] = c.otherBricks[i];

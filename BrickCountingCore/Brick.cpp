@@ -20,13 +20,13 @@ Brick::Brick(const Brick& b, const RectilinearBrick& rb) : angle(b.angle), level
 
   if(rb.horizontal())
     angle -= M_PI/2;
-  angle = math::normalizeAngle(angle);
+  angle = geometry::normalizeAngle(angle);
 }
 
 /*
 Main constructor: Built from a RectilinearConfiguration by connecting to a brick at an angle.
 */
-Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv-p.brick.level()) {  
+Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const geometry::Point &origin, double originAngle, int8_t originLv) : center(b.x-p.x(), b.y-p.y()), angle(originAngle), level(b.level()+originLv-p.brick.level()) {  
 #ifdef _BRICK
   std::cout << "Building brick. RB=" << b << std::endl;
   std::cout << " center compared to connection: " << center.X << "," << center.Y << std::endl << " point to connect to: " << origin.X << "," << origin.Y << ", angle of that point: " << originAngle << std::endl;
@@ -50,7 +50,7 @@ Brick::Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &o
   center.Y += origin.Y;
   if(b.horizontal())
     angle -= M_PI/2;
-  angle = math::normalizeAngle(angle);
+  angle = geometry::normalizeAngle(angle);
 }
 
 void Brick::toLDR(std::ofstream &os, int ldrColor) const {
@@ -68,7 +68,7 @@ void Brick::toLDR(std::ofstream &os, int ldrColor) const {
 
   /*  
   // Guide axle:
-  Point p = getStudPosition(NW);
+  geometry::Point p = getStudPosition(NW);
   os << "1 " << ldrColor << " " << ((p.X+xx)*20) << " " << (z+8-8) << " " << ((p.Y+yy)*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   // Guide hose:
@@ -86,27 +86,27 @@ void Brick::toLDR(std::ofstream &os, int ldrColor) const {
   //*/
   /*
   // Studs:
-  Point studs[NUMBER_OF_STUDS];
+  geometry::Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
   for(int i = 0; i < 8; ++i) {
-  Point p = studs[i];
+  geometry::Point p = studs[i];
   os << "1 " << 0 << " " << (p.X*20) << " " << (z-5*i) << " " << (p.Y*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
   /*
   // 7 POIs:
-  Point studs[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+  geometry::Point studs[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
   getBoxPOIs<0>(studs);
   for(int i = 0; i < NUMBER_OF_POIS_FOR_BOX_INTERSECTION; ++i) {
-  Point p = studs[i];
+  geometry::Point p = studs[i];
   os << "1 " << 0 << " " << (p.X*20) << " " << (z) << " " << (p.Y*20) << " ";
   os << "0 -1 0 1 0 0 0 0 1 4519.dat" << std::endl;
   }//*/
 }
 
 RectilinearBrick Brick::toRectilinearBrick() const {
-  int x = (int)math::round(this->center.X);
-  int y = (int)math::round(this->center.Y);
+  int x = (int)geometry::round(this->center.X);
+  int y = (int)geometry::round(this->center.Y);
   double a = angle*2/M_PI;
   if(a < 0)
     a = -a;
@@ -114,7 +114,7 @@ RectilinearBrick Brick::toRectilinearBrick() const {
   return RectilinearBrick((int8_t)x, (int8_t)y, level, horizontal);
 }
 
-void Brick::movePointSoThisIsAxisAlignedAtOrigin(Point &b) const {
+void Brick::movePointSoThisIsAxisAlignedAtOrigin(geometry::Point &b) const {
   // Tranlate to make this->origin = 0,0:
   b.X -= center.X;
   b.Y -= center.Y;
@@ -131,7 +131,7 @@ void Brick::moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const {
   b.angle -= angle;
 }
 
-Point Brick::getStudPosition(ConnectionPointType type) const {
+geometry::Point Brick::getStudPosition(ConnectionPointType type) const {
   double sina = sin(angle);
   double cosa = cos(angle);
   double dx, dy;
@@ -144,35 +144,35 @@ Point Brick::getStudPosition(ConnectionPointType type) const {
   }
   double dx2 = dx*cosa - dy*sina;
   double dy2 = dx*sina + dy*cosa;
-  return Point(center.X+dx2, center.Y+dy2);
+  return geometry::Point(center.X+dx2, center.Y+dy2);
 }
 
-void Brick::getStudPositions(Point *studs) const {
+void Brick::getStudPositions(geometry::Point *studs) const {
   double sina = sin(angle);
   double cosa = cos(angle);
   // 4 inner:
   double dx = HALF_STUD_DISTANCE;
   double dy = HALF_STUD_DISTANCE;
-  studs[0] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
-  studs[1] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
-  studs[2] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
-  studs[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+  studs[0] = geometry::Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+  studs[1] = geometry::Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+  studs[2] = geometry::Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+  studs[3] = geometry::Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
   // 4 outer:
   dy = STUD_AND_A_HALF_DISTANCE;
-  studs[4] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
-  studs[5] = Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
-  studs[6] = Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
-  studs[7] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
+  studs[4] = geometry::Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
+  studs[5] = geometry::Point(center.X+(dx*cosa-dy*sina),  center.Y+(dx*sina+dy*cosa));
+  studs[6] = geometry::Point(center.X+(dx*cosa+dy*sina),  center.Y+(dx*sina-dy*cosa));
+  studs[7] = geometry::Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
 }
 
 bool Brick::outerStudIntersectsStudAtOrigin() const {
-  Point studs[NUMBER_OF_STUDS];
+  geometry::Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
 
   // Handle four outer specially as they might cause connection:
   for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
-    Point &stud = studs[i];
-    double studDist = math::norm(stud);
+    geometry::Point &stud = studs[i];
+    double studDist = geometry::norm(stud);
     if(studDist < SNAP_DISTANCE)
       return true;
   }
@@ -180,18 +180,18 @@ bool Brick::outerStudIntersectsStudAtOrigin() const {
 }
 
 void Brick::getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<ClickInfo> &found) const {
-  Point studs[NUMBER_OF_STUDS];
+  geometry::Point studs[NUMBER_OF_STUDS];
   getStudPositions(studs);
 
   // Handle four outer specially as they might cause connection:
   for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
-    Point &stud = studs[i];
-    double studDist = math::norm(stud);
+    geometry::Point &stud = studs[i];
+    double studDist = geometry::norm(stud);
     if(studDist < radius - SNAP_DISTANCE || studDist > radius + SNAP_DISTANCE) {
       continue;
     }
-    double studAngle = math::angleOfPoint(stud);
-    if(math::inRadianInterval(studAngle, RadianInterval(minAngle, maxAngle))) {
+    double studAngle = geometry::angleOfPoint(stud);
+    if(geometry::inRadianInterval(studAngle, geometry::RadianInterval(minAngle, maxAngle))) {
       found.push_back(ClickInfo(studAngle, studDist));
     }
   }

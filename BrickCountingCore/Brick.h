@@ -1,13 +1,15 @@
 #ifndef BRICK_H
 #define BRICK_H
 
+#include "Common.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
-#include "Math.h"
+#include "geometry/BasicGeometry.h"
 
 #include <assert.h>
 #include <stdint.h>
 #include <iostream>
+#include <vector>
 
 #define NUMBER_OF_POIS_FOR_BOX_INTERSECTION 10
 #define NUMBER_OF_STUDS 8
@@ -24,7 +26,7 @@
 #define MOLDING_TOLERANCE_MULTIPLIER 1000
 #define EPSILON_TOLERANCE_MULTIPLIER 1
 
-typedef std::pair<double,double> ClickInfo; // angle, dist of stud making the click.
+typedef std::pair<double, double> ClickInfo; // angle, dist of stud making the click.
 
 /*
 A Brick at any location and angle.
@@ -35,420 +37,420 @@ std::ostream& operator<<(std::ostream &os, const Brick& b);
 
 class Brick {
 public:
-  Point center;
-  double angle; // angle 0 = vertical.
-  int8_t level;
+	geometry::Point center;
+	double angle; // angle 0 = vertical.
+	int8_t level;
 
-  Brick(const Brick& b) : center(b.center), angle(b.angle), level(b.level) {}
-  Brick(const RectilinearBrick& b) : center(b.x, b.y), angle(b.horizontal() ? -M_PI/2 : 0), level(b.level()) {}
-  Brick(const Brick& b, const RectilinearBrick& rb);
-  Brick() : center(0,0), angle(0), level(0) {}
-  Brick(double cx, double cy, double a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
-  Brick(const RectilinearBrick& b, const ConnectionPoint& p, const Point &origin, double originAngle, int8_t originLv);
+	Brick(const Brick& b) : center(b.center), angle(b.angle), level(b.level) {}
+	Brick(const RectilinearBrick& b) : center(b.x, b.y), angle(b.horizontal() ? -M_PI / 2 : 0), level(b.level()) {}
+	Brick(const Brick& b, const RectilinearBrick& rb);
+	Brick() : center(0, 0), angle(0), level(0) {}
+	Brick(double cx, double cy, double a, int8_t lv) : center(cx, cy), angle(a), level(lv) {}
+	Brick(const RectilinearBrick& b, const ConnectionPoint& p, const geometry::Point &origin, double originAngle, int8_t originLv);
 
-  void /*Brick::*/toLDR(std::ofstream &os, int ldrColor) const;
+	void /*Brick::*/toLDR(std::ofstream &os, int ldrColor) const;
 
-  RectilinearBrick /*Brick::*/toRectilinearBrick() const;
+	RectilinearBrick /*Brick::*/toRectilinearBrick() const;
 
-  void /*Brick::*/moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const;
-  void /*Brick::*/movePointSoThisIsAxisAlignedAtOrigin(Point &p) const;
+	void /*Brick::*/moveBrickSoThisIsAxisAlignedAtOrigin(Brick &b) const;
+	void /*Brick::*/movePointSoThisIsAxisAlignedAtOrigin(geometry::Point &p) const;
 
-  template <int ADD_XY>
-  void /*Brick::*/getBoxPOIs(Point *pois) const {
-    double sina = sin(angle);
-    double cosa = cos(angle);
+	template <int ADD_XY>
+	void /*Brick::*/getBoxPOIs(geometry::Point *pois) const {
+		double sina = sin(angle);
+		double cosa = cos(angle);
 
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+		const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
-    // 4 corners:
-    pois[0] = Point(center.X+(-dx*cosa-dy*sina), center.Y+(-dx*sina+dy*cosa));
-    pois[1] = Point(center.X+( dx*cosa-dy*sina), center.Y+( dx*sina+dy*cosa));
-    pois[2] = Point(center.X+( dx*cosa+dy*sina), center.Y+( dx*sina-dy*cosa));
-    pois[3] = Point(center.X+(-dx*cosa+dy*sina), center.Y+(-dx*sina-dy*cosa));
-    // 2 inner:
-    pois[4] = Point(center.X+0.75*sina, center.Y-0.75*cosa);
-    pois[5] = Point(center.X-0.75*sina, center.Y+0.75*cosa);
-    // 4 sides:
-    pois[6] = Point(center.X+dx*cosa, center.Y+dx*sina);
-    pois[7] = Point(center.X-dx*cosa, center.Y-dx*sina);
-    pois[8] = Point(center.X+dy*sina, center.Y-dy*cosa);
-    pois[9] = Point(center.X-dy*sina, center.Y+dy*cosa);
-  }
+		// 4 corners:
+		pois[0] = geometry::Point(center.X + (-dx*cosa - dy*sina), center.Y + (-dx*sina + dy*cosa));
+		pois[1] = geometry::Point(center.X + (dx*cosa - dy*sina), center.Y + (dx*sina + dy*cosa));
+		pois[2] = geometry::Point(center.X + (dx*cosa + dy*sina), center.Y + (dx*sina - dy*cosa));
+		pois[3] = geometry::Point(center.X + (-dx*cosa + dy*sina), center.Y + (-dx*sina - dy*cosa));
+		// 2 inner:
+		pois[4] = geometry::Point(center.X + 0.75*sina, center.Y - 0.75*cosa);
+		pois[5] = geometry::Point(center.X - 0.75*sina, center.Y + 0.75*cosa);
+		// 4 sides:
+		pois[6] = geometry::Point(center.X + dx*cosa, center.Y + dx*sina);
+		pois[7] = geometry::Point(center.X - dx*cosa, center.Y - dx*sina);
+		pois[8] = geometry::Point(center.X + dy*sina, center.Y - dy*cosa);
+		pois[9] = geometry::Point(center.X - dy*sina, center.Y + dy*cosa);
+	}
 
-  template <int ADD_XY, int STUD_ADD>
-  void /*Brick::*/getBoxLineSegments(LineSegment *segments) const {
-    double sina = sin(angle);
-    double cosa = cos(angle);
-    // 4 corners:
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double DX = dx + STUD_ADD*STUD_RADIUS;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
-    const double DY = dy + STUD_ADD*STUD_RADIUS;
+	template <int ADD_XY, int STUD_ADD>
+	void /*Brick::*/getBoxLineSegments(geometry::LineSegment *segments) const {
+		double sina = sin(angle);
+		double cosa = cos(angle);
+		// 4 corners:
+		const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double DX = dx + STUD_ADD*STUD_RADIUS;
+		const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+		const double DY = dy + STUD_ADD*STUD_RADIUS;
 
-    segments[0].P1 = Point(center.X+(-DX*cosa-dy*sina), center.Y+(-DX*sina+dy*cosa));
-    segments[0].P2 = Point(center.X+( DX*cosa-dy*sina), center.Y+( DX*sina+dy*cosa));
+		segments[0].P1 = geometry::Point(center.X + (-DX*cosa - dy*sina), center.Y + (-DX*sina + dy*cosa));
+		segments[0].P2 = geometry::Point(center.X + (DX*cosa - dy*sina), center.Y + (DX*sina + dy*cosa));
 
-    segments[1].P1 = Point(center.X+( dx*cosa-DY*sina), center.Y+( dx*sina+DY*cosa));
-    segments[1].P2 = Point(center.X+( dx*cosa+DY*sina), center.Y+( dx*sina-DY*cosa));
+		segments[1].P1 = geometry::Point(center.X + (dx*cosa - DY*sina), center.Y + (dx*sina + DY*cosa));
+		segments[1].P2 = geometry::Point(center.X + (dx*cosa + DY*sina), center.Y + (dx*sina - DY*cosa));
 
-    segments[2].P1 = Point(center.X+( DX*cosa+dy*sina), center.Y+( DX*sina-dy*cosa));
-    segments[2].P2 = Point(center.X+(-DX*cosa+dy*sina), center.Y+(-DX*sina-dy*cosa));
+		segments[2].P1 = geometry::Point(center.X + (DX*cosa + dy*sina), center.Y + (DX*sina - dy*cosa));
+		segments[2].P2 = geometry::Point(center.X + (-DX*cosa + dy*sina), center.Y + (-DX*sina - dy*cosa));
 
-    segments[3].P1 = Point(center.X+(-dx*cosa+DY*sina), center.Y+(-dx*sina-DY*cosa));
-    segments[3].P2 = Point(center.X+(-dx*cosa-DY*sina), center.Y+(-dx*sina+DY*cosa));
-  }
+		segments[3].P1 = geometry::Point(center.X + (-dx*cosa + DY*sina), center.Y + (-dx*sina - DY*cosa));
+		segments[3].P2 = geometry::Point(center.X + (-dx*cosa - DY*sina), center.Y + (-dx*sina + DY*cosa));
+	}
 
-  bool /*Brick::*/outerStudIntersectsStudAtOrigin() const;
-  void /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<ClickInfo> &found) const;
+	bool /*Brick::*/outerStudIntersectsStudAtOrigin() const;
+	void /*Brick::*/getStudIntersectionWithMovingStud(double radius, double minAngle, double maxAngle, std::vector<ClickInfo> &found) const;
 
-  /*
-    Returns the intersection between a rectangle defined by four points and a circle cutout (between minAngle and maxAngle).
-   */
-  template <int ADD_XY>
-  IntervalList /*Brick::*/rectangleIntersectionWithCircle(Point const * const points, double radius, double minAngle, double maxAngle) const {
+	/*
+	  Returns the intersection between a rectangle defined by four points and a circle cutout (between minAngle and maxAngle).
+	 */
+	template <int ADD_XY>
+	geometry::IntervalList /*Brick::*/rectangleIntersectionWithCircle(geometry::Point const * const points, double radius, double minAngle, double maxAngle) const {
 #ifdef _TRACE
-    std::cout << "    RECT VS Circle INIT. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << ", radius=" << radius << std::endl;
+		std::cout << "    RECT VS Circle INIT. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << ", radius=" << radius << std::endl;
 #endif
-    IntervalList ret;
+		geometry::IntervalList ret;
 
-    bool retInitiated = false;
-    // Intersection with the circle must be on the right side of all four line segments:
-    for(int i = 0; i < 4; ++i) {
-      // Find intersections:
-      RadianInterval intersection;
-      const Point &p1 = points[i];
-      const Point &p2 = points[(i+1)%4];
-      LineSegment segment(p1, p2);
+		bool retInitiated = false;
+		// Intersection with the circle must be on the right side of all four line segments:
+		for (int i = 0; i < 4; ++i) {
+			// Find intersections:
+			geometry::RadianInterval intersection;
+			const geometry::Point &p1 = points[i];
+			const geometry::Point &p2 = points[(i + 1) % 4];
+			geometry::LineSegment segment(p1, p2);
 #ifdef _TRACE
-      std::cout << "     RECT VS Circle SEGMENT: " << segment << std::endl;
+			std::cout << "     RECT VS Circle SEGMENT: " << segment << std::endl;
 #endif
-      bool intersects = math::findCircleHalfPlaneIntersection(radius, segment, intersection);
-      if(!intersects) {
+			bool intersects = geometry::findCircleHalfPlaneIntersection(radius, segment, intersection);
+			if (!intersects) {
 #ifdef _TRACE
-        std::cout << "      RECT VS Circle BAIL." << std::endl;
+				std::cout << "      RECT VS Circle BAIL." << std::endl;
 #endif
-        IntervalList empty;
-        return empty;
-      }
-      if(!retInitiated) {
-        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection, ret);
+				geometry::IntervalList empty;
+				return empty;
+			}
+			if (!retInitiated) {
+				geometry::intervalAndRadians(geometry::RadianInterval(minAngle, maxAngle), intersection, ret);
 #ifdef _TRACE
-        const double &intersectionMin = intersection.P1;
-        const double &intersectionMax = intersection.P2;
-        std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << ret << std::endl;
+				const double &intersectionMin = intersection.P1;
+				const double &intersectionMax = intersection.P2;
+				std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << ret << std::endl;
 #endif
-        retInitiated = true;
-      }
-      else {
-        IntervalList toMerge;
-        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), intersection, toMerge);
+				retInitiated = true;
+			}
+			else {
+				geometry::IntervalList toMerge;
+				geometry::intervalAndRadians(geometry::RadianInterval(minAngle, maxAngle), intersection, toMerge);
 #ifdef _TRACE
-        const double &intersectionMin = intersection.P1;
-        const double &intersectionMax = intersection.P2;
-        std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << toMerge << " => " << math::intervalAnd(ret, toMerge) << std::endl;
+				const double &intersectionMin = intersection.P1;
+				const double &intersectionMax = intersection.P2;
+				std::cout << "      RECT VS Circle &&. " << intersectionMin << "," << intersectionMax << " & " << minAngle << "," << maxAngle << " = " << toMerge << " => " << geometry::intervalAnd(ret, toMerge) << std::endl;
 #endif
-        IntervalList copyRet(ret); ret.clear();
-        math::intervalAnd(copyRet, toMerge, ret);
-      }
-      if(ret.empty())
-        return ret;
-    }
+				geometry::IntervalList copyRet(ret); ret.clear();
+				geometry::intervalAnd(copyRet, toMerge, ret);
+			}
+			if (ret.empty())
+				return ret;
+		}
 #ifdef _TRACE
-    if(!ret.empty()) {
-      std::cout << "     RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
-      std::cout << "     RECT VS Circle => " << ret << std::endl;
-    }
+		if (!ret.empty()) {
+			std::cout << "     RECT VS Circle. Rect=" << points[0] << "; " << points[1] << "; " << points[2] << "; " << points[3] << std::endl;
+			std::cout << "     RECT VS Circle => " << ret << std::endl;
+		}
 #endif
-    return ret;
-  }
+		return ret;
+	}
 
-  template <int ADD_XY>
-  bool /*Brick::*/boxIntersectsInnerStud(Point &stud) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+	template <int ADD_XY>
+	bool /*Brick::*/boxIntersectsInnerStud(geometry::Point &stud) const {
+		const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
-    if(stud.X < 0) stud.X = -stud.X;
-    if(stud.Y < 0) stud.Y = -stud.Y;
+		if (stud.X < 0) stud.X = -stud.X;
+		if (stud.Y < 0) stud.Y = -stud.Y;
 
-    if(stud.X >= cornerX+STUD_RADIUS || stud.Y >= cornerY+STUD_RADIUS) {
-      return false;
-    }
+		if (stud.X >= cornerX + STUD_RADIUS || stud.Y >= cornerY + STUD_RADIUS) {
+			return false;
+		}
 
-    // Might intersect - check corner case:
-    if(stud.X < cornerX || stud.Y < cornerY) {
-      return true;
-    }
-    const double dx = (stud.X-cornerX);
-    const double dy = (stud.Y-cornerY);
-    if(STUD_RADIUS*STUD_RADIUS > dx*dx+dy*dy) {
-      return true;
-    }
-    return false;
-  }
+		// Might intersect - check corner case:
+		if (stud.X < cornerX || stud.Y < cornerY) {
+			return true;
+		}
+		const double dx = (stud.X - cornerX);
+		const double dy = (stud.Y - cornerY);
+		if (STUD_RADIUS*STUD_RADIUS > dx*dx + dy*dy) {
+			return true;
+		}
+		return false;
+	}
 
-  /*
-    Helper method for blockIntersectionWithMovingStud when radius is 0.
-    If stud doesn't intersect, then return empty interval.
-    Otherwise, return full interval.
-   */
-  template <int ADD_XY>
-  IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle, bool allowClick) const {
-    Point p(0,0);
-    movePointSoThisIsAxisAlignedAtOrigin(p);
-    IntervalList ret;
-    if(allowClick) {
-      bool fakeConnected = false;
-      ConnectionPoint fakeCP;
-      RectilinearBrick fakeRB;
-      if(boxIntersectsOuterStud<ADD_XY>(p, fakeConnected, fakeCP, fakeCP, fakeRB, fakeRB, 4)) {
-        math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
-      }
-    }
-    else {
-      if(boxIntersectsInnerStud<ADD_XY>(p)) {
-        math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
-      }
-    }
-    return ret;
-  }
+	/*
+	  Helper method for blockIntersectionWithMovingStud when radius is 0.
+	  If stud doesn't intersect, then return empty interval.
+	  Otherwise, return full interval.
+	 */
+	template <int ADD_XY>
+	geometry::IntervalList /*Brick::*/blockIntersectionWithRotatingStud(double minAngle, double maxAngle, bool allowClick) const {
+		geometry::Point p(0, 0);
+		movePointSoThisIsAxisAlignedAtOrigin(p);
+		geometry::IntervalList ret;
+		if (allowClick) {
+			bool fakeConnected = false;
+			ConnectionPoint fakeCP;
+			RectilinearBrick fakeRB;
+			if (boxIntersectsOuterStud<ADD_XY>(p, fakeConnected, fakeCP, fakeCP, fakeRB, fakeRB, 4)) {
+				geometry::toIntervalsRadians(geometry::RadianInterval(minAngle, maxAngle), ret);
+			}
+		}
+		else {
+			if (boxIntersectsInnerStud<ADD_XY>(p)) {
+				geometry::toIntervalsRadians(geometry::RadianInterval(minAngle, maxAngle), ret);
+			}
+		}
+		return ret;
+	}
 
-  /*
-    Helper method for blockIntersectionWithFan when radius is 0.
-    If point doesn't intersect, then return empty interval.
-    Otherwise, return full interval.
-   */
-  template <int ADD_XY>
-  IntervalList /*Brick::*/blockIntersectionWithRotatingPoint(double minAngle, double maxAngle) const {
-    Point p(0,0);
-    movePointSoThisIsAxisAlignedAtOrigin(p);
+	/*
+	  Helper method for blockIntersectionWithFan when radius is 0.
+	  If point doesn't intersect, then return empty interval.
+	  Otherwise, return full interval.
+	 */
+	template <int ADD_XY>
+	geometry::IntervalList /*Brick::*/blockIntersectionWithRotatingPoint(double minAngle, double maxAngle) const {
+		geometry::Point p(0, 0);
+		movePointSoThisIsAxisAlignedAtOrigin(p);
 
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+		const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
-    if(p.X < 0) p.X = -p.X;
-    if(p.Y < 0) p.Y = -p.Y;
+		if (p.X < 0) p.X = -p.X;
+		if (p.Y < 0) p.Y = -p.Y;
 
-    IntervalList ret;
-    if(p.X < cornerX && p.Y < cornerY)
-      math::toIntervalsRadians(RadianInterval(minAngle, maxAngle), ret);
-    return ret;
-  }
+		geometry::IntervalList ret;
+		if (p.X < cornerX && p.Y < cornerY)
+			geometry::toIntervalsRadians(geometry::RadianInterval(minAngle, maxAngle), ret);
+		return ret;
+	}
 
-  /*
-  Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
-  Intersects block on either a line segment or a quarter-circle at one of the corners. This problem can be split into two intersections against rectangles and four against circles.
-  Returns intervals of intersections between minAngle and maxAngle.
-  */
-  template <int ADD_XY>
-  IntervalList /*Brick::*/blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
+	/*
+	Investigates the equivalent problem where a circle (center p, radius) intersects the Minkowski sum of brick and a stud.
+	Intersects block on either a line segment or a quarter-circle at one of the corners. This problem can be split into two intersections against rectangles and four against circles.
+	Returns intervals of intersections between minAngle and maxAngle.
+	*/
+	template <int ADD_XY>
+	geometry::IntervalList /*Brick::*/blockIntersectionWithMovingStud(double radius, double minAngle, double maxAngle) const {
 #ifdef _TRACE
-    bool spilled = false;
+		bool spilled = false;
 #endif
-    // First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
-    LineSegment segments[4];
-    getBoxLineSegments<ADD_XY,1>(segments); // ",1" ensures line segments are moved one stud radius out.    
-    Point p1[4] = {segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2};
-    IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
+		// First check line segments: The intersection with the moving stud must be on the right side of ALL four segments:
+		geometry::LineSegment segments[4];
+		getBoxLineSegments<ADD_XY, 1>(segments); // ",1" ensures line segments are moved one stud radius out.    
+		geometry::Point p1[4] = { segments[0].P1, segments[0].P2, segments[2].P1, segments[2].P2 };
+		geometry::IntervalList ret = rectangleIntersectionWithCircle<ADD_XY>(p1, radius, minAngle, maxAngle);
 #ifdef _TRACE
-    if(!ret.empty()) {
-      std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
-      LineSegment sx[4];
-      getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
-      std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
-      std::cout << "   WIDE Box intersect: " << ret << std::endl;
-      spilled = true;
-    }
-#endif
-
-    Point p2[4] = {segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2};
-    IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
-    IntervalList copyRet(ret); ret.clear();
-    math::intervalOr(copyRet, intersectionsWithRect2, ret);
-#ifdef _TRACE
-    if(!ret.empty()) {
-      if(!spilled) {
-        std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
-        LineSegment sx[4];
-        getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
-        std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
-        spilled = true;
-      }
-      std::cout << "   TALL Box intersect: " << intersectionsWithRect2 << " => " << ret << std::endl;
-    }
+		if (!ret.empty()) {
+			std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+			geometry::LineSegment sx[4];
+			getBoxLineSegments<ADD_XY, 0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+			std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+			std::cout << "   WIDE Box intersect: " << ret << std::endl;
+			spilled = true;
+		}
 #endif
 
-    // Now check quarter circles: 
-    //  Subtract the intersection intervals that intersect the corner circles on the left of the corner dividers:
-    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
-    getBoxPOIs<ADD_XY>(pois);
-    for(int i = 0; i < 4; ++i) {
-      // Find intersections:
-      IntervalList intervalFromCircle;
-      math::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS, intervalFromCircle);
-      for(const Interval* it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
-        IntervalList intervalFromCircleInCorrectInterval; 
-        math::intervalAndRadians(RadianInterval(minAngle, maxAngle), RadianInterval(it->first, it->second), intervalFromCircleInCorrectInterval);
-        IntervalList copyRet(ret); ret.clear();
-        math::intervalOr(copyRet, intervalFromCircleInCorrectInterval, ret);
+		geometry::Point p2[4] = { segments[1].P1, segments[1].P2, segments[3].P1, segments[3].P2 };
+		geometry::IntervalList intersectionsWithRect2 = rectangleIntersectionWithCircle<ADD_XY>(p2, radius, minAngle, maxAngle);
+		geometry::IntervalList copyRet(ret); ret.clear();
+		geometry::intervalOr(copyRet, intersectionsWithRect2, ret);
 #ifdef _TRACE
-        if(!ret.empty()) {
-          if(!spilled) {
-            std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
-            LineSegment sx[4];
-            getBoxLineSegments<ADD_XY,0>(sx); // ",1" ensures line segments are moved one stud radius out.    
-            std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
-            spilled = true;
-          }
-          std::cout << "   CORNER<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
-        }
+		if (!ret.empty()) {
+			if (!spilled) {
+				std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+				geometry::LineSegment sx[4];
+				getBoxLineSegments<ADD_XY, 0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+				std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+				spilled = true;
+			}
+			std::cout << "   TALL Box intersect: " << intersectionsWithRect2 << " => " << ret << std::endl;
+		}
 #endif
-      }
-    }
 
-    return ret;
-  }
+		// Now check quarter circles: 
+		//  Subtract the intersection intervals that intersect the corner circles on the left of the corner dividers:
+		geometry::Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+		getBoxPOIs<ADD_XY>(pois);
+		for (int i = 0; i < 4; ++i) {
+			// Find intersections:
+			geometry::IntervalList intervalFromCircle;
+			geometry::findCircleCircleIntersection(radius, pois[i], STUD_RADIUS, intervalFromCircle);
+			for (const geometry::Interval* it = intervalFromCircle.begin(); it != intervalFromCircle.end(); ++it) {
+				geometry::IntervalList intervalFromCircleInCorrectInterval;
+				geometry::intervalAndRadians(geometry::RadianInterval(minAngle, maxAngle), geometry::RadianInterval(it->first, it->second), intervalFromCircleInCorrectInterval);
+				geometry::IntervalList copyRet2(ret); ret.clear();
+				geometry::intervalOr(copyRet2, intervalFromCircleInCorrectInterval, ret);
+#ifdef _TRACE
+				if (!ret.empty()) {
+					if (!spilled) {
+						std::cout << "  BLOCK vs MS " << *this << ", r=" << radius << ", [" << minAngle << ";" << maxAngle << "]" << std::endl;
+						geometry::LineSegment sx[4];
+						getBoxLineSegments<ADD_XY, 0>(sx); // ",1" ensures line segments are moved one stud radius out.    
+						std::cout << "  BLOCK vs MS BASE BLOCK: " << sx[0] << ", " << sx[2] << std::endl;
+						spilled = true;
+					}
+					std::cout << "   CORNER<" << ADD_XY << "> " << i << " (" << pois[i] << ") intersect: " << *it << "=>" << intervalFromCircleInCorrectInterval << " => " << ret << std::endl;
+				}
+#endif
+			}
+		}
 
-  /*
-  Investigates the equivalent problem where a circle (center p, radius) intersects the brick.
-  Returns intervals of intersections between minAngle and maxAngle.
-  */
-  template <int ADD_XY>
-  IntervalList /*Brick::*/blockIntersectionWithMovingPoint(double radius, double minAngle, double maxAngle) const {
-    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
-    getBoxPOIs<ADD_XY>(pois);
-    return rectangleIntersectionWithCircle<ADD_XY>(pois, radius, minAngle, maxAngle);
-  }
+		return ret;
+	}
 
-  Point /*Brick::*/getStudPosition(ConnectionPointType type) const;
-  void /*Brick::*/getStudPositions(Point *positions) const;
+	/*
+	Investigates the equivalent problem where a circle (center p, radius) intersects the brick.
+	Returns intervals of intersections between minAngle and maxAngle.
+	*/
+	template <int ADD_XY>
+	geometry::IntervalList /*Brick::*/blockIntersectionWithMovingPoint(double radius, double minAngle, double maxAngle) const {
+		geometry::Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+		getBoxPOIs<ADD_XY>(pois);
+		return rectangleIntersectionWithCircle<ADD_XY>(pois, radius, minAngle, maxAngle);
+	}
 
-  template <int ADD_XY>
-  bool /*Brick::*/boxIntersectsPOIsFrom(Brick &b) const {
-    const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
-    moveBrickSoThisIsAxisAlignedAtOrigin(b);
-    // Get POIs:
-    Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
-    b.getBoxPOIs<ADD_XY>(pois);
-    // Check each POI:
-    for(int i = 0; i < NUMBER_OF_POIS_FOR_BOX_INTERSECTION; ++i) {
-      Point &poi = pois[i];
-      if(poi.X < 0)
-        poi.X = -poi.X;
-      if(poi.Y < 0)
-        poi.Y = -poi.Y;
-      if(poi.X + EPSILON < dx && poi.Y + EPSILON < dy) {
-        return true;
-      }
-    }
-    return false;
-  }
+	geometry::Point /*Brick::*/getStudPosition(ConnectionPointType type) const;
+	void /*Brick::*/getStudPositions(geometry::Point *positions) const;
 
-  /*
-  Assumes b is on same level.
-  */
-  template <int ADD_XY>
-  bool /*Brick::*/boxesIntersect(const Brick &b) const {
-    Brick tmpB(b);
-    Brick tmpThis(*this);
-    return boxIntersectsPOIsFrom<ADD_XY>(tmpB) || b.boxIntersectsPOIsFrom<ADD_XY>(tmpThis);
-  }
+	template <int ADD_XY>
+	bool /*Brick::*/boxIntersectsPOIsFrom(Brick &b) const {
+		const double dx = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double dy = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+		moveBrickSoThisIsAxisAlignedAtOrigin(b);
+		// Get POIs:
+		geometry::Point pois[NUMBER_OF_POIS_FOR_BOX_INTERSECTION];
+		b.getBoxPOIs<ADD_XY>(pois);
+		// Check each POI:
+		for (int i = 0; i < NUMBER_OF_POIS_FOR_BOX_INTERSECTION; ++i) {
+			geometry::Point &poi = pois[i];
+			if (poi.X < 0)
+				poi.X = -poi.X;
+			if (poi.Y < 0)
+				poi.Y = -poi.Y;
+			if (poi.X + EPSILON < dx && poi.Y + EPSILON < dy) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-  template <int ADD_XY>
-  bool /*Brick::*/boxIntersectsOuterStud(const Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
-    const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
-    const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
+	/*
+	Assumes b is on same level.
+	*/
+	template <int ADD_XY>
+	bool /*Brick::*/boxesIntersect(const Brick &b) const {
+		Brick tmpB(b);
+		Brick tmpThis(*this);
+		return boxIntersectsPOIsFrom<ADD_XY>(tmpB) || b.boxIntersectsPOIsFrom<ADD_XY>(tmpThis);
+	}
 
-    Point stud(studOfB);
-    if(stud.X < 0) stud.X = -stud.X;
-    if(stud.Y < 0) stud.Y = -stud.Y;
+	template <int ADD_XY>
+	bool /*Brick::*/boxIntersectsOuterStud(const geometry::Point &studOfB, bool &connected, ConnectionPoint &foundConnectionThis, ConnectionPoint &foundConnectionB, const RectilinearBrick &source, const RectilinearBrick &bSource, int i) const {
+		const double cornerX = VERTICAL_BRICK_CENTER_TO_SIDE + ADD_XY * BRICK_UNIT_GAP;
+		const double cornerY = VERTICAL_BRICK_CENTER_TO_TOP + ADD_XY * BRICK_UNIT_GAP;
 
-    if(stud.X >= cornerX+STUD_RADIUS || stud.Y >= cornerY+STUD_RADIUS) 
-      return false;
+		geometry::Point stud(studOfB);
+		if (stud.X < 0) stud.X = -stud.X;
+		if (stud.Y < 0) stud.Y = -stud.Y;
 
-    // X check if it hits stud:
-    const double studX = HALF_STUD_DISTANCE;
-    const double studY = STUD_AND_A_HALF_DISTANCE;   
-    if(SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X-studX)*(stud.X-studX)+(stud.Y-studY)*(stud.Y-studY)) {
-      // We are already connected:
-      if(connected) {
-        connected = false;
-        return true;
-      }
-      // Compute corner:
-      connected = true;
-      if(studOfB.X < 0 && studOfB.Y < 0)
-        foundConnectionThis = ConnectionPoint(SW, source, false, -1);
-      else if(studOfB.X < 0 && studOfB.Y > 0)
-        foundConnectionThis = ConnectionPoint(NW, source, false, -1);
-      else if(studOfB.X > 0 && studOfB.Y < 0)
-        foundConnectionThis = ConnectionPoint(SE, source, false, -1);
-      else // if(stud.X > 0 && stud.Y > 0)
-        foundConnectionThis = ConnectionPoint(NE, source, false, -1);
-      foundConnectionB = ConnectionPoint((ConnectionPointType)(i-4), bSource, true, -1);
-      return false;
-    }
+		if (stud.X >= cornerX + STUD_RADIUS || stud.Y >= cornerY + STUD_RADIUS)
+			return false;
 
-    // Might intersect - check corner case:
-    if(stud.X < cornerX || stud.Y < cornerY || STUD_RADIUS*STUD_RADIUS > (stud.X-cornerX)*(stud.X-cornerX)+(stud.Y-cornerY)*(stud.Y-cornerY)) {
-      connected = false;
-      return true;
-    }
-    return false;
-  }
+		// X check if it hits stud:
+		const double studX = HALF_STUD_DISTANCE;
+		const double studY = STUD_AND_A_HALF_DISTANCE;
+		if (SNAP_DISTANCE*SNAP_DISTANCE >= (stud.X - studX)*(stud.X - studX) + (stud.Y - studY)*(stud.Y - studY)) {
+			// We are already connected:
+			if (connected) {
+				connected = false;
+				return true;
+			}
+			// Compute corner:
+			connected = true;
+			if (studOfB.X < 0 && studOfB.Y < 0)
+				foundConnectionThis = ConnectionPoint(SW, source, false, -1);
+			else if (studOfB.X < 0 && studOfB.Y > 0)
+				foundConnectionThis = ConnectionPoint(NW, source, false, -1);
+			else if (studOfB.X > 0 && studOfB.Y < 0)
+				foundConnectionThis = ConnectionPoint(SE, source, false, -1);
+			else // if(stud.X > 0 && stud.Y > 0)
+				foundConnectionThis = ConnectionPoint(NE, source, false, -1);
+			foundConnectionB = ConnectionPoint((ConnectionPointType)(i - 4), bSource, true, -1);
+			return false;
+		}
 
-  template <int ADD_XY>
-  bool /*Brick::*/boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-    moveBrickSoThisIsAxisAlignedAtOrigin(b);
-    Point studsOfB[NUMBER_OF_STUDS];
-    b.getStudPositions(studsOfB);
+		// Might intersect - check corner case:
+		if (stud.X < cornerX || stud.Y < cornerY || STUD_RADIUS*STUD_RADIUS >(stud.X - cornerX)*(stud.X - cornerX) + (stud.Y - cornerY)*(stud.Y - cornerY)) {
+			connected = false;
+			return true;
+		}
+		return false;
+	}
 
-    // X handle four inner:
-    for(int i = 0; i < 4; ++i) {
-      Point &stud = studsOfB[i];
-      if(boxIntersectsInnerStud<ADD_XY>(stud)) {
-        connected = false;
-        return true;
-      }
-    }
-    // Handle four outer specially as they might cause connection:
-    for(int i = 4; i < NUMBER_OF_STUDS; ++i) {
-      Point stud = studsOfB[i];
-      if(boxIntersectsOuterStud<ADD_XY>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
-        return true;
-    }
-    return connected;
-  }
+	template <int ADD_XY>
+	bool /*Brick::*/boxIntersectsStudsFrom(Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+		moveBrickSoThisIsAxisAlignedAtOrigin(b);
+		geometry::Point studsOfB[NUMBER_OF_STUDS];
+		b.getStudPositions(studsOfB);
 
-  /*
-  Return true if this brick intersects the other. 
-  If the two bricks are corner connected, then connected is set to true and the found connection is set.
-  1: If not even close level-wise: return false.
-  2: If on same level: Check that boxes do not collide.
-  - If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22
-  3: If on adjacent levels:
-  - If any of the 8 studs of lower brick inside box of upper: intersect.
-  - If intersect: Check if only intersecting one corner stud.
-  - If only one corner stud, check if corner connected.
-  */
-  template <int ADD_XY>
-  bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
-    connected = false;
-    if(level > b.level+1 || b.level > level+1)
-      return false;
-    if(level == b.level) {
-      bool ret = boxesIntersect<ADD_XY>(b);
-      return ret;
-    }
-    Brick tmpB(b);
-    Brick tmpThis(*this);
-    if(level < b.level)
-      return b.boxIntersectsStudsFrom<ADD_XY>(tmpThis, source, connected, foundConnectionThis, foundConnectionB, bSource);
-    return boxIntersectsStudsFrom<ADD_XY>(tmpB, bSource, connected, foundConnectionB, foundConnectionThis, source);
-  }
+		// X handle four inner:
+		for (int i = 0; i < 4; ++i) {
+			geometry::Point &stud = studsOfB[i];
+			if (boxIntersectsInnerStud<ADD_XY>(stud)) {
+				connected = false;
+				return true;
+			}
+		}
+		// Handle four outer specially as they might cause connection:
+		for (int i = 4; i < NUMBER_OF_STUDS; ++i) {
+			geometry::Point stud = studsOfB[i];
+			if (boxIntersectsOuterStud<ADD_XY>(stud, connected, foundConnectionThis, foundConnectionB, source, bSource, i))
+				return true;
+		}
+		return connected;
+	}
 
-  bool operator < (const Brick &b) const;
+	/*
+	Return true if this brick intersects the other.
+	If the two bricks are corner connected, then connected is set to true and the found connection is set.
+	1: If not even close level-wise: return false.
+	2: If on same level: Check that boxes do not collide.
+	- If current implementation doesn't work, use algorithm from http://www.ragestorm.net/tutorial?id=22
+	3: If on adjacent levels:
+	- If any of the 8 studs of lower brick inside box of upper: intersect.
+	- If intersect: Check if only intersecting one corner stud.
+	- If only one corner stud, check if corner connected.
+	*/
+	template <int ADD_XY>
+	bool intersects(const Brick &b, const RectilinearBrick &bSource, bool &connected, ConnectionPoint &foundConnectionB, ConnectionPoint &foundConnectionThis, const RectilinearBrick &source) const {
+		connected = false;
+		if (level > b.level + 1 || b.level > level + 1)
+			return false;
+		if (level == b.level) {
+			bool ret = boxesIntersect<ADD_XY>(b);
+			return ret;
+		}
+		Brick tmpB(b);
+		Brick tmpThis(*this);
+		if (level < b.level)
+			return b.boxIntersectsStudsFrom<ADD_XY>(tmpThis, source, connected, foundConnectionThis, foundConnectionB, bSource);
+		return boxIntersectsStudsFrom<ADD_XY>(tmpB, bSource, connected, foundConnectionB, foundConnectionThis, source);
+	}
+
+	bool operator < (const Brick &b) const;
 };
 
 #endif // BRICK_H
