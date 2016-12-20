@@ -1,5 +1,5 @@
 #include "ConfigurationManager.h"
-#include "StronglyConnectedConfigurationManager.h"
+#include "BlockManager.h"
 #include "SingleConfigurationManager.h"
 
 #include <iostream>

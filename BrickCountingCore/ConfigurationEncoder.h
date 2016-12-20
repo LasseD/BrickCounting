@@ -3,7 +3,7 @@
 
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
-#include "StronglyConnectedConfiguration.hpp"
+#include "Block.hpp"
 #include "Configuration.hpp"
 #include "util/TinyVector.hpp"
 

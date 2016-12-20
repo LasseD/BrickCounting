@@ -3,7 +3,7 @@
 
 #include "Configuration.hpp"
 #include "ConnectionPoint.h"
-#include "StronglyConnectedConfiguration.hpp"
+#include "Block.hpp"
 #include "AngleMapping.h"
 #include "ConfigurationEncoder.h"
 #include "util/ProgressWriter.hpp"

@@ -1,8 +1,8 @@
 #include "stdafx.h" // Windows only requirement.
 
 #include "../BrickCountingCore/RectilinearBrick.h"
-#include "../BrickCountingCore/StronglyConnectedConfiguration.hpp"
-#include "../BrickCountingCore/StronglyConnectedConfigurationManager.h"
+#include "../BrickCountingCore/Block.hpp"
+#include "../BrickCountingCore/BlockManager.h"
 #include "../BrickCountingCore/ConfigurationManager.h"
 #include <iostream>
 #include <fstream>

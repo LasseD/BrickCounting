@@ -60,13 +60,13 @@
     <ClInclude Include="util\TinyVector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnionFind.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="geometry\BasicGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\UnionFind.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -110,10 +110,10 @@
     <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UnionFind.cpp">
+    <ClCompile Include="geometry\BasicGeometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="geometry\BasicGeometry.cpp">
+    <ClCompile Include="util\UnionFind.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

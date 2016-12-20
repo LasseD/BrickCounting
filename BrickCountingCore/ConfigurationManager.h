@@ -1,7 +1,7 @@
 #ifndef CONFIGURATION_MANAGER_H
 #define CONFIGURATION_MANAGER_H
 
-#include "StronglyConnectedConfiguration.hpp"
+#include "Block.hpp"
 #include "SingleConfigurationManager.h"
 
 class ConfigurationManager {

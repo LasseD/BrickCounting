@@ -4,8 +4,8 @@
 #include <set>
 #include <iostream>
 #include <fstream>
-#include "StronglyConnectedConfiguration.hpp"
-#include "StronglyConnectedConfigurationList.hpp"
+#include "Block.hpp"
+#include "BlockList.hpp"
 
 class RectilinearConfigurationManager {
 public:

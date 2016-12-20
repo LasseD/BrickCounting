@@ -5,7 +5,7 @@
 #include "Brick.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
-#include "StronglyConnectedConfiguration.hpp"
+#include "Block.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
