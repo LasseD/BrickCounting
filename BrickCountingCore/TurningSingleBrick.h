@@ -422,8 +422,8 @@ struct TurningSCCInvestigator {
             std::cout << " AAFB RET " << ret << " | " << studInterval << " = " << math::intervalOr(ret, studInterval) << std::endl;
 #endif
 
-            IntervalList copyRet(ret); ret.clear();
-            math::intervalOr(copyRet, studInterval, ret);
+            IntervalList copyRet2(ret); ret.clear();
+            math::intervalOr(copyRet2, studInterval, ret);
           }
 #ifdef _TRACE
           else {
@@ -458,11 +458,11 @@ struct TurningSCCInvestigator {
 
       // Check all possible collision bricks:
       for(const int* it = possibleCollisions.begin(); it != possibleCollisions.end(); ++it) {
-        Brick b = baseConfiguration.bricks[*it].b;
-        b.center.X -= tsb.studTranslation.X;
-        b.center.Y -= tsb.studTranslation.Y;
+        Brick brick = baseConfiguration.bricks[*it].b;
+        brick.center.X -= tsb.studTranslation.X;
+        brick.center.Y -= tsb.studTranslation.Y;
 
-        if(tsb.intersectsBrick<ADD_XY>(b)) {
+        if(tsb.intersectsBrick<ADD_XY>(brick)) {
           return false;
         }
       }

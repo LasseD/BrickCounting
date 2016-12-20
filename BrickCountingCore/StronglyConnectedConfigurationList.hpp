@@ -3,7 +3,7 @@
 
 #include "LDRPrinter.h"
 #include "StronglyConnectedConfiguration.hpp"
-#include "Util.hpp"
+#include "util/TinyVector.hpp"
 
 #include <set>
 #include <map>

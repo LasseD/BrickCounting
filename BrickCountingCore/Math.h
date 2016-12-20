@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "Util.hpp"
+#include "util/TinyVector.hpp"
 
 //#define _TRACE 1
 //#define _COMPARE_ALGORITHMS 1

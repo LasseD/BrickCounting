@@ -794,7 +794,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       if(mIsland.isCyclic && cyclic.find(encoding) != cyclic.end())
         continue; // Already found. This can happen when there are cycles.
 
-      Configuration c = getConfiguration(mIsland.representative);
+      Configuration configuration = getConfiguration(mIsland.representative);
       if(mIsland.isRectilinear) {
         newRectilinear.push_back(std::make_pair(getConfiguration(rectilinearPosition), mIsland));
       }
@@ -807,7 +807,7 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
       }
       else if(!mIsland.isRectilinear) {
 #ifdef _DEBUG
-        modelsToPrint.push_back(c);
+        modelsToPrint.push_back(configuration);
 #endif
         ++models;
       }

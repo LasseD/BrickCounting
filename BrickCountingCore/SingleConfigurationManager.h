@@ -6,6 +6,7 @@
 #include "StronglyConnectedConfiguration.hpp"
 #include "AngleMapping.h"
 #include "ConfigurationEncoder.h"
+#include "util/ProgressWriter.hpp"
 
 #include <vector>
 #include <set>

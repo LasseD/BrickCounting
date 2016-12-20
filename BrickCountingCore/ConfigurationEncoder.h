@@ -5,7 +5,7 @@
 #include "ConnectionPoint.h"
 #include "StronglyConnectedConfiguration.hpp"
 #include "Configuration.hpp"
-#include "Util.hpp"
+#include "util/TinyVector.hpp"
 
 typedef std::pair<uint64_t,uint64_t> Encoding;
 

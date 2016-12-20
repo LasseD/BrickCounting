@@ -6,7 +6,7 @@
 #include "Configuration.hpp"
 #include "ConfigurationEncoder.h"
 #include "UnionFind.h"
-#include "Util.hpp"
+#include "util/TinyVector.hpp"
 
 #define STEPS_0 0
 #define STEPS_1 203

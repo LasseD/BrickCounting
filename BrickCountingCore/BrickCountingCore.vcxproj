@@ -25,6 +25,7 @@
     <ClInclude Include="ConfigurationEncoder.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="ConnectionPoint.h" />
+    <ClInclude Include="geometry\RobotArmMotionPrimitives.h" />
     <ClInclude Include="LDRPrinter.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="RectilinearBrick.h" />
@@ -36,7 +37,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TurningSingleBrick.h" />
     <ClInclude Include="UnionFind.h" />
-    <ClInclude Include="Util.hpp" />
+    <ClInclude Include="util\TinyVector.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AngleMapping.cpp" />
@@ -45,6 +46,7 @@
     <ClCompile Include="ConfigurationEncoder.cpp" />
     <ClCompile Include="ConfigurationManager.cpp" />
     <ClCompile Include="ConnectionPoint.cpp" />
+    <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp" />
     <ClCompile Include="LDRPrinter.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="RectilinearBrick.cpp" />
