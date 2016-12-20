@@ -482,7 +482,7 @@ void AngleMapping::evalSML(unsigned int angleI, uint32_t smlI, const Configurati
 	++boosts[3];
 }
 
-void AngleMapping::findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) {
+void AngleMapping::findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const util::IntervalUnionFind &ufS, const util::IntervalUnionFind &ufM, const util::IntervalUnionFind &ufL) {
 	// Add all S-islands:
 	for (std::vector<uint32_t>::const_iterator it = ufS.rootsBegin(); it != ufS.rootsEnd(); ++it) {
 		const uint32_t unionI = *it;
@@ -755,9 +755,9 @@ void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set
 	for (unsigned int i = 0; i < numAngles - 1; ++i) {
 		sizes[i] = 2 * angleSteps[i] + 1;
 	}
-	UnionFind::IntervalUnionFind ufS(numAngles, sizes, *SS);
-	UnionFind::IntervalUnionFind ufM(numAngles, sizes, *MM);
-	UnionFind::IntervalUnionFind ufL(numAngles, sizes, *LL);
+	util::IntervalUnionFind ufS(numAngles, sizes, *SS);
+	util::IntervalUnionFind ufM(numAngles, sizes, *MM);
+	util::IntervalUnionFind ufL(numAngles, sizes, *LL);
 
 	// Find islands:
 	std::vector<SIsland> sIslands;

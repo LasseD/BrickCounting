@@ -41,6 +41,6 @@ Components in the geometry directory/namespace
 
 
 - Util: Split to "TinyVector.hpp" and "ProgressWriter.hpp". Move to util directory (new), use namespace "util".
-* Math: Rename to geometry/BasicGeometry and use geometry namespace.
-* UnionFind: Move to util.
+- Math: Rename to geometry/BasicGeometry and use geometry namespace.
+- UnionFind: Move to util.
 * TurningSingleBrick: TODO: Structure for "counters" - also include managers here?

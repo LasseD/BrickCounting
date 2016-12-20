@@ -37,8 +37,8 @@
     <ClInclude Include="StronglyConnectedConfigurationManager.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TurningSingleBrick.h" />
-    <ClInclude Include="UnionFind.h" />
     <ClInclude Include="util\TinyVector.hpp" />
+    <ClInclude Include="util\UnionFind.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AngleMapping.cpp" />
@@ -55,7 +55,7 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="StronglyConnectedConfigurationManager.cpp" />
     <ClCompile Include="TurningSingleBrick.cpp" />
-    <ClCompile Include="UnionFind.cpp" />
+    <ClCompile Include="util\UnionFind.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DF1DC769-AD70-45ED-99EE-3F5216446E2E}</ProjectGuid>

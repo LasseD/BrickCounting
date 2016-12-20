@@ -4,7 +4,7 @@
 #include "ConnectionPoint.h"
 #include "Configuration.hpp"
 #include "ConfigurationEncoder.h"
-#include "UnionFind.h"
+#include "util/UnionFind.h"
 #include "util/TinyVector.hpp"
 
 #include <stdint.h>
@@ -24,7 +24,7 @@ typedef unsigned long long counter;
 struct SIsland; // forward declaration.
 struct MIsland; // forward declaration.
 
-namespace math {
+namespace geometry {
 	void intervalToArray(const geometry::IntervalList &l, bool *array, unsigned int sizeArray);
 }
 
@@ -78,7 +78,7 @@ private:
 	void addFoundConfiguration(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration, Encoding> > &newRectilinear);
 	void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration, Encoding> > &newRectilinear);
 	void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
-	void findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL);
+	void findIslands(std::vector<SIsland> &sIslands, bool &anyProblematic, const util::IntervalUnionFind &ufS, const util::IntervalUnionFind &ufM, const util::IntervalUnionFind &ufL);
 	void setupAngleTypes();
 	Configuration getConfiguration(const Configuration &baseConfiguration, double lastAngle) const;
 	Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
@@ -93,7 +93,7 @@ struct MIsland {
 	MixedPosition representative;
 	Encoding encoding;
 
-	MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
+	MIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, Encoding encoding, bool isCyclic, const util::IntervalUnionFind &ufM, const util::IntervalUnionFind &ufL) : lIslands(0), isRectilinear(false), isCyclic(isCyclic), sizeRep(a->numAngles), representative(p), encoding(encoding) {
 		assert(unionFindIndex == ufM.getRootForPosition(p));
 		bool encodingUpdated = false;
 		geometry::IntervalList rectilinearList;
@@ -166,7 +166,7 @@ struct SIsland {
 		return false;
 	}
 
-	SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, const UnionFind::IntervalUnionFind &ufS, const UnionFind::IntervalUnionFind &ufM, const UnionFind::IntervalUnionFind &ufL) : sizeRep(a->numAngles), representative(p) {
+	SIsland(AngleMapping *a, uint32_t unionFindIndex, const MixedPosition &p, const util::IntervalUnionFind &ufS, const util::IntervalUnionFind &ufM, const util::IntervalUnionFind &ufL) : sizeRep(a->numAngles), representative(p) {
 		assert(unionFindIndex == ufS.getRootForPosition(p));
 		// Add all M-islands:
 		for (std::vector<uint32_t>::const_iterator it = ufM.rootsBegin(); it != ufM.rootsEnd(); ++it) {
