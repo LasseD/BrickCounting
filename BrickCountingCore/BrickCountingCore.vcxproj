@@ -32,9 +32,9 @@
     <ClInclude Include="RectilinearBrick.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="StronglyConnectedConfiguration.hpp" />
-    <ClInclude Include="StronglyConnectedConfigurationList.hpp" />
-    <ClInclude Include="StronglyConnectedConfigurationManager.h" />
+    <ClInclude Include="Block.hpp" />
+    <ClInclude Include="BlockList.hpp" />
+    <ClInclude Include="BlockManager.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TurningSingleBrick.h" />
     <ClInclude Include="util\TinyVector.hpp" />
@@ -53,7 +53,7 @@
     <ClCompile Include="RectilinearBrick.cpp" />
     <ClCompile Include="SingleConfigurationManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="StronglyConnectedConfigurationManager.cpp" />
+    <ClCompile Include="BlockManager.cpp" />
     <ClCompile Include="TurningSingleBrick.cpp" />
     <ClCompile Include="util\UnionFind.cpp" />
   </ItemGroup>
@@ -85,11 +85,11 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -124,6 +124,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)\$(Configuration)\</OutDir>
+    <TargetExt>.lib</TargetExt>
+    <IntDir>.\tmp\core\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -185,13 +189,20 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <CompileAsManaged>true</CompileAsManaged>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <DisableSpecificWarnings>4127</DisableSpecificWarnings>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -202,6 +213,9 @@
       </EntryPointSymbol>
       <OutputFile>$(SolutionDir)$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
+    <Lib>
+      <LinkTimeCodeGeneration />
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

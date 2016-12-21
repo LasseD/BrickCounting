@@ -37,12 +37,26 @@ ProgressWriter offers simple pretty printing progress for a task with a given nu
 
 ### Geometry
 
+
+
 Components in the geometry directory/namespace 
 
 
-* Rename "StronglyConnectedConfiguration" to "Block".
+- Rename "StronglyConnectedConfiguration" to "Block".
 * TurningSingleBrick: TODO: Structure for "counters" - also include managers here?
 
 
 TODO:
-- Rewrite UnionFind to actually use union find!
+- Rewrite UnionFind to actually use union find! https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+
+
+Definitions:
+
+Brick: 2x4
+Block: Start with a brick. Add more bricks by sharing at least 2 studs with a brick already in the block.
+Turn point
+Model: blocks put together at turn points
+ Non-rectilinear model 
+ Rectilinear model
+Model size: Number of bricks.
+Model type: 4/2/1 

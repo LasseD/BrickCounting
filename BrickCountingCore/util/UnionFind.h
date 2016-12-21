@@ -20,20 +20,22 @@ struct MixedPosition {
 };
 
 namespace util {
+	/*
+	Basic UF structure with path compression: https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+	*/
 	struct UnionFindStructure {
-		uint32_t numUnions;
-		bool flattened;
-		std::vector<uint32_t> *joins; // When join(a,b), b is inserted into joins[a] and a into joins[b].
-		uint32_t *minInUnions; // After flattening: Each index references min element in union.
-		std::vector<uint32_t> roots; // all distinct minInUnions-indices.
+		uint32_t size;
+		uint32_t *parents, *ranks; // parents, and sizes (ranks) of trees.
+		bool rootsComputed;
+		std::vector<uint32_t> roots;
 
-		UnionFindStructure(uint32_t numUnions);
+		UnionFindStructure(uint32_t size);
 		~UnionFindStructure();
 
-		void join(uint32_t a, uint32_t b);
-		void join(const geometry::IntervalList &l1, const geometry::IntervalList &l2, uint32_t unionStart1, uint32_t unionStart2);
-		uint32_t getMinInUnion(uint32_t a) const;
-		void flatten(); // Removes joins-structures. Creates minInUnions-list.
+		void performUnion(uint32_t a, uint32_t b);
+		void performUnion(const geometry::IntervalList &l1, const geometry::IntervalList &l2, uint32_t unionStart1, uint32_t unionStart2);
+		uint32_t find(uint32_t a) const;
+		void computeRoots();
 	};
 
 	class IntervalUnionFind {
@@ -49,8 +51,9 @@ namespace util {
 		void buildIntervalIndicatorToUnion();
 		void buildUnions(unsigned int positionI, MixedPosition &position);
 		uint32_t indicatorIndexOf(const MixedPosition &position) const;
-		IntervalUnionFind(); // Unused
-		IntervalUnionFind& operator=(const IntervalUnionFind &); // Unused
+
+		IntervalUnionFind(); // Undefined
+		IntervalUnionFind& operator=(const IntervalUnionFind &); // Undefined
 	public:
 		IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const geometry::IntervalListVector &M);
 		~IntervalUnionFind();

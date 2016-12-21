@@ -6,21 +6,39 @@
 #include <stack>
 
 namespace util {
-	UnionFindStructure::UnionFindStructure(uint32_t numUnions) : numUnions(numUnions), flattened(false) {
-		joins = new std::vector<uint32_t>[numUnions]; // Deleted in flatten()
+	UnionFindStructure::UnionFindStructure(uint32_t size) : size(size), rootsComputed(false) {
+		parents = new uint32_t[size];
+		ranks = new uint32_t[size];
+		for (uint32_t i = 0; i < size; ++i) {
+			parents[i] = i; // Self as parent to indicate root of tree.
+			ranks[i] = 0;
+		}
 	}
 	UnionFindStructure::~UnionFindStructure() {
-		assert(flattened);
-		delete[] minInUnions;
+		assert(rootsComputed);
+		delete[] parents;
 	}
 
-	void UnionFindStructure::join(uint32_t a, uint32_t b) {
-		assert(!flattened);
-		joins[a].push_back(b);
-		joins[b].push_back(a);
+	void UnionFindStructure::performUnion(uint32_t a, uint32_t b) {
+		assert(!rootsComputed);
+		uint32_t rootA = find(a);
+		uint32_t rootB = find(b);
+		if (rootA == rootB)
+			return; // Already in same tree.
+
+		// a and b are not already in same set. Merge them:
+		if (ranks[rootA] < ranks[rootB])
+			parents[rootA] = rootB;
+		else if (ranks[rootA] > ranks[rootB])
+			parents[rootB] = rootA;
+		else {
+			parents[rootB] = rootA;
+			++ranks[rootA];
+		}
 	}
 
-	void UnionFindStructure::join(const geometry::IntervalList &l1, const geometry::IntervalList &l2, uint32_t union1, uint32_t union2) {
+	void UnionFindStructure::performUnion(const geometry::IntervalList &l1, const geometry::IntervalList &l2, uint32_t union1, uint32_t union2) {
+		assert(!rootsComputed);
 		const geometry::Interval* it1 = l1.begin();
 		const geometry::Interval* it2 = l2.begin();
 
@@ -35,7 +53,7 @@ namespace util {
 				++union1;
 				continue;
 			}
-			join(union1, union2);
+			performUnion(union1, union2);
 			if (it1->second <= it2->second) {
 				++it1;
 				++union1;
@@ -47,60 +65,24 @@ namespace util {
 		}
 	}
 
-	uint32_t UnionFindStructure::getMinInUnion(uint32_t a) const {
-		assert(flattened);
-		assert(a < numUnions);
-		return minInUnions[a];
+	uint32_t UnionFindStructure::find(uint32_t a) const {
+		assert(a < size);
+		assert(a >= 0);
+		if(parents[a] != a)
+			parents[a] = find(parents[a]);
+		return parents[a];
 	}
 
-	void UnionFindStructure::flatten() {
-		assert(!flattened);
-		bool *handled = new bool[numUnions]; // Deleted further down
-		for (uint32_t i = 0; i < numUnions; ++i)
-			handled[i] = false;
-		minInUnions = new uint32_t[numUnions]; // Deleted in ~UnionFindStructure()
+	void UnionFindStructure::computeRoots() {
+		assert(!rootsComputed);
 
-		for (uint32_t i = 0; i < numUnions; ++i) {
-			// Handle union with representative "i"
-			if (handled[i])
-				continue;
-			minInUnions[i] = i;
-			handled[i] = true;
-			roots.push_back(i);
-
-			std::stack<uint32_t> s;
-			for (std::vector<uint32_t>::const_iterator it = joins[i].begin(); it != joins[i].end(); ++it) {
-				s.push(*it);
-				handled[*it] = true;
-			}
-
-			while (!s.empty()) {
-				uint32_t top = s.top();
-				assert(top < numUnions);
-				s.pop();
-				minInUnions[top] = i;
-
-				for (std::vector<uint32_t>::const_iterator it = joins[top].begin(); it != joins[top].end(); ++it) {
-					if (!handled[*it]) {
-						s.push(*it);
-						handled[*it] = true;
-					}
-				}
-			}
+		for (uint32_t i = 0; i < size; ++i) {
+			if (parents[i] == i)
+				roots.push_back(i);
 		}
 
-		delete[] handled;
-		delete[] joins;
-		flattened = true;
-	}
-
-	IntervalUnionFind::IntervalUnionFind() : M(*new geometry::IntervalListVector(0, 0)) { // New OK as this will fail
-		assert(false); std::cerr << "DEFAULT CONSTRUCTOR FOR IntervalUnionFind SHOULD NEVER BE CALLED" << std::endl;
-		int *die = NULL; die[0] = 42;
-	}
-
-	IntervalUnionFind& IntervalUnionFind::operator=(const IntervalUnionFind &) {
-		return *(new IntervalUnionFind()); // New OK as this will fail
+		rootsComputed = true;
+		delete[] ranks;
 	}
 
 	IntervalUnionFind::IntervalUnionFind(unsigned int numDimensions, unsigned short const * const dimensionSizes, const geometry::IntervalListVector &M) : numStepDimensions(numDimensions - 1), unionI(0), M(M) {
@@ -115,13 +97,12 @@ namespace util {
 		// Initially fill basic vectors:
 		buildIntervalIndicatorToUnion();
 
-		// Perform joins:
+		// Perform unions:
 		ufs = new UnionFindStructure(unionI); // Deleted in ~IntervalUnionFind()
 		MixedPosition position;
 		buildUnions(0, position);
 
-		// Flatten:
-		ufs->flatten();
+		ufs->computeRoots();
 
 		time(&endTime);
 		double seconds = difftime(endTime, startTime);
@@ -138,7 +119,7 @@ namespace util {
 	void IntervalUnionFind::buildIntervalIndicatorToUnion() {
 		assert(unionI == 0);
 		unionI = 1;
-		intervalIndicatorToUnion = new uint32_t[M.sizeIndicator() + 1]; // Deletred in ~IntervalUnionFind()
+		intervalIndicatorToUnion = new uint32_t[M.sizeIndicator() + 1]; // Deleted in ~IntervalUnionFind()
 		unionToInterval = new std::pair<uint32_t, unsigned short>[M.sizeNonEmptyIntervals() + 1]; // Deleted in ~IntervalUnionFind()
 
 		for (uint32_t i = 0; i < M.sizeIndicator(); ++i) {
@@ -189,7 +170,7 @@ namespace util {
 				continue;
 			const uint32_t unionStart2 = intervalIndicatorToUnion[neighbourPositionIndex];
 
-			ufs->join(l1, l2, unionStart1, unionStart2);
+			ufs->performUnion(l1, l2, unionStart1, unionStart2);
 		}
 	}
 
@@ -199,7 +180,8 @@ namespace util {
 			index = (index * dimensionSizes[i]) + position.p[i];
 
 #ifdef _DEBUG
-		if (intervalIndicatorToUnion[index] == 0) return index;
+		if (intervalIndicatorToUnion[index] == 0) 
+			return index;
 		MixedPosition rep;
 		getRepresentativeOfUnion(intervalIndicatorToUnion[index], rep);
 		for (unsigned int i = 0; i < numStepDimensions; ++i) {
@@ -235,7 +217,7 @@ namespace util {
 		uint32_t index = 0;
 		for (const geometry::Interval* it = l.begin(); it != l.end(); ++it, ++index) {
 			if (it->first <= rep.lastAngle && rep.lastAngle <= it->second) {
-				return ufs->getMinInUnion(firstUnion + index);
+				return ufs->find(firstUnion + index);
 			}
 		}
 

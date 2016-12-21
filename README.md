@@ -4,7 +4,7 @@
 
 ## Motivation
 
-[Previous results](http://www.math.ku.dk/~eilers/lego.html) count all the ways that 2x4 LEGO bricks can be connected at straight angles.
+[Previous results](http://www.math.ku.dk/~eilers/lego.html) count the ways that 2x4 LEGO bricks can be connected at straight angles.
 
 ![Bricks connected at right angles](http://c-mt.dk/counting/images/rectilinearintrosmall.png "There are 915.103.765 ways to combine 6 bricks at straight angles.")
 
