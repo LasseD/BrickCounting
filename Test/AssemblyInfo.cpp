@@ -11,7 +11,7 @@ using namespace System::Runtime::InteropServices;
 //
 [assembly:AssemblyTitleAttribute("Test")];
 [assembly:AssemblyDescriptionAttribute("")];
-[assembly:AssemblyConfigurationAttribute("")];
+//[assembly:AssemblyModelAttribute("")];
 [assembly:AssemblyCompanyAttribute("")];
 [assembly:AssemblyProductAttribute("Test")];
 [assembly:AssemblyCopyrightAttribute("Copyright (c)  2016")];

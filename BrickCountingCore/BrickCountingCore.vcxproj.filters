@@ -48,47 +48,11 @@
     <ClInclude Include="util\TinyVector.hpp">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="AngleMapping.h">
-      <Filter>Header Files\counting</Filter>
-    </ClInclude>
     <ClInclude Include="geometry\BasicGeometry.h">
       <Filter>Header Files\geometry</Filter>
     </ClInclude>
-    <ClInclude Include="Brick.h">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
-    <ClInclude Include="Configuration.hpp">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigurationEncoder.h">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigurationManager.h">
-      <Filter>Header Files\counting</Filter>
-    </ClInclude>
-    <ClInclude Include="ConnectionPoint.h">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
-    <ClInclude Include="RectilinearBrick.h">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
     <ClInclude Include="geometry\RobotArmMotionPrimitives.h">
       <Filter>Header Files\geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="SingleConfigurationManager.h">
-      <Filter>Header Files\counting</Filter>
-    </ClInclude>
-    <ClInclude Include="Block.hpp">
-      <Filter>Header Files\modelling</Filter>
-    </ClInclude>
-    <ClInclude Include="BlockList.hpp">
-      <Filter>Header Files\counting</Filter>
-    </ClInclude>
-    <ClInclude Include="BlockManager.h">
-      <Filter>Header Files\counting</Filter>
-    </ClInclude>
-    <ClInclude Include="TurningSingleBrick.h">
-      <Filter>Header Files\modelling</Filter>
     </ClInclude>
     <ClInclude Include="util\ProgressWriter.hpp">
       <Filter>Header Files\util</Filter>
@@ -99,52 +63,85 @@
     <ClInclude Include="util\MPDPrinter.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="counting\BlockList.hpp">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="counting\AngleMapping.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="counting\BlockManager.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="counting\ModelManager.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\Block.hpp">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\Model.hpp">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\Brick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\ConnectionPoint.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\ModelEncoder.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\RectilinearBrick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="modelling\TurningSingleBrick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="counting\SingleModelManager.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Brick.cpp">
-      <Filter>Source Files\modelling</Filter>
-    </ClCompile>
     <ClCompile Include="geometry\BasicGeometry.cpp">
       <Filter>Source Files\geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="BrickCounting.cpp">
-      <Filter>Source Files\counting</Filter>
-    </ClCompile>
-    <ClCompile Include="RectilinearBrick.cpp">
-      <Filter>Source Files\modelling</Filter>
-    </ClCompile>
-    <ClCompile Include="ConnectionPoint.cpp">
-      <Filter>Source Files\modelling</Filter>
     </ClCompile>
     <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp">
       <Filter>Source Files\geometry</Filter>
     </ClCompile>
-    <ClCompile Include="BlockManager.cpp">
-      <Filter>Source Files\counting</Filter>
-    </ClCompile>
-    <ClCompile Include="SingleConfigurationManager.cpp">
-      <Filter>Source Files\counting</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigurationManager.cpp">
-      <Filter>Source Files\counting</Filter>
-    </ClCompile>
     <ClCompile Include="util\UnionFind.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="ConfigurationEncoder.cpp">
-      <Filter>Source Files\modelling</Filter>
-    </ClCompile>
-    <ClCompile Include="AngleMapping.cpp">
-      <Filter>Source Files\counting</Filter>
-    </ClCompile>
-    <ClCompile Include="TurningSingleBrick.cpp">
-      <Filter>Source Files\modelling</Filter>
-    </ClCompile>
     <ClCompile Include="util\MPDPrinter.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="counting\AngleMapping.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="counting\BlockManager.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="counting\ModelManager.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="counting\SingleConfigurationManager.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="modelling\Brick.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="modelling\ConnectionPoint.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="modelling\ModelEncoder.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="modelling\RectilinearBrick.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="modelling\TurningSingleBrick.cpp">
+      <Filter>Source Files\modelling</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

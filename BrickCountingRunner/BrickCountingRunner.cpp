@@ -1,25 +1,26 @@
 #include "stdafx.h" // Windows only requirement.
 
-#include "../BrickCountingCore/RectilinearBrick.h"
-#include "../BrickCountingCore/Block.hpp"
-#include "../BrickCountingCore/BlockManager.h"
-#include "../BrickCountingCore/ConfigurationManager.h"
 #include <iostream>
 #include <fstream>
 #include <assert.h>
 #include <algorithm>
 #include <functional>
 
+#include "../BrickCountingCore/modelling/RectilinearBrick.h"
+#include "../BrickCountingCore/modelling/Block.hpp"
+#include "../BrickCountingCore/counting/BlockManager.h"
+#include "../BrickCountingCore/counting/ModelManager.h"
+
 void ensureFoldersAreCreated() {
 	std::cout << "Ensuring the necessary folders exist." << std::endl;
 	std::cout << "Please ensure this program has permissions to create folders and write files here." << std::endl;
 
-	CreateDirectory("scc", NULL);
-	CreateDirectory("scc\\6", NULL);
-	CreateDirectory("models", NULL);
-	CreateDirectory("models\\4", NULL);
-	CreateDirectory("models\\5", NULL);
-	CreateDirectory("models\\6", NULL);
+	CreateDirectory("blocks", NULL);
+	CreateDirectory("blocks\\6", NULL);
+	CreateDirectory("homotopies", NULL);
+	CreateDirectory("homotopies\\4", NULL);
+	CreateDirectory("homotopies\\5", NULL);
+	CreateDirectory("homotopies\\6", NULL);
 	CreateDirectory("manual", NULL);
 	CreateDirectory("manual\\4", NULL);
 	CreateDirectory("manual\\5", NULL);
@@ -34,45 +35,45 @@ bool fileExist(char const * const fileName) {
 	return file.good();
 }
 
-bool sccFilesExist(int maxSccSize) {
-	if (!fileExist("scc\\1.dat"))
+bool blockFilesExist(int maxBlockSize) {
+	if (!fileExist("blocks\\1.dat"))
 		return false;
-	if (maxSccSize <= 1)
+	if (maxBlockSize <= 1)
 		return true;
-	if (!fileExist("scc\\2.dat"))
+	if (!fileExist("blocks\\2.dat"))
 		return false;
-	if (maxSccSize <= 2)
+	if (maxBlockSize <= 2)
 		return true;
-	if (!fileExist("scc\\3.dat"))
+	if (!fileExist("blocks\\3.dat"))
 		return false;
-	if (maxSccSize <= 3)
+	if (maxBlockSize <= 3)
 		return true;
-	if (!fileExist("scc\\4.dat"))
+	if (!fileExist("blocks\\4.dat"))
 		return false;
-	if (maxSccSize <= 4)
+	if (maxBlockSize <= 4)
 		return true;
-	if (!fileExist("scc\\5.dat"))
+	if (!fileExist("blocks\\5.dat"))
 		return false;
 	return true;
 }
 
 void printUsage() {
 	std::cout << "Usage:" << std::endl;
-	std::cout << " Computes all models of a given combination type or size." << std::endl;
-	std::cout << " Specify the combination type using input paramenter." << std::endl;
+	std::cout << " Computes all NR-models of a given type or size." << std::endl;
+	std::cout << " Specify the model type using input paramenter." << std::endl;
 	std::cout << " Examples:" << std::endl;
-	std::cout << "  Combination type 3/1: BrickCounting.exe 3 1" << std::endl;
-	std::cout << "  Combination type 5/1: BrickCounting.exe 5 1" << std::endl;
-	std::cout << "  Combination type 2/2/1: BrickCounting.exe 2 2 1" << std::endl;
-	std::cout << " Alternatively. Specify the size of the combination using a single input parameter. All combination types with the combined size will be computed." << std::endl;
+	std::cout << "  Model type 3/1: BrickCounting.exe 3 1" << std::endl;
+	std::cout << "  Model type 5/1: BrickCounting.exe 5 1" << std::endl;
+	std::cout << "  Model type 2/2/1: BrickCounting.exe 2 2 1" << std::endl;
+	std::cout << " Alternatively. Specify the model size using a single input parameter. All model types with the given size will be computed." << std::endl;
 	std::cout << " Examples:" << std::endl;
-	std::cout << "  Combination size 3: BrickCounting.exe 3" << std::endl;
-	std::cout << "  Combination size 4: BrickCounting.exe 4" << std::endl;
+	std::cout << "  Model size 3: BrickCounting.exe 3" << std::endl;
+	std::cout << "  Model size 4: BrickCounting.exe 4" << std::endl;
 	std::cout << " Limitations:" << std::endl;
-	std::cout << "  Max configuration size is 6." << std::endl;
-	std::cout << "  Combination types with 3 or more SCCs might use too much memory (and time)." << std::endl;
+	std::cout << "  Max model size is 6." << std::endl;
+	std::cout << "  Model types with 3 or more blocks might use too much memory (and time)." << std::endl;
 	std::cout << " Special Use:" << std::endl;
-	std::cout << "  Compute all Rectilinear configurations: BrickCounting.exe R" << std::endl;
+	std::cout << "  Compute all Rectilinear models: BrickCounting.exe R" << std::endl;
 	std::cout << "  Compute a lower bound for the number of models for a given size (such as size 4): BrickCounting.exe X 4" << std::endl;
 }
 
@@ -85,7 +86,7 @@ int main(int numArgs, char** argV) {
 #endif
 	if (numArgs <= 1) {
 		printUsage();
-		//ConfigurationManager mgr(3, false); mgr.test();
+		//ModelManager mgr(3, false); mgr.test();
 
 		return 0;
 	}
@@ -93,62 +94,62 @@ int main(int numArgs, char** argV) {
 
 	if (numArgs == 2 || (numArgs == 3 && argV[1][0] == 'X')) {
 		if (argV[1][0] == 'R') {
-			RectilinearConfigurationManager sccMgr;
-			sccMgr.createOld();
+			counting::RectilinearModelManager blockMgr;
+			blockMgr.createOld();
 			return 0;
 		}
 
-		int sccSize = argV[numArgs - 1][0] - '0';
+		int blockSize = argV[numArgs - 1][0] - '0';
 
-		if (!sccFilesExist(sccSize - 1)) { // Create SCC data files:
-			RectilinearConfigurationManager mgr;
-			mgr.create(sccSize - 1);
+		if (!blockFilesExist(blockSize - 1)) { // Create Block data files:
+			counting::RectilinearModelManager mgr;
+			mgr.create(blockSize - 1);
 		}
 
-		if (sccSize < 3 || sccSize > 6) {
+		if (blockSize < 3 || blockSize > 6) {
 			printUsage();
 			return 0;
 		}
 
 #ifdef _COMPARE_ALGORITHMS
-		ConfigurationManager mgr(sccSize, numArgs == 3);
+		ModelManager mgr(blockSize, numArgs == 3);
 #else
-		ConfigurationManager mgr(sccSize - 1, numArgs == 3);
+		counting::ModelManager mgr(blockSize - 1, numArgs == 3);
 #endif
-		mgr.runForSize(sccSize);
+		mgr.runForSize(blockSize);
 		return 0;
 	}
 
 	bool extreme = numArgs >= 2 && argV[1][0] == 'X';
 
 	int combinedSize = 0;
-	int maxSccSize = 1;
+	int maxBlockSize = 1;
 	util::TinyVector<int, 6> combinationType;
 	for (int i = 1 + (extreme ? 1 : 0); i < numArgs; ++i) {
-		int sccSize = argV[i][0] - '0';
+		int blockSize = argV[i][0] - '0';
 #ifdef _DEBUG
-		std::cout << " SCC SIZE: " << sccSize << std::endl;
+		std::cout << " Block SIZE: " << blockSize << std::endl;
 #endif
-		combinedSize += sccSize;
-		combinationType.push_back(sccSize);
-		if (sccSize > maxSccSize)
-			maxSccSize = sccSize;
+		combinedSize += blockSize;
+		combinationType.push_back(blockSize);
+		if (blockSize > maxBlockSize)
+			maxBlockSize = blockSize;
 	}
 	if (combinedSize < 4 || combinedSize > 6) {
 		printUsage();
 		return 0;
 	}
 
-	if (!sccFilesExist(maxSccSize)) { // Create SCC data files:
-		RectilinearConfigurationManager mgr;
-		mgr.create(maxSccSize);
+	if (!blockFilesExist(maxBlockSize)) { // Create Block data files:
+		counting::RectilinearModelManager mgr;
+		mgr.create(maxBlockSize);
 	}
 
 	std::sort(combinationType.begin(), combinationType.end(), std::greater<int>());
 #ifdef _COMPARE_ALGORITHMS
-	ConfigurationManager mgr(combinedSize, extreme);
+	ModelManager mgr(combinedSize, extreme);
 #else
-	ConfigurationManager mgr(maxSccSize, extreme);
+	counting::ModelManager mgr(maxBlockSize, extreme);
 #endif
 	mgr.runForCombinationType(combinationType, combinedSize);
 	return 0;

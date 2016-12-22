@@ -13,7 +13,7 @@ namespace util {
 		void add(const std::string &ldrName, const LDRPrintable *p);
 
 	private:
-		std::vector<std::pair<std::string, const LDRPrintable*> > sccs;
+		std::vector<std::pair<std::string, const LDRPrintable*> > blocks;
 
 		void printHeader(std::ofstream &os, const std::string &title) const;
 		void printFooter(std::ofstream &os) const;

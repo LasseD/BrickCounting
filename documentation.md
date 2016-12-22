@@ -40,10 +40,16 @@ TODO! This is the starting point for implementing phase 2.
 
 ### Modelling TODO
 
-- Brick
+#### RectilinearBrick
+
+#### ConnectionPoint
+
+#### Brick
+
+#### Block
+
 - Configuration (TODO: Perhaps rename?)
 - ConfigurationEncoder
-- ConnectionPoint
 
 ### Util
 
@@ -71,21 +77,18 @@ TinyVector<T, CAPACITY> Represents a generic vector with elements of type T and 
 
 
 TODO:
-- Rewrite UnionFind to actually use union find! https://en.wikipedia.org/wiki/Disjoint-set_data_structure
-
 
 Definitions:
 
 Brick: 2x4
 Block: Start with a brick. Add more bricks by sharing at least 2 studs with a brick already in the block.
-"Block set: Given blocks."
-Connection point
+"Combination: Set of blocks."
+Connection/Connection point
 Model: blocks put together at connection points
  Non-rectilinear model 
  Rectilinear model
 Model size: Number of bricks.
 Model type: 4/2/1 
-Homotopy
-Configuration: Way to put together set of blocks.
+ Homotopy (and NR-Homotopies)
 Goals:
  - Compute homotopies and configurations Non-

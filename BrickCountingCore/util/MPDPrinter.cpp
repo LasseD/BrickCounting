@@ -7,7 +7,7 @@
 
 namespace util {
 	void MPDPrinter::add(const std::string &ldrName, const LDRPrintable *c) {
-		sccs.push_back(std::make_pair(ldrName, c));
+		blocks.push_back(std::make_pair(ldrName, c));
 	}
 
 	void MPDPrinter::print(const std::string &title) const {
@@ -16,11 +16,11 @@ namespace util {
 		ss << title << ".mpd";
 		os.open(ss.str().c_str(), std::ios::out);
 
-		int columns = (int)sqrt(sccs.size());
+		int columns = (int)sqrt(blocks.size());
 		int x = 0;
 		int y = 0;
 		printHeader(os, title);
-		for (std::vector<std::pair<std::string, const LDRPrintable*> >::const_iterator it = sccs.begin(); it != sccs.end(); ++it, ++x) {
+		for (std::vector<std::pair<std::string, const LDRPrintable*> >::const_iterator it = blocks.begin(); it != blocks.end(); ++it, ++x) {
 			if (x >= columns) {
 				x = 0;
 				++y;
@@ -30,7 +30,7 @@ namespace util {
 		printFooter(os);
 
 		// Print sub models:
-		for (std::vector<std::pair<std::string, const LDRPrintable*> >::const_iterator it = sccs.begin(); it != sccs.end(); ++it) {
+		for (std::vector<std::pair<std::string, const LDRPrintable*> >::const_iterator it = blocks.begin(); it != blocks.end(); ++it) {
 			printHeader(os, it->first);
 			it->second->toLDR(os, 4);
 			printFooter(os);
