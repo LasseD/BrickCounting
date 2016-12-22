@@ -12,53 +12,62 @@ This page gives a high level introduction to the documentation by providing an o
 * /BrickCountingRunner: Contains the main entry point for the software in "BrickCountingRunner.cpp".
 
 * /BrickCountingCore: Main directory of source files. Further divided into directories:
-* * /geometry: Helpers focused on geometry. There should be no mention of bricks or the geometry and construction of bricks in here.
-* * /configuration: TODO Brick, Configuration, ...
-* * /movement: TODO
-* * /counting: TODO
-* * /util: Utility classes such as data structures
-* * /visualization: Classes focused on visualization using LDraw.
+* * /counting: Managers for counting blocks, homotopies and configuration.
+* * /geometry: Helper classes and functions focused on geometry. There should be no mention of bricks or the geometry and construction of bricks in here.
+* * /modelling: Components for representations of bricks, blocks, and models.
+* * /util: Utility classes such as data structures and for visualization using LDraw.
 
 ## Individual Component Description
 
-This section contains a high level description of each component in the main directory (/BrickCountingCore). The components are grouped by directory/namespace and ordered so that the dependencies of a component are handled before the component itself.
+This section contains a high level description of each component in the main directory (/BrickCountingCore). The components are grouped by directory/namespace.
 
-### Util
+### Counting TODO
 
-Util (short for "Utilities") is a collection of general utility classes that can be used anywhere. The classes might even be useful for other projects.
-
-#### TinyVector (class defined in TinyVector.hpp)
-
-TinyVector<T, CAPACITY> Represents a generic vector with elements of type T and a capacity (maximal size) of CAPACITY provided by generic argument. The minimal public interface reflects that of std::vector<T>. TinyVector can be used in place of std::vector in hot loops where the maximal number of elements is known. It offers a significant performance benefit as there is no concurrency considerations, resizing or pointers. It is simply a thin wrapper around an array. TinyVector was created when it was found that most of the running time of an early version of the software was spent on thread locking and new/delete calls from std::vectors.
-
-#### ProgressWriter (class defined in ProgressWriter.hpp)
-
-ProgressWriter offers simple pretty printing progress for a task with a given number of steps. If all steps take roughly the same amount of time, then the predicted remaining time will be a good estimate.
+- AngleMapping(+MIsland,SIsland)
+- ConfigurationManager
 
 ### Geometry
 
+The Geometry namespace contains geometric structures and functions.
 
+#### BasicGeometry (files BasicGeometry.h and BasicGeometry.cpp)
 
-Components in the geometry directory/namespace 
+All basic geometric structures and functions are found in the BasicGeometry files. This includes representations of points, intervals, line segments, and functions such as for finding intersections between circles and half planes.
 
+#### RobotArmMotionPrimitives (files RobotArmMotionPrimitives.h and RobotArmMotionPrimitives.cpp)
 
-* TurningSingleBrick: TODO: Structure for "counters" - also include managers here?
+TODO! This is the starting point for implementing phase 2.
 
-### Modelling
+### Modelling TODO
 
 - Brick
 - Configuration (TODO: Perhaps rename?)
 - ConfigurationEncoder
 - ConnectionPoint
 
-### Counting
+### Util
 
-- AngleMapping(+MIsland,SIsland)
-- ConfigurationManager
+The Util (short for "Utilities") namespace contains a collection of general utility classes that can be used anywhere. The classes might even be useful for other projects.
 
-### Default
+#### LDRPrintable ("interface" defined in LDRPrintable.h)
 
-- Common
+The interface (C++ class with a virtual un-implemented function) LDRPrintable is used to allow for printing of models to the LDR (LDraw) format. 
+
+#### MPDPrinter (class defined in MPDPrinter.h and MPDPrinter.cpp)
+
+MPDPrinter is a class that can write an MPD file with a set of LDRPrintable objects. It is used for visualizing the models that are found.
+
+#### ProgressWriter (class defined in ProgressWriter.hpp)
+
+ProgressWriter offers simple pretty printing progress for a task with a given number of steps. If all steps take roughly the same amount of time, then the predicted remaining time will be a good estimate.
+
+#### TinyVector (class defined in TinyVector.hpp)
+
+TinyVector<T, CAPACITY> Represents a generic vector with elements of type T and a capacity (maximal size) of CAPACITY provided by generic argument. The minimal public interface reflects that of std::vector<T>. TinyVector can be used in place of std::vector in hot loops where the maximal number of elements is known. It offers a significant performance benefit as there is no concurrency considerations, resizing or pointers. It is simply a thin wrapper around an array. TinyVector was created when it was found that most of the running time of an early version of the software was spent on thread locking and new/delete calls from std::vectors.
+
+
+
+
 
 
 TODO:

@@ -1,8 +1,8 @@
 #include "BasicGeometry.h"
 
-#include "../Common.h"
-
 #include <cmath>
+
+#include "../Common.h"
 
 ///////////////////////////////////////////////////////
 // Simple geometry functions

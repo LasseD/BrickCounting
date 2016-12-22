@@ -1,8 +1,9 @@
 #ifndef GEOMETRY_ROBOT_ARM_MOTION_PRIMITIVES_H
 #define GEOMETRY_ROBOT_ARM_MOTION_PRIMITIVES_H
 
-#include "BasicGeometry.h"
 #include <vector>
+
+#include "BasicGeometry.h"
 
 namespace geometry {
 	struct AngleRestrictorFunction; // Forward declaration.

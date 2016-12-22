@@ -1,5 +1,5 @@
-#ifndef BASICGEOMETRY_H
-#define BASICGEOMETRY_H
+#ifndef GEOMETRY_BASIC_GEOMETRY_H
+#define GEOMETRY_BASIC_GEOMETRY_H
 
 #include <utility>
 #include <iostream>
@@ -103,4 +103,4 @@ std::ostream& operator<<(std::ostream &os, const geometry::Point& p);
 std::ostream& operator<<(std::ostream &os, const geometry::IntervalList& p);
 std::ostream& operator<<(std::ostream &os, const geometry::LineSegment& l);
 
-#endif // BASICGEOMETRY_H
+#endif // GEOMETRY_BASIC_GEOMETRY_H
