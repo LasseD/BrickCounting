@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <time.h>
 
+#include "util/MPDPrinter.h"
+
 SingleConfigurationManager::SingleConfigurationManager(const util::TinyVector<FatSCC, 6> &combination, std::ofstream &os, bool findExtremeAnglesOnly) : 
     combinationSize((unsigned int)combination.size()), encoder(combination), os(os), findExtremeAnglesOnly(findExtremeAnglesOnly), attempts(0), models(0), rectilinear(0) {
   for(int i = 0; i < BOOST_STAGES; ++i) {
@@ -322,7 +324,7 @@ void SingleConfigurationManager::printMPDFile() const {
   if(modelsToPrint.empty())
     return;
 
-  MPDPrinter h;
+  util::MPDPrinter h;
 
   int j = 0;
   for(std::vector<Configuration>::const_iterator it = modelsToPrint.begin(); it != modelsToPrint.end(); ++it, ++j) {
@@ -346,7 +348,7 @@ void SingleConfigurationManager::printMPDFile() const {
 }
 
 void SingleConfigurationManager::printManualLDRFile(const std::vector<std::pair<std::string,Configuration> > &v, const std::string &fileName) const {
-  MPDPrinter h;  
+  util::MPDPrinter h;  
   for(std::vector<std::pair<std::string,Configuration> >::const_iterator it = v.begin(); it != v.end(); ++it) {
     h.add(it->first, &(it->second));
   }
@@ -366,7 +368,7 @@ void SingleConfigurationManager::printManualLDRFiles() const {
   std::vector<std::pair<std::string,Configuration> > v;
 
   // Actual printing:
-  for(std::vector<util::TinyVector<Connection, 5> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
+  for(std::vector<util::TinyVector<AngledConnection, 5> >::const_iterator it = manual.begin(); it != manual.end(); ++it) {
     Configuration c(combination, *it);
     std::stringstream ss1, ss2;
     ss1 << "manual\\" << size << "\\";

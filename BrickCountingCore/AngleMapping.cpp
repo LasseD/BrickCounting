@@ -1,12 +1,13 @@
 #include "AngleMapping.h"
 
+#include <time.h>
+#include <sstream>
+
+#include "util/MPDPrinter.h"
 #include "Common.h"
 #include "Brick.h"
 #include "Configuration.hpp"
 #include "TurningSingleBrick.h"
-
-#include <time.h>
-#include <sstream>
 
 namespace geometry {
 	void intervalToArray(const IntervalList &l, bool *array, unsigned int sizeArray) {
@@ -185,7 +186,7 @@ Configuration AngleMapping::getConfiguration(const MixedPosition &p) const {
 		const IConnectionPoint &ip1 = points[2 * i];
 		const IConnectionPoint &ip2 = points[2 * i + 1];
 		const StepAngle angle((short)p.p[i] - (short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
-		const Connection cc(ip1, ip2, angle);
+		const AngledConnection cc(ip1, ip2, angle);
 		assert(ip2.P1.configurationSCCI != 0);
 		c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
 	}
@@ -193,7 +194,7 @@ Configuration AngleMapping::getConfiguration(const MixedPosition &p) const {
 	const IConnectionPoint &ip1 = points[2 * (numAngles - 1)];
 	const IConnectionPoint &ip2 = points[2 * (numAngles - 1) + 1];
 	const StepAngle angle(p.lastAngle);
-	const Connection cc(ip1, ip2, angle);
+	const AngledConnection cc(ip1, ip2, angle);
 	assert(ip2.P1.configurationSCCI != 0);
 	c.add(sccs[ip2.P1.configurationSCCI], ip2.P1.configurationSCCI, cc);
 
@@ -206,7 +207,7 @@ Configuration AngleMapping::getConfiguration(const Configuration &baseConfigurat
 	const IConnectionPoint &ip1 = points[2 * angleI];
 	const IConnectionPoint &ip2 = points[2 * angleI + 1];
 	const StepAngle angle((short)angleStep - (short)angleSteps[angleI], angleSteps[angleI] == 0 ? 1 : angleSteps[angleI]);
-	const Connection cc(ip1, ip2, angle);
+	const AngledConnection cc(ip1, ip2, angle);
 	assert(ip2.P1.configurationSCCI != 0);
 	c.add(sccs[ip2.P1.configurationSCCI], ip2.first.configurationSCCI, cc);
 
@@ -219,25 +220,25 @@ Configuration AngleMapping::getConfiguration(const Configuration &baseConfigurat
 	const IConnectionPoint &ip1 = points[2 * (numAngles - 1)];
 	const IConnectionPoint &ip2 = points[2 * (numAngles - 1) + 1];
 	const StepAngle angle(lastAngle);
-	const Connection cc(ip1, ip2, angle);
+	const AngledConnection cc(ip1, ip2, angle);
 	assert(ip2.P1.configurationSCCI != 0);
 	c.add(sccs[ip2.P1.configurationSCCI], ip2.first.configurationSCCI, cc);
 
 	return c;
 }
 
-void AngleMapping::getConfigurationConnections(const MixedPosition &p, util::TinyVector<Connection, 5> &result) const {
+void AngleMapping::getConfigurationConnections(const MixedPosition &p, util::TinyVector<AngledConnection, 5> &result) const {
 	for (unsigned int i = 0; i < numAngles - 1; ++i) {
 		const IConnectionPoint &ip1 = points[2 * i];
 		const IConnectionPoint &ip2 = points[2 * i + 1];
 		const StepAngle angle((short)p.p[i] - (short)angleSteps[i], angleSteps[i] == 0 ? 1 : angleSteps[i]);
-		result.push_back(Connection(ip1, ip2, angle));
+		result.push_back(AngledConnection(ip1, ip2, angle));
 	}
 
 	const IConnectionPoint &ip1 = points[2 * (numAngles - 1)];
 	const IConnectionPoint &ip2 = points[2 * (numAngles - 1) + 1];
 	const StepAngle angle(p.lastAngle);
-	result.push_back(Connection(ip1, ip2, angle));
+	result.push_back(AngledConnection(ip1, ip2, angle));
 }
 
 void AngleMapping::setBoostPrecision() {
@@ -507,14 +508,14 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands, bool &anyProblema
 			Configuration c = getConfiguration(mIsland.representative);
 			std::stringstream ss;
 			ss << "fail_" << mIslandI << "_" << mIsland << "_";
-			util::TinyVector<Connection, 5> cc;
+			util::TinyVector<AngledConnection, 5> cc;
 			getConfigurationConnections(mIsland.representative, cc);
 			encoder.writeFileName(ss, cc, false);
 			h.add(ss.str(), new Configuration(c)); // OK Be cause we are about to die.
 		}
 		std::stringstream ss;
 		ss << "S-Island_";
-		util::TinyVector<Connection, 5> cc;
+		util::TinyVector<AngledConnection, 5> cc;
 		getConfigurationConnections(sIsland.representative, cc);
 		encoder.writeFileName(ss, cc, true);
 		h.print(ss.str());
@@ -522,8 +523,8 @@ void AngleMapping::findIslands(std::vector<SIsland> &sIslands, bool &anyProblema
 	}
 }
 
-void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const {
-	util::TinyVector<Connection, 5> cc;
+void AngleMapping::reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<AngledConnection, 5> > &manual, bool includeMappingFile) const {
+	util::TinyVector<AngledConnection, 5> cc;
 	getConfigurationConnections(p, cc);
 
 	manual.push_back(cc);
@@ -594,7 +595,7 @@ void AngleMapping::addFoundConfiguration(const Configuration &c, bool rectilinea
 	util::TinyVector<IConnectionPair, 8> found;
 	bool checkRealizable = c.isRealizable<-MOLDING_TOLERANCE_MULTIPLIER>(found);
 	if (!checkRealizable) {
-		MPDPrinter h;
+		util::MPDPrinter h;
 		h.add("ADD_FAIL", &c);
 		h.print("ADD_FAIL");
 
@@ -731,7 +732,7 @@ void AngleMapping::findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, s
 	}
 }
 
-void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration, MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic) {
+void AngleMapping::findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<AngledConnection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration, MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic) {
 	assert(!findExtremeAnglesOnly);
 	time_t startTime, endTime;
 	time(&startTime);

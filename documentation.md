@@ -42,8 +42,23 @@ ProgressWriter offers simple pretty printing progress for a task with a given nu
 Components in the geometry directory/namespace 
 
 
-- Rename "StronglyConnectedConfiguration" to "Block".
 * TurningSingleBrick: TODO: Structure for "counters" - also include managers here?
+
+### Modelling
+
+- Brick
+- Configuration (TODO: Perhaps rename?)
+- ConfigurationEncoder
+- ConnectionPoint
+
+### Counting
+
+- AngleMapping(+MIsland,SIsland)
+- ConfigurationManager
+
+### Default
+
+- Common
 
 
 TODO:
@@ -54,9 +69,14 @@ Definitions:
 
 Brick: 2x4
 Block: Start with a brick. Add more bricks by sharing at least 2 studs with a brick already in the block.
-Turn point
-Model: blocks put together at turn points
+"Block set: Given blocks."
+Connection point
+Model: blocks put together at connection points
  Non-rectilinear model 
  Rectilinear model
 Model size: Number of bricks.
 Model type: 4/2/1 
+Homotopy
+Configuration: Way to put together set of blocks.
+Goals:
+ - Compute homotopies and configurations Non-

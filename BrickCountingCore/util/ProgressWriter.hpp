@@ -1,5 +1,5 @@
-#ifndef PROGRESSWRITER_HPP
-#define PROGRESSWRITER_HPP
+#ifndef UTIL_PROGRESS_WRITER_HPP
+#define UTIL_PROGRESS_WRITER_HPP
 
 #include <time.h>
 #include <iostream>
@@ -75,4 +75,4 @@ namespace util {
 	};
 }
 
-#endif // PROGRESSWRITER_HPP
+#endif // UTIL_PROGRESS_WRITER_HPP

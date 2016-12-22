@@ -21,7 +21,7 @@ public:
   std::map<FatSCC,uint64_t> foundSCCs; // For debugging only!
 #endif
 
-  std::vector<util::TinyVector<Connection, 5> > manual;
+  std::vector<util::TinyVector<AngledConnection, 5> > manual;
 private:
   std::vector<Configuration> nrcToPrint; // Used when there are non-rectilinear models, but not multiple non-rectilinear models for a given connection set.
   std::vector<Configuration> modelsToPrint; // Used when there are multiple models for a given connection set then include all models in it - including the RC!

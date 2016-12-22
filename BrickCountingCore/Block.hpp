@@ -1,7 +1,7 @@
-#ifndef STRONGLY_CONNECTED_CONFIGURATION_HPP
-#define STRONGLY_CONNECTED_CONFIGURATION_HPP
+#ifndef MODELLING_BLOCK_HPP
+#define MODELLING_BLOCK_HPP
 
-#include "LDRPrinter.h"
+#include "util/LDRPrintable.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
 #include "Brick.h"
@@ -18,7 +18,7 @@
 #define NO_INDEX ULONG_MAX
 
 template <unsigned int SIZE>
-class RectilinearConfiguration : public LDRPrintable {
+class RectilinearConfiguration : public util::LDRPrintable {
 public:
   RectilinearBrick otherBricks[SIZE == 1 ? 1 : SIZE-1]; // first brick 0,0, vertical at lv. 0. Bricks sorted.
 
@@ -671,4 +671,4 @@ inline std::ostream& operator<<(std::ostream& os, const FatSCC& c) {
   return os;
 }
 
-#endif // STRONGLY_CONNECTED_CONFIGURATION_HPP
+#endif // MODELLING_BLOCK_HPP

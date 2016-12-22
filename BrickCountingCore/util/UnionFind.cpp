@@ -90,9 +90,8 @@ namespace util {
 		time(&startTime);
 
 		// Initialize members:
-		for (unsigned int i = 0; i < numDimensions; ++i) {
+		for (unsigned int i = 0; i < numDimensions; ++i)
 			this->dimensionSizes[i] = dimensionSizes[i];
-		}
 
 		// Initially fill basic vectors:
 		buildIntervalIndicatorToUnion();

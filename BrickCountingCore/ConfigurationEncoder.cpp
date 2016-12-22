@@ -345,9 +345,9 @@ void ConfigurationEncoder::testCodec(const IConnectionPairSet &list1) const {
 #ifdef _TRACE
   std::cout << "INIT testCodec(" << list1 << ")" << std::endl;
 #endif
-  util::TinyVector<Connection, 5> cs;
+  util::TinyVector<AngledConnection, 5> cs;
   for(std::set<IConnectionPair>::const_iterator it = list1.begin(); it != list1.end(); ++it)
-    cs.push_back(Connection(*it, StepAngle()));
+    cs.push_back(AngledConnection(*it, StepAngle()));
   Configuration c1(fatSccs, cs);
 #ifdef _TRACE
   std::cout << "Configuration to check on: " << c1 << std::endl;
@@ -372,7 +372,7 @@ void ConfigurationEncoder::testCodec(const IConnectionPairSet &list1) const {
 
   cs.clear();
   for(std::set<IConnectionPair>::const_iterator it = list2.begin(); it != list2.end(); ++it)
-    cs.push_back(Connection(*it, StepAngle()));
+    cs.push_back(AngledConnection(*it, StepAngle()));
   Configuration c2(fatSccs, cs);
 #ifdef _TRACE
   std::cout << " c2: " << c2 << std::endl;
@@ -388,10 +388,10 @@ void ConfigurationEncoder::testCodec(const IConnectionPairSet &list1) const {
 #endif
 }
 
-void ConfigurationEncoder::writeFileName(std::ostream &ss, const util::TinyVector<Connection, 5> &l, bool includeAngles) const {
+void ConfigurationEncoder::writeFileName(std::ostream &ss, const util::TinyVector<AngledConnection, 5> &l, bool includeAngles) const {
   Configuration c(fatSccs, l);
   IConnectionPairSet icpl;
-  for(const Connection* it = l.begin(); it != l.end(); ++it)
+  for(const AngledConnection* it = l.begin(); it != l.end(); ++it)
     icpl.insert(*it);
 
   Encoding encoded = encode(icpl);
@@ -407,7 +407,7 @@ void ConfigurationEncoder::writeFileName(std::ostream &ss, const util::TinyVecto
   if(!includeAngles)
     return;
   ss << "_angles";
-  for(const Connection* it = l.begin(); it != l.end(); ++it)
+  for(const AngledConnection* it = l.begin(); it != l.end(); ++it)
     ss << "_" << it->angle.n;
 }
 

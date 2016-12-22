@@ -1,5 +1,5 @@
-#ifndef UNION_FIND_H
-#define UNION_FIND_H
+#ifndef UTIL_UNION_FIND_H
+#define UTIL_UNION_FIND_H
 
 #include <stdint.h>
 #include <vector>
@@ -65,4 +65,4 @@ namespace util {
 	};
 }
 
-#endif // UNION_FIND_H
+#endif // UTIL_UNION_FIND_H

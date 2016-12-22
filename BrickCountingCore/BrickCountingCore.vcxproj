@@ -28,7 +28,6 @@
     <ClInclude Include="ConnectionPoint.h" />
     <ClInclude Include="geometry\BasicGeometry.h" />
     <ClInclude Include="geometry\RobotArmMotionPrimitives.h" />
-    <ClInclude Include="LDRPrinter.h" />
     <ClInclude Include="RectilinearBrick.h" />
     <ClInclude Include="SingleConfigurationManager.h" />
     <ClInclude Include="stdafx.h" />
@@ -37,6 +36,9 @@
     <ClInclude Include="BlockManager.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TurningSingleBrick.h" />
+    <ClInclude Include="util\LDRPrintable.h" />
+    <ClInclude Include="util\MPDPrinter.h" />
+    <ClInclude Include="util\ProgressWriter.hpp" />
     <ClInclude Include="util\TinyVector.hpp" />
     <ClInclude Include="util\UnionFind.h" />
   </ItemGroup>
@@ -49,12 +51,12 @@
     <ClCompile Include="ConnectionPoint.cpp" />
     <ClCompile Include="geometry\BasicGeometry.cpp" />
     <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp" />
-    <ClCompile Include="LDRPrinter.cpp" />
     <ClCompile Include="RectilinearBrick.cpp" />
     <ClCompile Include="SingleConfigurationManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="BlockManager.cpp" />
     <ClCompile Include="TurningSingleBrick.cpp" />
+    <ClCompile Include="util\MPDPrinter.cpp" />
     <ClCompile Include="util\UnionFind.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

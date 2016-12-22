@@ -409,7 +409,7 @@ struct TurningSCCInvestigator {
 #endif
 					Configuration c2(baseConfiguration);
 					StepAngle stepAngle(it2->first);
-					Connection connection(connectionPair, stepAngle);
+					AngledConnection connection(connectionPair, stepAngle);
 					c2.add(scc, connectionPair.P2.first.configurationSCCI, connection);
 					if (c2.isRealizable<ADD_XY>(possibleCollisions, scc.size)) {
 						const double angleOfSnapRadius = it2->second;

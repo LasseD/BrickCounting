@@ -7,114 +7,144 @@
     <Filter Include="Source Files">
       <UniqueIdentifier>{aadf5ce2-07fa-4f38-a7b5-ef5b4437b7c7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{3eb070eb-f1ec-4e04-abd9-a995ba762248}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\geometry">
+      <UniqueIdentifier>{630d5101-8ac7-4c24-9a24-8c512fc142cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\modelling">
+      <UniqueIdentifier>{5b80d293-b5b6-44b5-9514-5b1fdf8706b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\counting">
+      <UniqueIdentifier>{273dbabd-36ee-4055-b805-bb1e3135fbf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\counting">
+      <UniqueIdentifier>{550fad65-1c86-45fb-9214-0e6648267635}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\geometry">
+      <UniqueIdentifier>{a391722a-cc14-4f1f-a545-5eb0a9430454}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\modelling">
+      <UniqueIdentifier>{2a2eb18f-0d16-4d68-8416-b8aa8e1cbcfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{d28759a0-cf3f-468c-8031-349e0a50644e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AngleMapping.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Brick.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Configuration.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigurationEncoder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigurationManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConnectionPoint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LDRPrinter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RectilinearBrick.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SingleConfigurationManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TurningSingleBrick.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="geometry\RobotArmMotionPrimitives.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="util\TinyVector.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="geometry\BasicGeometry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\UnionFind.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="BlockManager.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="util\TinyVector.hpp">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="BlockList.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="AngleMapping.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\BasicGeometry.h">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Brick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.hpp">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigurationEncoder.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigurationManager.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectionPoint.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="RectilinearBrick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry\RobotArmMotionPrimitives.h">
+      <Filter>Header Files\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="SingleConfigurationManager.h">
+      <Filter>Header Files\counting</Filter>
     </ClInclude>
     <ClInclude Include="Block.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockList.hpp">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockManager.h">
+      <Filter>Header Files\counting</Filter>
+    </ClInclude>
+    <ClInclude Include="TurningSingleBrick.h">
+      <Filter>Header Files\modelling</Filter>
+    </ClInclude>
+    <ClInclude Include="util\ProgressWriter.hpp">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\LDRPrintable.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="util\MPDPrinter.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AngleMapping.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Brick.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BrickCounting.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigurationEncoder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigurationManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConnectionPoint.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LDRPrinter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RectilinearBrick.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SingleConfigurationManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TurningSingleBrick.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Brick.cpp">
+      <Filter>Source Files\modelling</Filter>
     </ClCompile>
     <ClCompile Include="geometry\BasicGeometry.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\geometry</Filter>
     </ClCompile>
-    <ClCompile Include="util\UnionFind.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="BrickCounting.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="RectilinearBrick.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectionPoint.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry\RobotArmMotionPrimitives.cpp">
+      <Filter>Source Files\geometry</Filter>
     </ClCompile>
     <ClCompile Include="BlockManager.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleConfigurationManager.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigurationManager.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="util\UnionFind.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigurationEncoder.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="AngleMapping.cpp">
+      <Filter>Source Files\counting</Filter>
+    </ClCompile>
+    <ClCompile Include="TurningSingleBrick.cpp">
+      <Filter>Source Files\modelling</Filter>
+    </ClCompile>
+    <ClCompile Include="util\MPDPrinter.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

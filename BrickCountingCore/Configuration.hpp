@@ -1,7 +1,7 @@
-#ifndef CONFIGURATION_HPP
-#define CONFIGURATION_HPP
+#ifndef MODELLING_CONFIGURATION_HPP
+#define MODELLING_CONFIGURATION_HPP
 
-#include "LDRPrinter.h"
+#include "util/LDRPrintable.h"
 #include "Brick.h"
 #include "RectilinearBrick.h"
 #include "ConnectionPoint.h"
@@ -81,31 +81,31 @@ inline std::ostream& operator<<(std::ostream &os, const StepAngle& c) {
   return os;
 }
 
-struct Connection {
+struct AngledConnection {
   StepAngle angle;
   IConnectionPoint p1, p2; // Invariant: p1.first.configurationSCCI < p2.second.configurationSCCI
-  Connection(){}
-  Connection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) { }
-  Connection(const Connection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
-  Connection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) { } 
+  AngledConnection(){}
+  AngledConnection(const IConnectionPair &c, const StepAngle &angle) : angle(angle), p1(c.first), p2(c.second) { }
+  AngledConnection(const AngledConnection &c) : angle(c.angle), p1(c.p1), p2(c.p2) {}
+  AngledConnection(const IConnectionPoint &p1, const IConnectionPoint &p2, const StepAngle &angle) : angle(angle), p1(p1), p2(p2) { } 
   double angleToRadians() const {
     return angle.toRadians();
   }
-  bool operator<(const Connection &c) const {
+  bool operator<(const AngledConnection &c) const {
     if(angle != c.angle)      
       return angle < c.angle;
     if(p1 != c.p1)
       return p1 < c.p1;
     return p2 < c.p2;
   }
-  bool operator!=(const Connection &c) const {
+  bool operator!=(const AngledConnection &c) const {
     return angle != c.angle || p1 != c.p1 || p2 != c.p2;
   }
-  bool operator==(const Connection &c) const {
+  bool operator==(const AngledConnection &c) const {
     return angle == c.angle && p1 == c.p1 && p2 == c.p2;
   }
 };
-inline std::ostream& operator<<(std::ostream &os, const Connection& c) {
+inline std::ostream& operator<<(std::ostream &os, const AngledConnection& c) {
   os << "Connection[" << c.p1 << "-" << c.p2 << ",a=" << c.angleToRadians() << "]";
   return os;
 }
@@ -140,7 +140,7 @@ public:
     }
     v.insert(toInsert);
   }
-  void insert(const Connection &c) {
+  void insert(const AngledConnection &c) {
     IConnectionPair toInsert(c.p1, c.p2);
     insert(toInsert);
   }
@@ -170,7 +170,7 @@ struct IBrick {
   IBrick(const IBrick &ib) : rb(ib.rb), b(ib.b), bi(ib.bi) {}
 };
 
-struct Configuration : public LDRPrintable {
+struct Configuration : public util::LDRPrintable {
   //private:
   Brick origBricks[6];
 
@@ -272,7 +272,7 @@ struct Configuration : public LDRPrintable {
     initSCC(scc);
   }
 
-  void add(const FatSCC &scc, int configurationSCCI, Connection c) {
+  void add(const FatSCC &scc, int configurationSCCI, AngledConnection c) {
     // Get objects of interest:
     if(configurationSCCI == c.p1.first.configurationSCCI) {
       std::swap(c.p1,c.p2);
@@ -299,18 +299,18 @@ struct Configuration : public LDRPrintable {
     }
   }
 
-  Configuration(FatSCC const * const sccs, const util::TinyVector<Connection, 5> &cs) : bricksSize(0) {
+  Configuration(FatSCC const * const sccs, const util::TinyVector<AngledConnection, 5> &cs) : bricksSize(0) {
     initSCC(sccs[0]);
-    std::set<Connection> remainingConnections;
-    for(const Connection* it = cs.begin(); it != cs.end(); ++it) {
+    std::set<AngledConnection> remainingConnections;
+    for(const AngledConnection* it = cs.begin(); it != cs.end(); ++it) {
       remainingConnections.insert(*it);
     }
 
     bool addedSccs[6] = {true,false,false,false,false,false};
 
     while(!remainingConnections.empty()) {
-      for(std::set<Connection>::const_iterator it = remainingConnections.begin(); it != remainingConnections.end(); ++it) {
-        const Connection &c = *it;
+      for(std::set<AngledConnection>::const_iterator it = remainingConnections.begin(); it != remainingConnections.end(); ++it) {
+        const AngledConnection &c = *it;
         int i1 = c.p1.first.configurationSCCI;
         int i2 = c.p2.first.configurationSCCI;
         if(addedSccs[i1] && addedSccs[i2]) {
@@ -367,4 +367,4 @@ inline std::ostream& operator<<(std::ostream& os, const Configuration& c) {
   return os;
 }
 
-#endif // CONFIGURATION_HPP
+#endif // MODELLING_CONFIGURATION_HPP

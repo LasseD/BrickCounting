@@ -1,5 +1,5 @@
-#ifndef TINYVECTOR_HPP
-#define TINYVECTOR_HPP
+#ifndef UTIL_TINY_VECTOR_HPP
+#define UTIL_TINY_VECTOR_HPP
 
 namespace util {
 	template <typename T, unsigned int CAPACITY>
@@ -81,4 +81,4 @@ namespace util {
 	};
 }
 
-#endif // TINYVECTOR_HPP
+#endif // UTIL_TINY_VECTOR_HPP

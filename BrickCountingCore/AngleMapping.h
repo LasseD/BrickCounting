@@ -68,13 +68,13 @@ public:
 	1) For all possible angles: Comput S,M,L.
 	2) Combine regions in S,M,L in order to determine new models.
 	*/
-	void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<Connection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration, MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic);
+	void findNewConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<util::TinyVector<AngledConnection, 5> > &manual, std::vector<Configuration> &modelsToPrint, counter &models, std::vector<std::pair<Configuration, MIsland> > &newRectilinear, bool stopEarlyIfAnyProblematic, bool &anyProblematic);
 	void findNewExtremeConfigurations(std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration, Encoding> > &newRectilinear);
 	Configuration getConfiguration(const MixedPosition &p) const;
 	void setBoostPrecision();
 
 private:
-	void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<Connection, 5> > &manual, bool includeMappingFile) const;
+	void reportProblematic(const MixedPosition &p, int mIslandI, int mIslandTotal, int lIslandTotal, std::vector<util::TinyVector<AngledConnection, 5> > &manual, bool includeMappingFile) const;
 	void addFoundConfiguration(const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration, Encoding> > &newRectilinear);
 	void evalExtremeConfigurations(unsigned int angleI, const Configuration &c, bool rectilinear, std::set<uint64_t> &nonCyclic, std::set<Encoding> &cyclic, std::vector<Configuration> &modelsToPrint, counter &models, counter &rect, std::vector<std::pair<Configuration, Encoding> > &newRectilinear);
 	void evalSML(unsigned int angleI, uint32_t smlIndex, const Configuration &c, bool noS, bool noM, bool noL);
@@ -82,7 +82,7 @@ private:
 	void setupAngleTypes();
 	Configuration getConfiguration(const Configuration &baseConfiguration, double lastAngle) const;
 	Configuration getConfiguration(const Configuration &baseConfiguration, int angleI, unsigned short angleStep) const;
-	void getConfigurationConnections(const MixedPosition &p, util::TinyVector<Connection, 5> &result) const;
+	void getConfigurationConnections(const MixedPosition &p, util::TinyVector<AngledConnection, 5> &result) const;
 	void init();
 };
 

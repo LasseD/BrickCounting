@@ -285,9 +285,9 @@ void ConfigurationManager::test() {
   ConfigurationEncoder encoder(v2);
   encoder.decode(encoded, list);
 
-  std::vector<Connection> cs;
+  std::vector<AngledConnection> cs;
   for(std::set<IConnectionPair>::const_iterator it2 = list.begin(); it2 != list.end(); ++it2) {
-    cs.push_back(Connection(*it2, StepAngle()));
+    cs.push_back(AngledConnection(*it2, StepAngle()));
     listx.push_back(*it2);
     std::cout << *it2 << std::endl;
   }

@@ -62,7 +62,7 @@ public:
   void decode(uint64_t encoded, IConnectionPairSet &list) const;
 
   void testCodec(const IConnectionPairSet &list1) const;
-  void writeFileName(std::ostream &ss, const util::TinyVector<Connection, 5> &l, bool includeAngles) const;
+  void writeFileName(std::ostream &ss, const util::TinyVector<AngledConnection, 5> &l, bool includeAngles) const;
 
 private:
   void rotateSCC(int i, util::TinyVector<ConnectionPoint, 8> *connectionPoints, std::map<ConnectionPoint,IConnectionPair> *connectionMaps) const;
