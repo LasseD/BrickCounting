@@ -11,9 +11,7 @@
 #include <fstream>
 #include <assert.h>
 #include <sstream>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-using namespace boost::posix_time;
+#include <chrono>
 
 namespace rectilinear {
 
@@ -299,7 +297,7 @@ class CombinationReader {
 
 public:
 	CombinationReader(int ls[]) {
-		std::cout << "  Combination reader for " << Z << "/";
+		//std::cout << "  Combination reader for " << Z << "/";
 		std::stringstream ss;
 		ss << Z << "/";
 	
@@ -308,7 +306,7 @@ public:
 		for(int i = 0; size_total < Z; i++) {
 			layer_size = ls[i];
 			layer_sizes[i] = layer_size;
-			std::cout << layer_size;
+			//std::cout << layer_size;
 			ss << layer_size;
 			size_total += layer_size;
 		}
@@ -322,7 +320,7 @@ public:
 			nxt = Brick(true,0,0);
 		else
 			istream->read((char*)&nxt, sizeof(Brick));
-		std::cout << " created with init " << nxt << std::endl;
+		//std::cout << " created with init " << nxt << std::endl;
 	}
 
 	~CombinationReader() {
@@ -558,19 +556,20 @@ return false;
 */
 template <int Z>
 void handle_combination_writers(int token, int remaining, bool add_self, int &added, int &symmetries) {
-	if(remaining == 0) {		
-		ptime t_init=microsec_clock::local_time();
+	if(remaining == 0) {
+		std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
 		int before = added;
 		std::cout << " Handling combinations for token " << token << std::endl;
 
 		CombinationWriter<Z>(token).fill_from_readers(added, symmetries);
 
 		std::cout << "  Constructed " << added << " combinations in ";
-		double millis = (microsec_clock::local_time()-t_init).total_milliseconds();
-		std::cout << millis << "ms." << std::endl;
+ 		std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
+		std::chrono::duration<double> t = t_end - t_init;
+		std::cout << t.count() << "s." << std::endl;
 	}
 	else {
-		//std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << add_self << std::endl;
+		std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << add_self << std::endl;
 		for(int i = remaining - (add_self ? 0 : 1); i > 0; i--) {
 			int ntoken = 10*token + i;
 			handle_combination_writers<Z>(ntoken, remaining - i, true, added, symmetries);
@@ -580,7 +579,7 @@ void handle_combination_writers(int token, int remaining, bool add_self, int &ad
 
 template <int Z>
 void build_all_combinations() {
-	ptime t_init=microsec_clock::local_time();
+	std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
 	std::cout << "Building all combinations of size " << Z << std::endl;
 	int added = 0, symmetries = 0;
 	if(Z == 1) {
@@ -588,16 +587,18 @@ void build_all_combinations() {
 		bool res = cw.add(Combination<1>(), added, symmetries);
 		assert(res);
 		std::cout << "Constructed 1 combination of size 1 ignoring 1 symmetry in ";
-		double millis = (microsec_clock::local_time()-t_init).total_milliseconds();
-		std::cout << millis << "ms." << std::endl;
+ 		std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
+		std::chrono::duration<double> t = t_end - t_init;
+		std::cout << t.count() << "s." << std::endl;
 		return;
 	}
 	
-    handle_combination_writers<Z>(0, Z, false, added, symmetries);
+  handle_combination_writers<Z>(0, Z, false, added, symmetries);
 
 	std::cout << "Constructed " << added << " combinations of size " << Z << " ignoring " << symmetries << " symmetries in ";
-	double millis = (microsec_clock::local_time()-t_init).total_milliseconds();
-	std::cout << millis << "ms." << std::endl;
+	std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> t = t_end - t_init;
+	std::cout << t.count() << "s." << std::endl;
 	if(Z == 2)
 		assert(added == 24);
 	if(Z == 3)
