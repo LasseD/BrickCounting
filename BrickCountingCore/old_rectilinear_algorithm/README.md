@@ -13,7 +13,7 @@ mkdir 2 3 4 5 6
 Compile the code:
 
 ```
-g++ -o2 *.cpp -o run.o
+g++ -o2 -DNDEBUG *.cpp -o run.o
 ```
 
 Run the code:

@@ -5,14 +5,53 @@
 #include <stdlib.h>
 #include "rectilinear.h"
 
+void countRefinements(char* input) {
+		int size = 0, token = 0;
+		char c;
+		for(int i = 0; (c = input[i]); i++) {
+				token = token * 10 + (c-'0');
+				size += (c-'0');
+		}
+		uint64_t added = 0, symmetries = 0;
+		bool saveOutput = true;
+		switch(size) {
+		case 2:
+				rectilinear::handleCombinationWriters<2>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 3:
+				rectilinear::handleCombinationWriters<3>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 4:
+				rectilinear::handleCombinationWriters<4>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 5:
+				rectilinear::handleCombinationWriters<5>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 6:
+				rectilinear::handleCombinationWriters<6>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 7:
+				rectilinear::handleCombinationWriters<7>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 8:
+				rectilinear::handleCombinationWriters<8>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 9:
+				rectilinear::handleCombinationWriters<9>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 10:
+				rectilinear::handleCombinationWriters<10>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		case 11:
+				rectilinear::handleCombinationWriters<11>(token, 0, false, added, symmetries, saveOutput);
+				break;
+		default:
+				std::cout << "Model size not supported: " << size << std::endl;
+				break;
+		}
+}
+
 /*
-Rectilinear:
-
-Design:
-- File layout:
--- folder: count, file: lvls
--- example: folder 2, file 11.brx
-
 - file format:
 -- Rectilinear combination bit usage (11 bit total):
  First bit: 0 for vertical, 1 for horizontal
@@ -21,59 +60,24 @@ Design:
  Restrictions:
   - first brick must be a 000 config
   - lower lv. 0 must be minimal (lex on bricks)
-  - bricks must be x,y lex sorted on layers
-
-- Program design:
--- main.cpp: entry point.
--- file_management.h and .cpp: 
---- class RectilinearCombinations
----- read
----- contains
----- verify
----- add
----- save
-
--  Usage: params: count (must be at most +1 of largest done)
-
-Single Circle (no non-rect):
-- one 3 point circle:
- TODO
-- two 3 point circles:
- -- middle has to be 2-brick, then 3 point circles from ^^
-- one 4 point circle:
- -- one 3-brick, 3 x single brick.
- -- one 2-brick, 3 x single brick
- -- 4 x one brick
- -- two 2-brick, 2 x single brick
-- one 5 point circle:
- -- one 2-brick, 4 x single brick
- -- 5 x one brick
-- one 6 point circle:
- -- 6 x single brick
-
-no circle, non-rect:
-- TODO
-
-Both circle and rect:
-- one 4 point circle:
- -- two single brick unrect
- -- one single brick unrect
- -- one two brick unrect
- -- two-snake unrect
-- one 3 point circle (uses 4 bricks):
- -- two single brick unrect
- -- one single brick unrect
- -- one two brick unrect
- -- two-snake unrect
-
+  - bricks must be x,y lex sorted on layers	
  */
 int main(int argc, char** argv) {
-  rectilinear::build_all_combinations<1>();
-  rectilinear::build_all_combinations<2>();
-  rectilinear::build_all_combinations<3>();
-  rectilinear::build_all_combinations<4>();
-  rectilinear::build_all_combinations<5>();
-  rectilinear::build_all_combinations<6>();
-  return 0;
+		bool saveFiles = true;
+		switch(argc) {
+		case 1:
+				//rectilinear::build_all_combinations<2>(saveFiles);
+				//rectilinear::build_all_combinations<3>(saveFiles);
+				//rectilinear::build_all_combinations<4>(saveFiles);
+				rectilinear::build_all_combinations<5>(saveFiles);
+				//rectilinear::build_all_combinations<6>(saveFiles);
+				break;
+		case 2:
+				countRefinements(argv[1]);
+				break;
+		default:
+				std::cout << "Usage: Run without arguments to call all models. Or specify refinement like 121 to run for specific refinement A(4,3,1,2,1) as an example." << std::endl;
+				break;
+		}
+		return 0;
 }
-
