@@ -5,7 +5,9 @@
 #define BRICKS_RECTILINEAR_H
 
 #define ABS(a) ((a) < 0 ? -(a) : (a))
+#define MAX(a,b) ((a) < (b) ? (b) : (a))
 #define DIFF(a,b) ((a) < (b) ? (b)-(a) : (a)-(b))
+#define MAX_BRICKS 11
 
 #include "stdint.h"
 #include <stdarg.h>
@@ -16,6 +18,8 @@
 #include <chrono>
 #include <set>
 #include <algorithm>
+
+extern uint64_t added, symmetries, earlyExits;
 
 namespace rectilinear {
 
@@ -42,97 +46,121 @@ struct Brick {
 
 const Brick FirstBrick = Brick();
 
-/**
- * LayerBrick: A Brick at a given layer.
- */
-struct LayerBrick {
-		LayerBrick();
-		LayerBrick(Brick b, int l);
-		LayerBrick(const LayerBrick &b);	
-
-		bool operator <(const LayerBrick& b) const;
-		bool operator ==(const LayerBrick& b) const;
-		friend std::ostream& operator <<(std::ostream &os,const LayerBrick &b);
-		int cmp(const LayerBrick& b) const;
-
-		Brick brick;
-		uint8_t layer:3;
-};
-
 template <int Z> // Combination with Z bricks
 class Combination {
+private:
+    // State to check connectivity:
+		bool connected[Z][Z];
 public:
-		LayerBrick bricks[Z];
+		int layerSizes[Z], height;
+		Brick bricks[Z][Z]; // Layer, idx
 
 		/*
 			Init with one brick on layer 0 at 0,0.
 		*/
 		Combination() {
-				bricks[0] = LayerBrick(FirstBrick, 0);
+				bricks[0][0] = FirstBrick;
+				layerSizes[0] = 1;
+				height = 1;
 		}
 
-		Combination(LayerBrick b[]) {
-				for(int i = 0; i < Z; i++) {
-						bricks[i] = b[i];
+		void copy(const Combination<Z> &b) {
+				assert(b.height > 0);
+				height = b.height;
+				#ifdef DEBUG
+				int check = 0;
+				#endif
+				for(int i = 0; i < height; i++) {
+						int s = b.layerSizes[i];
+						layerSizes[i] = s;
+						for(int j = 0; j < s; j++) {
+								bricks[i][j] = b.bricks[i][j];
+						}
+  		 	 	  #ifdef DEBUG
+				    check += s;
+				    #endif
 				}
-				normalize();
+				#ifdef DEBUG
+				if(check != Z) {
+						std::cerr << "Failed check in copy " << b << std::endl;
+						assert(false);
+				}
+				#endif
 		}
 
 		Combination(const Combination<Z> &b) {
-				for(int i = 0; i < Z; i++) {
-						bricks[i] = b.bricks[i];
-				}
+				copy(b);
 		}
 
 		inline friend std::ostream& operator << (std::ostream &os, const Combination<Z> &b) {
-				for(int i = 0; i < Z; i++)
-						os << b.bricks[i] << " ";
+				os << "Combination |" << Z << "|, height " << b.height << ", layers ";
+				for(int i = 0; i < b.height; i++) {
+						os << b.layerSizes[i];
+				}
+				os << ", bricks";
+				for(int i = 0; i < b.height; i++) {
+						for(int j = 0; j < b.layerSizes[i]; j++) {
+								os << " " << b.bricks[i][j] << " ";
+						}
+				}
 				return os;
 		}
 
 		bool operator <(const Combination<Z>& b) const {
-				for(int i = 0; i < Z; i++) {
-						assert(bricks[i].layer == b.bricks[i].layer);
-						int res = bricks[i].cmp(b.bricks[i]);
-						if(res != 0)
-								return res < 0;
-				}		    
+				assert(height == b.height);
+				for(int i = 0; i < height; i++) {
+						assert(layerSizes[i] == b.layerSizes[i]);
+						int s = layerSizes[i];
+						for(int j = 0; j < s; j++) {
+								int res = bricks[i][j].cmp(b.bricks[i][j]);
+								if(res != 0) {
+										return res < 0;
+								}
+						}   
+				}
 				return false;
 		}
 		bool operator ==(const Combination& b) const {
-				for(int i = 0; i < Z; i++) {
-						assert(bricks[i].layer == b.bricks[i].layer);
-						int res = bricks[i].cmp(b.bricks[i]);
-						if(res != 0)
-								return false;
-				}		    
+				assert(height == b.height);
+				for(int i = 0; i < height; i++) {
+						assert(layerSizes[i] == b.layerSizes[i]);
+						int s = layerSizes[i];
+						for(int j = 0; j < s; j++) {
+								int res = bricks[i][j].cmp(b.bricks[i][j]);
+								if(res != 0) {
+										return false;
+								}
+						}   
+				}
 				return true;
 		}
 
-		bool isValid(const std::string s) const {
-				if(bricks[0].brick != FirstBrick) {
+		bool isValid(const std::string s) {
+				if(bricks[0][0] != FirstBrick) {
 						std::cerr << "Error: First brick not |0,0|: " << *this << " at " << s << std::endl;
 						return false;
 				}
-				if(bricks[0].layer != 0) {
-						std::cerr << "Error: First brick not at layer 0: " << *this << " at " << s << std::endl;
-						return false;
-				}
 				// Check ordering of bricks:
-				for(int i = 1; i < Z; i++) {
-						if(bricks[i] < bricks[i-1] || bricks[i-1] == bricks[i]) {
-								std::cerr << "Error: Invalid < combination: " << *this << " at " << s << " for bricks " << (i-1) << " and " << i << std::endl;
-								return false;
+				for(int layer = 0; layer < height; layer++) {
+						int s = layerSizes[layer];
+						for(int i = 0; i+1 < s; i++) {
+								if(!(bricks[layer][i] < bricks[layer][i+1])) {
+										std::cerr << "Error: Invalid " << s << " combination: " << *this << " at layer " << layer << " for bricks " << i << " and " << (i+1) << std::endl;
+										return false;
+								}
 						}
 				}
 				// Check for overlaps:
-				for(int i = 0; i < Z; i++) {
-						const LayerBrick &bi = bricks[i];
-						for(int j = i+1; j < Z; j++) {
-								const LayerBrick &bj = bricks[j];
-								if(bi.layer == bj.layer && bi.brick.intersects(bj.brick)) {
-										std::cout << "Bricks " << i << " and " << j << " intersect in " << *this << std::endl;
-										return false;
+				for(int layer = 0; layer < height; layer++) {
+						int s = layerSizes[layer];
+						for(int i = 0; i+1 < s; i++) {
+								const Brick &bi = bricks[layer][i];
+								for(int j = i+1; j < s; j++) {
+										const Brick &bj = bricks[layer][j];
+										if(bi.intersects(bj)) {
+												std::cout << "Bricks " << i << " and " << j << " of layer " << layer << " intersect in " << *this << std::endl;
+												return false;
+										}
 								}
 						}
 				}
@@ -147,12 +175,9 @@ public:
 		void translateMinToOrigo() {
 				int8_t minx = 127, miny = 127;
 
-				for(int i = 0; i < Z; i++) {
-						Brick &b = bricks[i].brick;
+				for(int i = 0; i < layerSizes[0]; i++) {
+						Brick &b = bricks[0][i];
 						if(b.is_vertical) {
-								if(bricks[i].layer > 0) {
-										break;
-								}
 								// Vertical bricks in layer 0 can be 'min':
 								if(b.x < minx || (b.x == minx && b.y < miny)) {
 										minx = b.x;
@@ -161,53 +186,60 @@ public:
 						}
 				}
 				// Move all to new min:
-				for(int i = 0; i < Z; i++) {
-						bricks[i].brick.x -= minx;
-						bricks[i].brick.y -= miny;
+				for(int i = 0; i < height; i++) {
+						for(int j = 0; j < layerSizes[i]; j++) {
+								bricks[i][j].x -= minx;
+								bricks[i][j].y -= miny;
+						}
 				}
 		}
+
+		void sortBricks() {
+				for(int layer = 0; layer < height; layer++) {
+						int layerSize = layerSizes[layer];
+						if(layerSize > 1) {
+								std::sort(bricks[layer], &bricks[layer][layerSize]);
+						}
+				}
+		}
+
 		void rotate90() {
-				for(int i = 0; i < Z; i++) {
-						Brick &b = bricks[i].brick;
-						int8_t tmp = b.x; // std::swap does not work on this type!
-						b.x = b.y;
-						b.y = -tmp;
-						b.is_vertical = !b.is_vertical;
+				for(int i = 0; i < height; i++) {
+						for(int j = 0; j < layerSizes[i]; j++) {
+								Brick &b = bricks[i][j];
+								int8_t tmp = b.x; // std::swap does not work on int8_t!
+								b.x = b.y;
+								b.y = -tmp;
+								b.is_vertical = !b.is_vertical;
+						}
 				}
 				translateMinToOrigo();
-				std::sort(bricks, &bricks[Z]);
+				sortBricks();
 				assert(isValid("rotate90"));
 		}
 
 		void rotate180() {
-				int8_t minx = bricks[0].brick.x, miny = bricks[0].brick.y;
-
-				for(int i = 1; i < Z; i++) { // 1 because the first brick stays.
-						Brick &b = bricks[i].brick;
-						if(b.is_vertical) {
-								b.x = -b.x;			
-								b.y = -b.y;
-								if((int)bricks[i].layer == 0 && 
-									 (b.x < minx || (b.x == minx && b.y < miny))) {
-										minx = b.x;
-										miny = b.y;
-								}
-						}
-						else {
-								b.x = -b.x;			
+				// Perform rotation:
+				for(int i = 0; i < height; i++) {
+						for(int j = 0; j < layerSizes[i]; j++) {
+								Brick &b = bricks[i][j];
+								b.x = -b.x;
 								b.y = -b.y;
 						}
 				}
-				if(minx < 0 || (minx == 0 && miny < 0)) { // move all:
-						for(int i = 0; i < Z; i++) {
-								bricks[i].brick.x -= minx;
-								bricks[i].brick.y -= miny;
-						}
-				}
-				std::sort(bricks, &bricks[Z]);
+				translateMinToOrigo();
+				sortBricks(); // TODO: Is std::reverse fast enough?
 				assert(isValid("rotate180"));
 		}
 
+		// TODO: Optimize by:
+		// 1) Finding center of first layer.
+		// 2) For each layer:
+		//  - Check same center as first. If not, return false.
+		//  - If a brick is at center, disregard it.
+		//  - If odd number of remaining bricks: return false.
+		//  - All bricks must have a corresponding brick across the center.
+		// 3) return true
 		bool is180Symmetric() const {
 				Combination<Z> c(*this);
 				c.rotate180();
@@ -215,66 +247,133 @@ public:
 		}
 
 		bool can_rotate90() const {
-				if(Z < 3)
-						return false;
-				for(int i = 0; i < Z && (int)bricks[i].layer == 0; i++) {
-						if(!bricks[i].brick.is_vertical)
+				if(Z <= 2)
+						return false; // Not possible to rotate 2 brick models 90 degrees.
+				for(int i = 0; i < layerSizes[0]; i++) {
+						if(!bricks[0][i].is_vertical) {
 								return true;
+						}
 				}
 				return false;
 		}
 
 		/**
 		 * Copy this combination and add b at layer.
+		 * Assume the brick is connected to one of the existing bricks.
 		 */
 		template <int W>
 		bool addBrick(const Brick &b, const uint8_t layer, Combination<W> &out, int &rotated) const {
 				assert(W == Z+1);
-				for(int i = 0; i < Z; i++) {
-						const LayerBrick &b2 = bricks[i];
-						if(layer+1 < b2.layer)
-								break; // no more to check.
-						if(layer != b2.layer) 
-								continue; // Skip to correct layer
-						if(b2.brick.intersects(b))
-								return false;
+				int layerSize = layer == height ? 0 : layerSizes[layer];
+				for(int i = 0; i < layerSize; i++) {
+						const Brick &b2 = bricks[layer][i];
+						if(b2.intersects(b)) {
+								return false; // Intersects!
+						}
 				}
 
-				// Abb by finding first brick not smaller than bl (simple merge):
+				// Set up out-configuration:
+				out.height = height;
+				for(int i = 0; i < height; i++) {
+						int s = layerSizes[i];
+						if(i == layer) {
+								out.layerSizes[i] = s+1;
+								continue; // Handle this layer separately
+						}
+						out.layerSizes[i] = s;
+						for(int j = 0; j < s; j++) {
+								out.bricks[i][j] = bricks[i][j];
+						}
+				}
+				if(height == layer) {
+						out.height = height + 1;
+						out.layerSizes[height] = 1;
+				}
+				
+				// For layer, add by finding first brick not smaller than b (simple merge):
 				int in = 0;
-				const LayerBrick lb(b, layer);
-				for(int i = 0; i < Z; i++) {
+				for(int i = 0; i < layerSize; i++) {
 						if(in == 0) {
-								const LayerBrick &lb2 = bricks[i];
-								if(lb < lb2) {
+								const Brick &b2 = bricks[layer][i];
+								if(b < b2) { // Merge in:
 										in = 1;
-										out.bricks[i] = lb;
+										out.bricks[layer][i] = b;
 								}
 						}
-						out.bricks[i+in] = bricks[i];
+						out.bricks[layer][i+in] = bricks[layer][i];
 				}
-				if(in == 0)
-						out.bricks[Z] = lb;
+				// Finish up:
+				if(in == 0) {
+						out.bricks[layer][layerSize] = b; // Add to the end
+				}
 
 				out.normalize(rotated);
 				return true;
 		}
 
 		template <int W>
-		bool removeBrickAt(int idx, Combination<W> &out) const {
+		void removeSingleLowerBrick(Combination<W> &out) const {
 				assert(W == Z-1);
-				// Remove brick at index idx:
-				int outIdx = 0;
-				for(int i = 0; i < Z; i++) {
-						if(idx == i)
-								continue;
-						out.bricks[outIdx++] = bricks[i];
-				}
-				// Move layers down if lower single bricks was deleted:
-				if(out.bricks[0].layer > 0) {
-						for(int i = 0; i < W; i++) {
-								out.bricks[i].layer--;
+				out.height = height-1;
+				for(int layer = 0; layer+1 < height; layer++) {
+						int s = layerSizes[layer+1];
+						out.layerSizes[layer] = s;
+						for(int i = 0; i < s; i++) {
+								out.bricks[layer][i] = bricks[layer+1][i];
 						}
+				}
+		}
+				
+		template <int W>
+		void removeSingleTopBrick(Combination<W> &out) const {
+				assert(W == Z-1);
+				out.height = height-1;
+				for(int layer = 0; layer < height-1; layer++) {
+						int s = layerSizes[layer];
+						out.layerSizes[layer] = s;
+						for(int i = 0; i < s; i++) {
+								out.bricks[layer][i] = bricks[layer][i];
+						}
+				}
+		}
+				
+		template <int W>
+		bool removeBrickAt(int layer, int idx, Combination<W> &out) const {
+				assert(W == Z-1);
+				int layerSize = layerSizes[layer];
+				if(layerSize == 1) {
+						if(layer == 0) {
+								// Special case: Single lower brick removal
+								removeSingleLowerBrick(out);
+						}
+						else if(layer == height-1) {
+								// Special case: Top brick
+								removeSingleTopBrick(out);
+						}
+						else {
+								return false; // Single last brick in non-extreme layer!
+						}
+				}
+
+				out.height = height;
+				for(int i = 0; i < height; i++) {
+						int s = layerSizes[i];
+						if(i == layer) {
+								out.layerSizes[i] = s-1;
+								continue;
+						}
+						out.layerSizes[i] = s;
+						for(int j = 0; j < s; j++) {
+								out.bricks[i][j] = bricks[i][j];
+						}
+				}
+				
+				// Remove brick at index idx:
+				for(int i = 0, outIdx = 0; i < Z; i++) {
+						if(idx == i) {
+								continue;
+						}
+						out.bricks[layer][outIdx++] = bricks[layer][i];
 				}
 
 				// Check that combination is still connected:
@@ -287,19 +386,15 @@ public:
 				return true; // All OK.
 		}
 		
-		void copy(const Combination<Z> &b) {
-				for(int i = 0; i < Z; i++) {
-						bricks[i] = b.bricks[i];
-				}
-		}
 		void normalize(int &rotated) {
+				#ifdef DEBUG
+				std::cout << "Normalizing " << *this << std::endl;
+				#endif
 				// Ensure FirstBrick is first and all is sorted:
 				bool hasVerticalLayer0Brick = false;
-				for(int i = 0; i < Z; i++) {
-						LayerBrick &lb = bricks[i];
-						if(lb.layer > 0)
-								break;
-						if(lb.brick.is_vertical) {
+				for(int i = 0; i < layerSizes[0]; i++) {
+						Brick &b = bricks[0][i];
+						if(b.is_vertical) {
 								hasVerticalLayer0Brick = true;
 								break;
 						}
@@ -308,7 +403,7 @@ public:
 				// Check if first brick is horizontal at 0,0:
 				if(hasVerticalLayer0Brick) {
 						translateMinToOrigo();
-						std::sort(bricks, &bricks[Z]);
+						sortBricks();
 				}
 				else {
 						rotate90();
@@ -337,70 +432,88 @@ public:
 				int ignore;
 				normalize(ignore);
 		}
-		bool isConnected() const {
-				bool a[11];
-				a[0] = true; // Start from first brick
-				for(int i = 1; i < Z; i++) {
-						a[i] = false;
-				}
-
-				// Greedily add to a:
-				int cnt = 1; // Count of connected bricks
-				bool anyAdded = true;
-				while(anyAdded) {
-						anyAdded = false;
-						for(int i = 0; i < Z; i++) { // For all bricks:
-								if(!a[i]) {
-										continue; // Not yet connected.
+ 
+		int countConnected(int layer, int idx) {
+				connected[layer][idx] = true;
+				const Brick &b = bricks[layer][idx];
+				int ret = 1;
+				// Add for layer below:
+				if(layer > 0) {
+						int s = layerSizes[layer-1];
+						for(int i = 0; i < s; i++) {
+								if(connected[layer-1][i]) {
+										continue;
 								}
-								const LayerBrick &bi = bricks[i];
-								for(int j = 0; j < Z; j++) {
-										if(a[j]) // j already included (includes i == j):
-												continue;
-										const LayerBrick &bj = bricks[j];
-										if(ABS(bi.layer - bj.layer) == 1 && bi.brick.intersects(bj.brick)) {
-												a[j] = true;
-												anyAdded = true;
-												cnt++;
-										}
+								const Brick &b2 = bricks[layer-1][i];
+								if(b.intersects(b2)) {
+										ret += countConnected(layer-1, i);
 								}
 						}
 				}
-
-				return cnt == Z;
-		}
-
-		void flip(int height) {
-				for(int i = 0; i < Z; i++) {
-						bricks[i].layer = height-1-bricks[i].layer;						
-				}
-				std::sort(bricks, &bricks[Z]);
-				normalize();
-		}
-
-		uint8_t differentBrick(const Combination<Z> &c) const {
-				uint8_t ret = 0;
-				for(int i = 1; i < Z; i++) {
-						if(bricks[i].brick != c.bricks[i].brick) {
-								if(ret == 0) {
-										ret = (uint8_t)i;										
+				// Add for layer above:
+				if(layer < height-1) {
+						int s = layerSizes[layer+1];
+						for(int i = 0; i < s; i++) {
+								if(connected[layer+1][i]) {
+										continue;
 								}
-								else {
-										return 0; // More than one bricks difference
+								const Brick &b2 = bricks[layer+1][i];
+								if(b.intersects(b2)) {
+										ret += countConnected(layer+1, i);
 								}
 						}
 				}
 				return ret;
+		}
+
+		bool isConnected() {
+				// Reset state:
+				for(int i = 0; i < height; i++) {
+						int s = layerSizes[i];
+						for(int j = 0; j < s; j++) {
+								connected[i][j] = false;
+						}
+				}
+				// Run DFS:
+				int cnt = countConnected(0, 0);
+
+				return cnt == Z;
+		}
+
+		void flip() {
+				#ifdef TRACE
+				std::cout << "START Flipping " << *this << std::endl;
+				#endif
+				Brick tmp[Z-1];
+				for(int layer1 = 0, layer2 = height-1; layer1 < layer2; layer1++, layer2--) {
+						int s1 = layerSizes[layer1];
+						int s2 = layerSizes[layer2];
+						// Save layer 1 in tmp:
+						for(int i = 0; i < s1; i++)
+								tmp[i] = bricks[layer1][i];
+						// Move layer2 to layer1:
+						for(int i = 0; i < s2; i++)
+								bricks[layer1][i] = bricks[layer2][i];
+						// Move tmp to layer 2:
+						for(int i = 0; i < s1; i++)
+								bricks[layer2][i] = tmp[i];
+				}
+				std::reverse(layerSizes, &layerSizes[height]);
+				normalize();
+				#ifdef TRACE
+				std::cout << "DONE Flipping " << *this << std::endl;
+				#endif
 		}
 };
 
 template <int Z>
 class CombinationReader {
 private:
-		std::ifstream *istream;
-		int layerSizes[11], height;
-		uint8_t bits, bitIdx;
-		Combination<Z> lastCombination;
+		std::ifstream *istream; // Reads reversed combinations
+		int layerSizes[MAX_BRICKS], // Reversed
+				height, combinationsLeft;
+		uint8_t bits, bitIdx, brickLayer;
+		Combination<Z-1> baseCombination; // Reversed!
 		bool reverse, done;
 		uint64_t combinationCounter;
 		std::string name;
@@ -413,30 +526,29 @@ public:
 				bits = 0;
 				bitIdx = 8; // Ensure a byte is read next time
 
-				// TODO: Minimize layerSizes and flip if upside down!
 				std::stringstream ss, ss2;
 				ss << Z << "/";
 
-				int layer_size = 0;
+				int layerSize = 0;
 				int size_total = 0;
 				for(int i = 0; size_total < Z; i++) {
-						layer_size = layerSizes[i];
-						this->layerSizes[i] = layer_size;
-						ss2 << layer_size;
-						size_total += layer_size;
+						layerSize = layerSizes[i];
+						this->layerSizes[i] = layerSize;
+						ss2 << layerSize;
+						size_total += layerSize;
 						height++;
 				}
 				assert(Z == size_total);
 
 				std::string layerString = ss2.str(), layerStringReverse = layerString;
 				std::reverse(layerStringReverse.begin(), layerStringReverse.end());				
-				reverse = layerString < layerStringReverse;
+				reverse = layerString < layerStringReverse; // Reverse => Read upside-down.
 
-				name = (reverse ? layerStringReverse : layerString);
-				ss << name;
+				name = layerString; // Do not reverse
+				ss << (reverse ? layerStringReverse : layerString);
 				std::string file_name = ss.str();
 	
-				if(Z != 1) {
+				if(Z > 1) {
 						istream = new std::ifstream(file_name.c_str(), std::ios::binary);
 				}
 
@@ -444,24 +556,14 @@ public:
 						std::reverse(this->layerSizes, &this->layerSizes[height]);
 				}
 
-				// Set lastCombination:
-				lastCombination.bricks[0].brick = FirstBrick;
-				int layer = 0;
-				for(int i = 0, j = 0; i < Z; i++, j++) {
-						if(j == this->layerSizes[layer]) {
-								j = 0;
-								layer++;
-						}
-						lastCombination.bricks[i].layer = layer;
-				}
-				std::cout << "  READER for " << layerString << ": " << file_name << ", reversed: " << reverse;
-				#ifdef DEBUG
-				std::cout << ", input layers: " << lastCombination << std::endl;
-				#endif
+				baseCombination.bricks[0][0] = FirstBrick;
+				combinationsLeft = 0;
+
+				std::cout << "   READER for " << layerString << ": " << file_name << ", reversed: " << reverse << std::endl;
 		}
 
 		~CombinationReader() {
-				if(Z != 1) {
+				if(Z > 1) {
 						istream->close();
 						delete istream;
 				}
@@ -470,15 +572,15 @@ public:
 		bool readBit() {
 				if(bitIdx == 8) {
 						istream->read((char*)&bits, 1);
-            #ifdef DEBUG
-						std::cout << "   Reading byte " << (int)bits << std::endl;
+            #ifdef TRACE
+						std::cout << "     Reading byte " << (int)bits << std::endl;
             #endif
 						bitIdx = 0;
 				}
 				bool bit = (bits >> (7-bitIdx)) & 1;
 				bitIdx++;
-        #ifdef DEBUG
-				std::cout << "   readBit " << (int)bit << std::endl;
+        #ifdef TRACE
+				std::cout << "     readBit " << (int)bit << std::endl;
         #endif
 				return bit;
 		}
@@ -491,8 +593,8 @@ public:
 				}
 				if(negate)
 						ret = -ret;
-        #ifdef DEBUG
-				std::cout << "  readInt8 " << (int)ret << std::endl;
+        #ifdef TRACE
+				std::cout << "    readInt8 -> " << (int)ret << std::endl;
         #endif
 				return ret;
 		}
@@ -502,8 +604,21 @@ public:
 				for(int i = 0; i < 4; i++) {
 						ret = ret | ((int)readBit() << i);
 				}
-        #ifdef DEBUG
-				std::cout << "  readUInt4 " << (int)ret << std::endl;
+        #ifdef TRACE
+				std::cout << "    readUInt4 -> " << (int)ret << std::endl;
+        #endif
+				return ret;
+		}
+		
+		uint32_t readUInt32() {
+				uint32_t ret = 0;
+				for(int block = 0; block < 4; block++) {
+						for(int i = 0; i < 8; i++) {
+								ret = ret | ((int)readBit() << i);
+						}
+				}
+        #ifdef TRACE
+				std::cout << "    readUInt32 -> " << ret << std::endl;
         #endif
 				return ret;
 		}
@@ -513,56 +628,78 @@ public:
 				b.x = readInt8();
 				b.y = readInt8();
         #ifdef DEBUG
-				std::cout << "  readBrick " << b << std::endl;
+				std::cout << "    readBrick -> " << b << std::endl;
         #endif
 		}
 
+		// Assume c already has height and layerSizes set.
 		bool readCombination(Combination<Z> &c) {
 				if(done) {
 						return false;
 				}
 				if(Z == 1) {
-						c.bricks[0].layer = 0;
-						c.bricks[0].brick = FirstBrick;
+						c.layerSizes[0] = 1;
+						c.bricks[0][0] = FirstBrick;
+						c.height = 1;
 						done = true;
 						return true;
 				}
 
-				uint8_t brickI = readUInt4();
-				if(brickI == 15) {
-						done = true;
-						return false;
+				if(combinationsLeft == 0) { // Read new base combination:
+						brickLayer = readUInt4(); // Brick to be added to base combination.
+						if(brickLayer == 15) {
+								done = true;
+								return false;
+						}
+
+						baseCombination.height = height - (brickLayer == height-1 && layerSizes[brickLayer] == 1);
+
+						#ifdef DEBUG
+						std::cout << "    Building on layer " << (int)brickLayer << " of base combination height is " << baseCombination.height << " vs height " << height << std::endl;
+						#endif
+
+						for(int i = 0; i < baseCombination.height; i++) {
+								int s = layerSizes[i] - (brickLayer == i);
+								baseCombination.layerSizes[i] = s;
+
+								for(int j = (i == 0 ? 1 : 0); j < s; j++) {
+										readBrick(baseCombination.bricks[i][j]);
+								}
+						}
+						
+						combinationsLeft = readUInt32();
+						#ifdef DEBUG
+						std::cout << "   Read new base combination: " << baseCombination << ", remaining: " << combinationsLeft << std::endl;
+						#endif
+						assert(baseCombination.isValid("Base combination"));
 				}
 
-				if(brickI == 0) { // Read full combination:
-						c.bricks[0] = LayerBrick(FirstBrick, 0);
-						uint8_t layer = 0;
-						int j = 1;
-						for(int i = 1; i < Z; i++) { // Read size-1 bricks:
-								if(j == layerSizes[(int)layer]) {
-										j = 0;
-										layer++;
-								}
-								c.bricks[i].layer = layer;
-								readBrick(c.bricks[i].brick);
-								j++;
+				// Copy base combination and add one brick:
+				c.height = height;
+				for(int i = 0; i < height; i++) {
+						c.layerSizes[i] = layerSizes[i];
+						int in = 0;
+						if(i == brickLayer) {
+								readBrick(c.bricks[i][0]);
+								in = 1;
 						}
-						lastCombination = c;
-						assert(c.isValid("Full"));
+						int s = (i == baseCombination.height) ? 0 : baseCombination.layerSizes[i];
+						for(int j = 0; j < s; j++) {
+								c.bricks[i][j+in] = baseCombination.bricks[i][j];
+						}
 				}
-				else { // Read just one brick:
-						c = lastCombination;
-						readBrick(c.bricks[brickI].brick);
-						assert(c.isValid("Compressed"));
-				}
+				combinationsLeft--;
 
 				if(reverse) {
 						#ifdef DEBUG
 						std::cout << "   Flipping " << c << " of height " << height << std::endl;
             #endif
-						c.flip(height);
-						assert(c.isValid("Flipped"));
+						c.flip();
 				}
+				else {
+						c.normalize(); // Because brickLayer might not be sorted
+				}
+				assert(c.isValid("Read"));
 
 				#ifdef DEBUG
 				std::cout << "  Reading combination " << combinationCounter++ << " of type " << name << ": " << c << std::endl;
@@ -574,14 +711,15 @@ public:
 template <int Z>
 class CombinationWriter {
 		std::ofstream *ostream;
-		int token; // eg. 211 for 4 bricks in config 2-1-1
-		std::set<Combination<Z> > combinations;
+		int token, height; // eg. 211 for 4 bricks in config 2-1-1
+		std::set<Combination<Z> > combinations; // Only used by assertion!
 		uint8_t bits, cntBits;
-		Combination<Z> lastWritten;
 		uint64_t writtenFull, writtenShort;
 
 public:
 		CombinationWriter(int token, bool saveOutput) : token(token) {
+				height = 0;
+
 				#ifdef DEBUG
 				std::cout << " Create Combination writer for token " << token << ", output?: " << saveOutput << std::endl;
 				#endif
@@ -592,6 +730,7 @@ public:
 						int size_add = token % 10;
 						it += size_add;
 						token /= 10;
+						height++;
 				}
 
 				std::stringstream ss;
@@ -615,13 +754,13 @@ public:
 		}
 
 		void writeBit(bool bit) {
-        #ifdef DEBUG
-				//std::cout << "   WriteBit " << (int)bit << std::endl;
+        #ifdef TRACE
+				std::cout << "    WriteBit " << (int)bit << std::endl;
         #endif
 				bits = (bits << 1) + (bit ? 1 : 0);
 				cntBits++;
 				if(cntBits == 8) {
-            #ifdef DEBUG
+            #ifdef TRACE
 				    std::cout << "   Writing byte '" << (int)bits << "'" << std::endl;
             #endif
 						ostream->write((char*)&bits, 1);
@@ -637,7 +776,7 @@ public:
 
 		// Max difference from first brick is for 11 bricks: 10*3 = 30 studs, so 6 bits suffice:
 		void writeInt8(const int8_t toWrite) {
-        #ifdef DEBUG
+        #ifdef TRACE
 				std::cout << "   WriteInt8 " << (int)toWrite << std::endl;
         #endif
 				int i = toWrite;
@@ -656,15 +795,28 @@ public:
 		}
 
 		void writeUInt4(const uint8_t toWrite) {
-				int i = toWrite;
+				uint8_t i = toWrite;
+        #ifdef TRACE
+				std::cout << "   WriteUInt4 " << (int)i << std::endl;
+        #endif
 				for(int j = 0; j < 4; j++) {
 						writeBit(i & 1);
 						i >>= 1;
 				}
 		}
 
+		void writeUInt32(uint32_t toWrite) {
+        #ifdef TRACE
+				std::cout << "   WriteUInt32 " << toWrite << std::endl;
+        #endif
+				for(int j = 0; j < 32; j++) {
+						writeBit(toWrite & 1);
+						toWrite >>= 1;
+				}
+		}
+
 		void writeBrick(const Brick &b) {
-        #ifdef DEBUG
+        #ifdef TRACE
 				std::cout << "   WriteBrick " << b << std::endl;
         #endif
 				writeBit(b.is_vertical);
@@ -672,90 +824,97 @@ public:
 				writeInt8(b.y);
 		}
 
-		void writeCombination(const Combination<Z> &c) {
-				if(ostream == NULL) {
+		template <int W>
+		void writeCombinations(const Combination<W> &baseCombination, uint8_t brickLayer, std::vector<Brick> &v) {
+				#ifdef DEBUG
+				std::cout << "   Writing " << v.size() << " combinations based on " << baseCombination << std::endl;
+        #endif
+				assert(W == Z-1);
+				if(ostream == NULL || v.empty()) {
 						return;
 				}
-				uint8_t brickI = lastWritten.differentBrick(c);
-				writeUInt4(brickI);
-				if(brickI == 0) {
-						for(int i = 1; i < Z; i++) { // Skip first brick
-								writeBrick(c.bricks[i].brick);
+
+				writeUInt4(brickLayer);
+				for(int i = 0; i < baseCombination.height; i++) {
+						int s = baseCombination.layerSizes[i];
+						for(int j = (i == 0 ? 1 : 0); j < s; j++) {
+    				    #ifdef TRACE
+								std::cout << "   Write base brick [" << i << "][" << j << "]" << std::endl;
+                #endif
+								writeBrick(baseCombination.bricks[i][j]);
 						}
-						lastWritten = c;
-						writtenFull++;
 				}
-				else {
-						writeBrick(c.bricks[brickI].brick);
-						writtenShort++;
+				writeUInt32(v.size());
+
+				for(int i = 0; i < v.size(); i++) {
+						writeBrick(v[i]);
+						#ifdef DEBUG
+						std::cout << "    AddBrick " << brickLayer << " " << v[i] << std::endl;
+						#endif
 				}
+
+				writtenFull++;
+				writtenShort+=v.size();
 		}
 
 		template <int W>
-		void add(Combination<W> &cOld, Brick &addedBrick, int layer, uint64_t &added, uint64_t &symmetries) {
+		bool add(Combination<W> &cOld, const Brick &addedBrick, const uint8_t layer) {
 				#ifdef DEBUG
-				std::cout << " Try to add " << addedBrick << " at layer " << layer << std::endl;
+				std::cout << "   TRY NEW " << addedBrick << " at layer " << (int)layer << std::endl;
         #endif
 				assert(W == Z-1);
-				Combination<Z> c;
+				Combination<Z> c; // Build completely in addBrick()
 				int rotated = 0;
 				if(!cOld.addBrick(addedBrick, layer, c, rotated)) {
   				  #ifdef DEBUG
-				    std::cout << " Does not fit!" << layer << std::endl;
+				    std::cout << " Does not fit!" << std::endl;
             #endif
-						return; // Does not fit.
+						return false; // Does not fit.
 				}
+				#ifdef DEBUG
+				std::cout << "   FIT OK" << std::endl;
+        #endif
 
 				// If cOld is symmetric, then check if we are first:
 				if(cOld.is180Symmetric() && rotated > 90) {
   				  #ifdef DEBUG
 				    std::cout << " Not first version of symmetric combination!" << std::endl;
             #endif
-						return; // Not first version of this symmetric combination.
-				}
-				
-				// Compute layer sizes: TODO: Move this to combination class and improve performance of various functions!
-				int layer_sizes[11];
-				for(int i = 0; i < Z; i++) {
-						layer_sizes[i] = 0;
-				}
-				for(int i = 0; i < Z; i++) {
-						layer_sizes[c.bricks[i].layer]++;
+						return false; // Not first version of this symmetric combination.
 				}
 
 				// Try to remove bricks b from c up to and including layer of addedBrick (unless layer only has 1 brick)
 				// If b is lower layer than addedBrick and combination stays connected, then do not add!
 				// If b same layer as addedBrick: Do not add if combination without b < combination without addedBrick
-				for(int i = 0; i < Z; i++) {
-						int siblingBrickLayer = c.bricks[i].layer;
-						if(siblingBrickLayer < layer) {
-								Combination<W> ignore;
-								if(layer_sizes[siblingBrickLayer] > 1 && c.removeBrickAt(i, ignore)) {
+				Combination<W> ignore, sibling;
+				for(int i = MAX(0, layer-1); i < layer; i++) {
+						for(int j = 0; j < c.layerSizes[i]; j++) {
+								if(c.layerSizes[i] > 1 && c.removeBrickAt(i, j, ignore)) {
 										#ifdef DEBUG
 										std::cout << "  Could be constructed from lower refinement " << ignore << std::endl;
 										#endif
-										return; // Sibling comes before cOld, so we do not add
+										return false; // Sibling comes before cOld, so we do not add
 								}
 						}
-						else if(siblingBrickLayer == layer) {
-								#ifdef DEBUG
-								std::cout << "   same layer!" << std::endl;
-								#endif
-								Combination<W> sibling;
-								if(c.removeBrickAt(i, sibling)) { // Can remove siblingBrick:
-										#ifdef DEBUG
+				}
+
+				int s = c.layerSizes[layer];
+				if(s >= 2) { // If there is at least one other brick at the layer:
+						for(int j = 0; j < s; j++) {
+                #ifdef DEBUG
+								std::cout << "   Check same layer!" << std::endl;
+						    #endif
+								if(c.removeBrickAt(layer, j, sibling)) { // Can remove siblingBrick:
+                    #ifdef DEBUG
 										std::cout << "Comparing sibling " << sibling << " with old " << cOld << std::endl;
-										#endif
+								    #endif
 										if(sibling < cOld) {
-  	  									#ifdef DEBUG
+                        #ifdef DEBUG
 												std::cout << "  Could be constructed from lesser sibling" << sibling << std::endl;
-												#endif
-												return; // Lesser sibling!
+										    #endif
+												return false; // Lesser sibling!
 										}
 								}
-						}
-						else { // siblingBrickLayer > layer:
-								break; // Now above layer of brick to be removed.
 						}
 				}
 
@@ -766,9 +925,6 @@ public:
 
 				assert(combinations.insert(c).second);
 				assert(c.isValid("Counting"));
-
-				// Write to output file:
-				writeCombination(c);
 
 				// Update counters:
 				added++;
@@ -783,6 +939,8 @@ public:
 				if(c == rotated180) {
 						symmetries++;
 				}
+				// TODO: What about 90 degree symmetries?
+				return true;
 		}
 
 		~CombinationWriter() {
@@ -797,34 +955,65 @@ public:
 		}
 
 		template <int W>
-		void makeNewCombinations(Combination<W> &c, const int layer, uint64_t &added, uint64_t &symmetries, std::set<Combination<Z> > &_old, std::set<Combination<Z> > &_new) {
+		void makeNewCombinations(Combination<W> &c, const int layer, std::set<Combination<Z> > &_old, std::set<Combination<Z> > &_new) {
         #ifdef DEBUG
 				std::cout << "-----------------------------" << std::endl;
 				std::cout << "Building on " << c << std::endl;
 				#endif
 				assert(c.isValid("makeNewCombinations"));
 				assert(W == Z-1);
+
+				// Stop early if c is stable with brick below layer-1 removed!
+				Combination<W-1> evenSmaller;
+				for(int i = 0; i < layer-1; i++) {
+						int s = c.layerSizes[i];
+						if(s == 1)
+								continue;
+						for(int j = 0; j < s; j++) {
+								if(c.removeBrickAt(i, j, evenSmaller)) {
+										earlyExits++;
+										#ifdef DEBUG
+										std::cout << "EARLY EXIT due to stable base on layer " << i << ": " << c << " -> " << evenSmaller << std::endl;
+										#endif
+										if((earlyExits-1)%1000000 == 1000000-1)
+												std::cout << "X" << std::flush;
+										return;
+								}
+						}
+				}
 				
         // Build new combinations by adding to all existing bricks:
-				std::set<Brick> alreadyAdded;
-				for(int i = 0; i < W; i++) {
-						const LayerBrick &brick = c.bricks[i];
+				std::set<Brick> alreadyAdded, neighbours;
+				std::vector<Brick> v;
+
+				// Find all potential neighbours above and below:
+				if(layer > 0) {
+						int s = c.layerSizes[layer-1];
+						for(int j = 0; j < s; j++) {
+								Brick &b = c.bricks[layer-1][j];
+								neighbours.insert(b);
+						}
+				}
+				if(layer+1 < c.height) {
+						int s = c.layerSizes[layer+1];
+						for(int j = 0; j < s; j++) {
+								Brick &b = c.bricks[layer+1][j];
+								neighbours.insert(b);
+						}
+				}
+				
+				for(std::set<Brick>::const_iterator it = neighbours.begin(); it != neighbours.end(); it++) {
+						const Brick &brick = *it;
             #ifdef DEBUG
 				    std::cout << " Try adding to brick " << brick << std::endl;
             #endif
 
-						if(brick.layer > layer + 1) {
-								break; // 2 or more above -> done.
-						}
-						if(!(brick.layer+1 == layer || brick.layer-1 == layer)) {
-								continue; // Connect only to bricks above or below
-						}
-						bool isVertical = c.bricks[i].brick.is_vertical;
+						bool isVertical = brick.is_vertical;
 
 						// Add crossing bricks (one vertical, one horizontal):
 						for(int x = -2; x < 3; x++) {
 								for(int y = -2; y < 3; y++) {
-										Brick b(!isVertical, brick.brick.x+x, brick.brick.y+y);
+										Brick b(!isVertical, brick.x+x, brick.y+y);
 										if(alreadyAdded.insert(b).second) { // Brick not already added:
 												#ifdef DEBUG
 												std::cout << "  TRY ADDING CROSSING " << b << " on layer " << layer << std::endl;
@@ -836,7 +1025,9 @@ public:
 												}
 												uint64_t before = added;
 												#endif
-												add(c, b, layer, added, symmetries);
+												if(add(c, b, layer)) {
+														v.push_back(b);
+												}
 												#ifdef DEBUG
 												if(before == added-1) {
 														std::cout << "   NEW OK" << std::endl;
@@ -855,7 +1046,7 @@ public:
 						}		
 						for(int y = -h+1; y < h; y++) {
 								for(int x = -w+1; x < w; x++) {
-										Brick b(isVertical, brick.brick.x+x, brick.brick.y+y);
+										Brick b(isVertical, brick.x+x, brick.y+y);
 										if(alreadyAdded.insert(b).second) {
                         #ifdef DEBUG
 												std::cout << "  TRY ADDING PARALLEL " << b << " on layer " << layer << std::endl;
@@ -867,7 +1058,9 @@ public:
 												}
 												uint64_t before = added;
 												#endif
-												add(c, b, layer, added, symmetries);
+												if(add(c, b, layer)) {
+														v.push_back(b);
+												}
 												#ifdef DEBUG
 												if(before == added-1) {
 														std::cout << "   NEW OK" << std::endl;
@@ -881,13 +1074,17 @@ public:
 				    std::cout << " Done adding to brick " << brick << std::endl;
             #endif
 				}
+
+				// Write:
+				writeCombinations<W>(c, layer, v);
+				
         #ifdef DEBUG
 				std::cout << "DONE Building on " << c << std::endl;
 				std::cout << "-----------------------------" << std::endl;
 				#endif
 		}
 
-		void fillFromReaders(uint64_t &added, uint64_t &symmetries) {
+		void fillFromReaders() {
  		    std::set<Combination<Z> > _old, _new;
         #ifdef DEBUG
 				std::cout << "  Filling from readers. added=" << added << ", symmetries=" << symmetries << std::endl;
@@ -895,40 +1092,46 @@ public:
 				
 				// Build layers:
 				int layers = 0, tkn = token;
-				int layer_sizes[11];
-				for(int i = 0; i < 11; i++) {
+				int layerSizes[MAX_BRICKS];
+				for(int i = 0; true; i++) {
 						int size_add = tkn % 10;
 						if(size_add == 0)
 								break;
 						layers++;
-						layer_sizes[i] = size_add;
+						layerSizes[i] = size_add;
 						tkn /= 10;
 				}
 				// Flip the layer sizes:
 				for(int i = 0; i < layers/2; i++) {
-						std::swap(layer_sizes[i], layer_sizes[layers-i-1]);
+						std::swap(layerSizes[i], layerSizes[layers-i-1]);
 				}
 
+				// Combination to read:
+				Combination<Z-1> c;
+				c.height = height;
+				for(int i = 0; i < height; i++) {
+						c.layerSizes[i] = layerSizes[i];
+				}
+				
 				for(int i = 0; i < layers; i++) { // Reader from reader where brick on layer i was added:
-						if(layer_sizes[i] == 1 && i != layers-1)
+						if(layerSizes[i] == 1 && i != layers-1)
 								continue;
-						if(layers == 2 && layer_sizes[i-1] == Z-1 && Z != 2)
+						if(layers == 2 && layerSizes[i-1] == Z-1 && Z != 2)
 								continue;
 
-						layer_sizes[i]--;
+						layerSizes[i]--;
   	  			#ifdef DEBUG
-						std::cout << "Creating reader for writer " << token << " with " << layers << " layers. Reducing layer " << i << std::endl;
+						std::cout << "   Creating reader for writer " << token << " with " << layers << " layers. Reducing layer " << i << std::endl;
 						#endif
-						CombinationReader<Z-1> reader(layer_sizes);	
+						CombinationReader<Z-1> reader(layerSizes);	
 
-						Combination<Z-1> c;
 						while(reader.readCombination(c)) {
-								makeNewCombinations(c, i, added, symmetries, _old, _new);
+								makeNewCombinations(c, i, _old, _new);
 						}
   	  			#ifdef DEBUG
 						std::cout << "Done handling reader for writer " << token << " with " << layers << " layers. Reducing layer " << i << std::endl;
 						#endif
-						layer_sizes[i]++;
+						layerSizes[i]++;
 				}
 
   	  	#ifdef DEBUG
@@ -954,42 +1157,44 @@ public:
   Otherwise, combinations of all remaining are constructed recursively.
 */
 template <int Z>
-void handleCombinationWriters(int token, int remaining, bool add_self, uint64_t &added, uint64_t &symmetries, bool saveOutput) {
+void handleCombinationWriters(int token, int remaining, bool add_self, bool saveOutput) {
 		if(remaining == 0) {
 				std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
 				uint64_t before = added, before_s = symmetries;
 				std::cout << " Handling combinations for token " << token << std::endl;
 
 				CombinationWriter<Z> writer(token, saveOutput);
-				#ifdef DEBUG
+				#ifdef TRACE
 				std::cout << "  Writer constructed" << std::endl;
 				#endif
-				writer.fillFromReaders(added, symmetries);
+				writer.fillFromReaders();
 
 				std::cout << "  Constructed " << (added-before) << " combinations, of which " << (symmetries-before_s) << " are symmetric in ";
 				std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
 				std::chrono::duration<double> t = t_end - t_init;
-				std::cout << t.count() << "s." << std::endl;
+				std::cout << t.count() << "s. Early exits: " << earlyExits << std::endl;
 				return;
 		}
 
-		//std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << add_self << std::endl;
+		#ifdef TRACE
+		std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << add_self << std::endl;
+		#endif
 		for(int i = remaining - (add_self ? 0 : 1); i > 0; i--) {
 				int ntoken = 10*token + i;
-				handleCombinationWriters<Z>(ntoken, remaining - i, true, added, symmetries, saveOutput);
+				handleCombinationWriters<Z>(ntoken, remaining - i, true, saveOutput);
 		}
 }
 
 template <int Z>
 void build_all_combinations(bool saveOutput) {
 		std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
-		uint64_t added = 0, symmetries = 0;
+		added = 0; symmetries = 0; earlyExits = 0;
 		if(Z == 1) {
 				return; // Trivial case with 1 brick.
 		}
 	
 		std::cout << "Building all combinations of size " << Z << std::endl;
-		handleCombinationWriters<Z>(0, Z, false, added, symmetries, saveOutput);
+		handleCombinationWriters<Z>(0, Z, false, saveOutput);
 
 		std::cout << "Constructed " << added << " combinations of size " << Z << ", " << symmetries << " of those being symmetric in ";
 		std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();

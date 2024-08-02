@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include "rectilinear.h"
 
+uint64_t added, symmetries, earlyExits;
+
 void countRefinements(char* input) {
 		int size = 0, token = 0;
 		char c;
@@ -12,38 +14,37 @@ void countRefinements(char* input) {
 				token = token * 10 + (c-'0');
 				size += (c-'0');
 		}
-		uint64_t added = 0, symmetries = 0;
-		bool saveOutput = true;
+		bool saveOutput = size < 8;
 		switch(size) {
 		case 2:
-				rectilinear::handleCombinationWriters<2>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<2>(token, 0, false, saveOutput);
 				break;
 		case 3:
-				rectilinear::handleCombinationWriters<3>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<3>(token, 0, false, saveOutput);
 				break;
 		case 4:
-				rectilinear::handleCombinationWriters<4>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<4>(token, 0, false, saveOutput);
 				break;
 		case 5:
-				rectilinear::handleCombinationWriters<5>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<5>(token, 0, false, saveOutput);
 				break;
 		case 6:
-				rectilinear::handleCombinationWriters<6>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<6>(token, 0, false, saveOutput);
 				break;
 		case 7:
-				rectilinear::handleCombinationWriters<7>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<7>(token, 0, false, saveOutput);
 				break;
 		case 8:
-				rectilinear::handleCombinationWriters<8>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<8>(token, 0, false, saveOutput);
 				break;
 		case 9:
-				rectilinear::handleCombinationWriters<9>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<9>(token, 0, false, saveOutput);
 				break;
 		case 10:
-				rectilinear::handleCombinationWriters<10>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<10>(token, 0, false, saveOutput);
 				break;
 		case 11:
-				rectilinear::handleCombinationWriters<11>(token, 0, false, added, symmetries, saveOutput);
+				rectilinear::handleCombinationWriters<11>(token, 0, false, saveOutput);
 				break;
 		default:
 				std::cout << "Model size not supported: " << size << std::endl;
@@ -52,15 +53,10 @@ void countRefinements(char* input) {
 }
 
 /*
-- file format:
--- Rectilinear combination bit usage (11 bit total):
- First bit: 0 for vertical, 1 for horizontal
- x index: 0 to 31: -15 to 15 (5 bit)
- y index: 0 to 31: -15 to 15 (5 bit)
- Restrictions:
-  - first brick must be a 000 config
-  - lower lv. 0 must be minimal (lex on bricks)
-  - bricks must be x,y lex sorted on layers	
+ Rectilinear models with restrictions on representation:
+  - first brick must be vertical at first layer and placed at 0,0
+  - model is minimal of all rotations (vs rotated 90, 180, 270 degrees)
+  - bricks are lexicographically sorted (orientation,x,y) on each layer
  */
 int main(int argc, char** argv) {
 		bool saveFiles = true;
