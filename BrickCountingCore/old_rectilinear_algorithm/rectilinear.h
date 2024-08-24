@@ -944,8 +944,11 @@ public:
 		}
 
 		~CombinationWriter() {
+				#ifdef DEBUG
 				std::cout << "  Written combinations full: " << writtenFull << ", short: " << writtenShort << " Compression% " << (writtenShort)*100.0/(writtenFull+writtenShort) << std::endl;
+				#endif
 				if(ostream != NULL) {
+						std::cout << "   Closing write stream for " << token << std::endl;
 						writeUInt4(15); // Mark end of file.
 						flushBits();
 						ostream->flush();
@@ -965,10 +968,11 @@ public:
 
 				// Stop early if c is stable with brick below layer-1 removed!
 				Combination<W-1> evenSmaller;
-				for(int i = 0; i < layer-1; i++) {
+				/*for(int i = 0; i < layer-1; i++) {
 						int s = c.layerSizes[i];
-						if(s == 1)
-								continue;
+						if(s == 1) {
+								continue; // Do not remove brick if it is the only one in the layer!
+						}
 						for(int j = 0; j < s; j++) {
 								if(c.removeBrickAt(i, j, evenSmaller)) {
 										earlyExits++;
@@ -980,7 +984,7 @@ public:
 										return;
 								}
 						}
-				}
+				}//*/
 				
         // Build new combinations by adding to all existing bricks:
 				std::set<Brick> alreadyAdded, neighbours;

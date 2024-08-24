@@ -7,14 +7,27 @@
 
 uint64_t added, symmetries, earlyExits;
 
-void countRefinements(char* input) {
-		int size = 0, token = 0;
+/*
+	TODO:
+	- Make CombinationReader into interface
+	- Have SpindleReader for Lemma 1
+	- Create Max2LayerReader for <222> combinations
+ */
+void countRefinements(char* input, bool saveOutput) {
+		int size = 0, token = 0, reverseToken = 0, height = 0;
 		char c;
 		for(int i = 0; (c = input[i]); i++) {
 				token = token * 10 + (c-'0');
 				size += (c-'0');
+				height++;
 		}
-		bool saveOutput = size < 8;
+		for(int i = height-1; i >= 0; i--) {
+				c = input[i];
+				reverseToken = reverseToken * 10 + (c-'0');
+		}
+		if(token < reverseToken) {
+				token = reverseToken;
+		}
 		switch(size) {
 		case 2:
 				rectilinear::handleCombinationWriters<2>(token, 0, false, saveOutput);
@@ -62,17 +75,20 @@ int main(int argc, char** argv) {
 		bool saveFiles = true;
 		switch(argc) {
 		case 1:
-				//rectilinear::build_all_combinations<2>(saveFiles);
-				//rectilinear::build_all_combinations<3>(saveFiles);
-				//rectilinear::build_all_combinations<4>(saveFiles);
+				rectilinear::build_all_combinations<2>(saveFiles);
+				rectilinear::build_all_combinations<3>(saveFiles);
+				rectilinear::build_all_combinations<4>(saveFiles);
 				rectilinear::build_all_combinations<5>(saveFiles);
-				//rectilinear::build_all_combinations<6>(saveFiles);
+				rectilinear::build_all_combinations<6>(saveFiles);
 				break;
 		case 2:
-				countRefinements(argv[1]);
+				countRefinements(argv[1], false);
+				break;
+		case 3:
+				countRefinements(argv[1], true);
 				break;
 		default:
-				std::cout << "Usage: Run without arguments to call all models. Or specify refinement like 121 to run for specific refinement A(4,3,1,2,1) as an example." << std::endl;
+				std::cout << "Usage: Run without arguments to call all models. Or specify refinement like 121 [save] to run for specific refinement A(4,3,1,2,1) as an example. A second argument will cause the output to be saved on disk." << std::endl;
 				break;
 		}
 		return 0;
