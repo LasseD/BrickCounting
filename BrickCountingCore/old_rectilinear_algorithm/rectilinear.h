@@ -968,7 +968,7 @@ public:
 
 				// Stop early if c is stable with brick below layer-1 removed!
 				Combination<W-1> evenSmaller;
-				/*for(int i = 0; i < layer-1; i++) {
+				for(int i = 0; i < layer-1; i++) {
 						int s = c.layerSizes[i];
 						if(s == 1) {
 								continue; // Do not remove brick if it is the only one in the layer!
@@ -984,7 +984,7 @@ public:
 										return;
 								}
 						}
-				}//*/
+				}
 				
         // Build new combinations by adding to all existing bricks:
 				std::set<Brick> alreadyAdded, neighbours;
