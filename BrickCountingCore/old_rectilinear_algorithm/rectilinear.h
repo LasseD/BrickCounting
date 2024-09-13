@@ -1453,6 +1453,12 @@ void countX2(char* input) {
 				CombinationReader<Z-layer0Size+1> preReader(smallerLayerSizes);
 				while(preReader.readCombination(smaller)) {
 						preCount++;
+						if((preCount-1)%1000000000 == 1000000000-1)
+								std::cout << " " << preCount/1000000000 << " billion" << std::endl;
+						else if((preCount-1)%100000000 == 100000000-1)
+								std::cout << ":" << std::flush;	
+						else if((preCount-1)%10000000 == 10000000-1)
+								std::cout << "." << std::flush;	
 				}
 				// In own space to ensure proper closing of file before next read.
 		}
