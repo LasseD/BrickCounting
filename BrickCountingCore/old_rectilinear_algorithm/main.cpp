@@ -14,50 +14,43 @@ uint64_t added, symmetries, earlyExits;
 	- Create Max2LayerReader for <222> combinations
  */
 void countRefinements(char* input, bool saveOutput) {
-		int size = 0, token = 0, reverseToken = 0, height = 0;
+		int size = 0, token = 0,  height = 0;
 		char c;
 		for(int i = 0; (c = input[i]); i++) {
 				token = token * 10 + (c-'0');
 				size += (c-'0');
 				height++;
 		}
-		for(int i = height-1; i >= 0; i--) {
-				c = input[i];
-				reverseToken = reverseToken * 10 + (c-'0');
-		}
-		if(token < reverseToken) {
-				token = reverseToken;
-		}
 		switch(size) {
 		case 2:
-				rectilinear::handleCombinationWriters<2>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<2>(token, height, input, saveOutput);
 				break;
 		case 3:
-				rectilinear::handleCombinationWriters<3>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<3>(token, height, input, saveOutput);
 				break;
 		case 4:
-				rectilinear::handleCombinationWriters<4>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<4>(token, height, input, saveOutput);
 				break;
 		case 5:
-				rectilinear::handleCombinationWriters<5>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<5>(token, height, input, saveOutput);
 				break;
 		case 6:
-				rectilinear::handleCombinationWriters<6>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<6>(token, height, input, saveOutput);
 				break;
 		case 7:
-				rectilinear::handleCombinationWriters<7>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<7>(token, height, input, saveOutput);
 				break;
 		case 8:
-				rectilinear::handleCombinationWriters<8>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<8>(token, height, input, saveOutput);
 				break;
 		case 9:
-				rectilinear::handleCombinationWriters<9>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<9>(token, height, input, saveOutput);
 				break;
 		case 10:
-				rectilinear::handleCombinationWriters<10>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<10>(token, height, input, saveOutput);
 				break;
 		case 11:
-				rectilinear::handleCombinationWriters<11>(token, 0, false, saveOutput);
+				rectilinear::countRefinements<11>(token, height, input, saveOutput);
 				break;
 		default:
 				std::cout << "Model size not supported: " << size << std::endl;

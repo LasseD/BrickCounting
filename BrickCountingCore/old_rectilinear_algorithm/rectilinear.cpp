@@ -40,6 +40,11 @@ int Brick::cmp(const Brick& b) const {
 bool Brick::operator <(const Brick& b) const {
 	return cmp(b) < 0;
 }
+uint64_t Brick::encode15() const {
+		uint64_t X = x+30;
+		uint64_t Y = y+30;
+		return (((X << 7) | Y) << 1) | is_vertical;
+}
 
 std::ostream& operator <<(std::ostream &os,const Brick &b) {
     os << (b.is_vertical?"|":"=") << (int)b.x << "," << (int)b.y << (b.is_vertical?"|":"=");

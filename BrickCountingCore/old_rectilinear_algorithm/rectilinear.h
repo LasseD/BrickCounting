@@ -8,6 +8,8 @@
 #define MAX(a,b) ((a) < (b) ? (b) : (a))
 #define DIFF(a,b) ((a) < (b) ? (b)-(a) : (a)-(b))
 #define MAX_BRICKS 11
+#define MAX_HEIGHT 6
+#define MAX_LAYER_SIZE 9
 
 #include "stdint.h"
 #include <stdarg.h>
@@ -17,6 +19,7 @@
 #include <sstream>
 #include <chrono>
 #include <set>
+#include <map>
 #include <algorithm>
 
 extern uint64_t added, symmetries, earlyExits;
@@ -38,6 +41,7 @@ struct Brick {
 		friend std::ostream& operator <<(std::ostream &os,const Brick &b);
 		int cmp(const Brick& b) const;
 		bool intersects(const Brick &b) const;
+		uint64_t encode15() const;
 
 		bool is_vertical:1;
 		// Could use :6 when 6 bricks is maximum size, but it would not provide practical benefits.
@@ -50,10 +54,10 @@ template <int Z> // Combination with Z bricks
 class Combination {
 private:
     // State to check connectivity:
-		bool connected[Z][Z];
+		bool connected[MAX_HEIGHT][MAX_LAYER_SIZE];
 public:
-		int layerSizes[Z], height;
-		Brick bricks[Z][Z]; // Layer, idx
+		int layerSizes[MAX_HEIGHT], height;
+		Brick bricks[MAX_HEIGHT][MAX_LAYER_SIZE]; // Layer, idx
 
 		/*
 			Init with one brick on layer 0 at 0,0.
@@ -215,7 +219,7 @@ public:
 				}
 				translateMinToOrigo();
 				sortBricks();
-				assert(isValid("rotate90"));
+				//assert(isValid("rotate90"));
 		}
 
 		void rotate180() {
@@ -229,7 +233,7 @@ public:
 				}
 				translateMinToOrigo();
 				sortBricks(); // TODO: Is std::reverse fast enough?
-				assert(isValid("rotate180"));
+				//assert(isValid("rotate180"));
 		}
 
 		// TODO: Optimize by:
@@ -244,6 +248,34 @@ public:
 				Combination<Z> c(*this);
 				c.rotate180();
 				return *this == c;
+		}
+
+		bool isSymmetricAboveFirstLayer() const {
+				Combination<Z-1> c;
+				c.height = height-1;
+				for(int i = 1; i < height; i++) {
+						c.layerSizes[i-1] = layerSizes[i];
+						for(int j = 0; j < layerSizes[i]; j++) {
+								c.bricks[i-1][j] = bricks[i][j];
+						}
+				}
+				c.normalize();
+				Combination<Z-1> c2(c);
+				c2.rotate180();
+				return c == c2;
+		}
+
+		bool isConnectedAboveFirstLayer() const {
+				Combination<Z-1> c;
+				c.height = height-1;
+				for(int i = 1; i < height; i++) {
+						c.layerSizes[i-1] = layerSizes[i];
+						for(int j = 0; j < layerSizes[i]; j++) {
+								c.bricks[i-1][j] = bricks[i][j];
+						}
+				}
+				//c.normalize(); // TODO: Needed?
+				return c.isConnected();
 		}
 
 		bool can_rotate90() const {
@@ -387,9 +419,6 @@ public:
 		}
 		
 		void normalize(int &rotated) {
-				#ifdef DEBUG
-				std::cout << "Normalizing " << *this << std::endl;
-				#endif
 				// Ensure FirstBrick is first and all is sorted:
 				bool hasVerticalLayer0Brick = false;
 				for(int i = 0; i < layerSizes[0]; i++) {
@@ -484,7 +513,7 @@ public:
 				#ifdef TRACE
 				std::cout << "START Flipping " << *this << std::endl;
 				#endif
-				Brick tmp[Z-1];
+				Brick tmp[MAX_BRICKS-1];
 				for(int layer1 = 0, layer2 = height-1; layer1 < layer2; layer1++, layer2--) {
 						int s1 = layerSizes[layer1];
 						int s2 = layerSizes[layer2];
@@ -504,13 +533,87 @@ public:
 				std::cout << "DONE Flipping " << *this << std::endl;
 				#endif
 		}
+
+		uint64_t encodeFor12(bool &topSymmetric, bool &topConnected) const {
+				assert(layerSizes[0] == 1);
+				assert(layerSizes[1] == 2);
+
+				uint64_t ret = 0;
+
+				// Encode bricks:
+				for(int i = 0; i < 2; i++) {
+						for(int j = 0; j < layerSizes[i]; j++) {
+								ret = (ret << 15) | bricks[i][j].encode15();
+						}
+				}
+				
+				// Additional bits:
+				topSymmetric = isSymmetricAboveFirstLayer();
+				topConnected = isConnectedAboveFirstLayer();
+				
+				return (ret << 2) | (topSymmetric << 1) | topConnected;
+		}
+
+		uint64_t countSymmetricLayer0Siblings() const {
+				assert(layerSizes[0] > 1);
+				assert(layerSizes[1] == 2);
+
+				uint64_t ret = 0;
+				int X = bricks[1][0].x + bricks[1][1].x;
+				int Y = bricks[1][0].y + bricks[1][1].y;
+				std::set<std::pair<int,int> > v, h, *seen;
+				for(int i = 0; i < layerSizes[0]; i++) {
+						const Brick &b = bricks[0][i];
+						int x = b.x;
+						int y = b.y;
+						std::pair<int,int> p2(X-x, Y-y);
+						seen = b.is_vertical ? &v : &h;
+						if(seen->find(p2) == seen->end()) {
+								std::pair<int,int> p1(x,y);
+								seen->insert(p1);
+						}
+						else {
+								ret++;
+						}
+				}
+				return ret;
+		}
+
+		uint64_t countSymmetricLayer0SiblingsThatConnectAbove() const {
+				assert(layerSizes[0] > 1);
+				assert(layerSizes[1] == 2);
+
+				uint64_t ret = 0;
+				int X = bricks[1][0].x + bricks[1][1].x;
+				int Y = bricks[1][0].y + bricks[1][1].y;
+				std::set<std::pair<int,int> > v, h, *seen;
+				for(int i = 0; i < layerSizes[0]; i++) {
+						const Brick &b = bricks[0][i];
+						if(!b.intersects(bricks[1][0]) || !b.intersects(bricks[1][1])) {
+								continue; // Not connecting above
+						}
+						
+						int x = b.x;
+						int y = b.y;
+						std::pair<int,int> p2(X-x, Y-y);
+						seen = b.is_vertical ? &v : &h;
+						if(seen->find(p2) == seen->end()) {
+								std::pair<int,int> p1(x,y);
+								seen->insert(p1);
+						}
+						else {
+								ret++;
+						}
+				}
+				return ret;
+		}
 };
 
 template <int Z>
 class CombinationReader {
 private:
 		std::ifstream *istream; // Reads reversed combinations
-		int layerSizes[MAX_BRICKS], // Reversed
+		int layerSizes[MAX_HEIGHT], // Reversed
 				height, combinationsLeft;
 		uint8_t bits, bitIdx, brickLayer;
 		Combination<Z-1> baseCombination; // Reversed!
@@ -572,16 +675,10 @@ public:
 		bool readBit() {
 				if(bitIdx == 8) {
 						istream->read((char*)&bits, 1);
-            #ifdef TRACE
-						std::cout << "     Reading byte " << (int)bits << std::endl;
-            #endif
 						bitIdx = 0;
 				}
 				bool bit = (bits >> (7-bitIdx)) & 1;
 				bitIdx++;
-        #ifdef TRACE
-				std::cout << "     readBit " << (int)bit << std::endl;
-        #endif
 				return bit;
 		}
 
@@ -593,9 +690,6 @@ public:
 				}
 				if(negate)
 						ret = -ret;
-        #ifdef TRACE
-				std::cout << "    readInt8 -> " << (int)ret << std::endl;
-        #endif
 				return ret;
 		}
 
@@ -604,9 +698,6 @@ public:
 				for(int i = 0; i < 4; i++) {
 						ret = ret | ((int)readBit() << i);
 				}
-        #ifdef TRACE
-				std::cout << "    readUInt4 -> " << (int)ret << std::endl;
-        #endif
 				return ret;
 		}
 		
@@ -617,9 +708,6 @@ public:
 								ret = ret | ((int)readBit() << i);
 						}
 				}
-        #ifdef TRACE
-				std::cout << "    readUInt32 -> " << ret << std::endl;
-        #endif
 				return ret;
 		}
 		
@@ -627,9 +715,6 @@ public:
 				b.is_vertical = readBit();
 				b.x = readInt8();
 				b.y = readInt8();
-        #ifdef DEBUG
-				std::cout << "    readBrick -> " << b << std::endl;
-        #endif
 		}
 
 		// Assume c already has height and layerSizes set.
@@ -654,10 +739,6 @@ public:
 
 						baseCombination.height = height - (brickLayer == height-1 && layerSizes[brickLayer] == 1);
 
-						#ifdef DEBUG
-						std::cout << "    Building on layer " << (int)brickLayer << " of base combination height is " << baseCombination.height << " vs height " << height << std::endl;
-						#endif
-
 						for(int i = 0; i < baseCombination.height; i++) {
 								int s = layerSizes[i] - (brickLayer == i);
 								baseCombination.layerSizes[i] = s;
@@ -668,9 +749,6 @@ public:
 						}
 						
 						combinationsLeft = readUInt32();
-						#ifdef DEBUG
-						std::cout << "   Read new base combination: " << baseCombination << ", remaining: " << combinationsLeft << std::endl;
-						#endif
 						assert(baseCombination.isValid("Base combination"));
 				}
 
@@ -691,9 +769,6 @@ public:
 				combinationsLeft--;
 
 				if(reverse) {
-						#ifdef DEBUG
-						std::cout << "   Flipping " << c << " of height " << height << std::endl;
-            #endif
 						c.flip();
 				}
 				else {
@@ -701,7 +776,7 @@ public:
 				}
 				assert(c.isValid("Read"));
 
-				#ifdef DEBUG
+				#ifdef TRACE
 				std::cout << "  Reading combination " << combinationCounter++ << " of type " << name << ": " << c << std::endl;
 				#endif
 				return true;
@@ -959,7 +1034,7 @@ public:
 
 		template <int W>
 		void makeNewCombinations(Combination<W> &c, const int layer, std::set<Combination<Z> > &_old, std::set<Combination<Z> > &_new) {
-        #ifdef DEBUG
+        #ifdef TRACE
 				std::cout << "-----------------------------" << std::endl;
 				std::cout << "Building on " << c << std::endl;
 				#endif
@@ -1082,7 +1157,7 @@ public:
 				// Write:
 				writeCombinations<W>(c, layer, v);
 				
-        #ifdef DEBUG
+        #ifdef TRACE
 				std::cout << "DONE Building on " << c << std::endl;
 				std::cout << "-----------------------------" << std::endl;
 				#endif
@@ -1096,7 +1171,7 @@ public:
 				
 				// Build layers:
 				int layers = 0, tkn = token;
-				int layerSizes[MAX_BRICKS];
+				int layerSizes[MAX_HEIGHT];
 				for(int i = 0; true; i++) {
 						int size_add = tkn % 10;
 						if(size_add == 0)
@@ -1186,6 +1261,302 @@ void handleCombinationWriters(int token, int remaining, bool add_self, bool save
 		for(int i = remaining - (add_self ? 0 : 1); i > 0; i--) {
 				int ntoken = 10*token + i;
 				handleCombinationWriters<Z>(ntoken, remaining - i, true, saveOutput);
+		}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template <int Z, int layer0Size>
+void countLayer0P(Combination<Z> &symmetryChecker, int idx, std::set<Brick>::const_iterator itBegin, std::set<Brick>::const_iterator itEnd, uint64_t &cnt, uint64_t &cntSymmetric, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination<Z> > &seen) {
+		if(idx == layer0Size-1) {
+				Combination<Z> c(symmetryChecker);
+				c.normalize();				
+
+				if(seen.find(c) != seen.end()) {
+						return; // Already seen!
+				}
+				seen.insert(c);
+
+				assert(c.layerSizes[1] == 2);
+				assert(c.layerSizes[0] == layer0Size);
+				bool isSymmetric = c.is180Symmetric();
+				uint64_t timesCounted;
+
+				if(!topConnected) {
+						uint64_t connectsAbove = 0;
+						for(int i = 0; i < layer0Size; i++) {
+								Brick &b = c.bricks[0][i];
+								if(b.intersects(c.bricks[1][0]) && b.intersects(c.bricks[1][1])) {
+										connectsAbove++;
+								}
+						}
+						
+						if(topSymmetric) {
+								uint64_t s = c.countSymmetricLayer0SiblingsThatConnectAbove();
+								timesCounted = connectsAbove - s;
+						}
+						else {
+								timesCounted = connectsAbove;
+						}
+				}
+				else { // topConnected:
+						// Top is connected, so each brick in layer 0 causes a count... unless
+						// top is symmetric and bricks below have symmetric sibling
+						if(topSymmetric) {
+								uint64_t s = c.countSymmetricLayer0Siblings();
+								timesCounted = layer0Size - s;
+						}
+						else {
+								timesCounted = layer0Size; // Once for each brick
+						}
+				}
+
+				cnt += divisor / timesCounted;
+				if(topSymmetric && isSymmetric) {
+						cntSymmetric += divisor / timesCounted;
+				}
+
+				#ifdef TRACE
+				//if(topConnected && topSymmetric && timesCounted == 2) {
+				if(!topConnected && timesCounted == 3) {
+						std::cout << std::endl;
+						std::cout << c << std::endl;
+						std::cout << "topConnected " << topConnected << std::endl;
+						std::cout << "isSymmetric " << isSymmetric << std::endl;
+						std::cout << "topSymmetric " << topSymmetric << std::endl;
+						std::cout << "timesCounted " << timesCounted << std::endl;
+						std::cout << "countSymmetricLayer0SiblingsThatConnectAbove " << c.countSymmetricLayer0SiblingsThatConnectAbove() << std::endl;
+						std::cout << "countSymmetricLayer0Siblings " << c.countSymmetricLayer0Siblings() << std::endl;
+						int *a = NULL; a[2] = 4;
+				}
+				#endif
+
+				return;
+		}
+		
+		for(std::set<Brick>::const_iterator it = itBegin; it != itEnd; it++) {
+				Brick b = *it;
+				// Check that b does not collide:
+				bool ok = true;
+				for(int i = 1; i < idx+1; i++) {
+						if(symmetryChecker.bricks[0][i].intersects(b)) {
+								ok = false;
+								break;
+						}
+				}
+				if(!ok) {
+						continue; // Intersection!
+				}
+				
+				symmetryChecker.bricks[0][idx+1] = b;
+				std::set<Brick>::const_iterator nxt = it;
+				nxt++;
+				countLayer0P<Z,layer0Size>(symmetryChecker, idx+1, nxt, itEnd, cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
+		}
+}
+
+/*
+	Place "toPlace" bricks on layer 0 in all ways possible.
+ */
+template <int Z, int layer0Size>
+void countLayer0Placements(Combination<Z-layer0Size+1> &c, uint64_t &cnt, uint64_t &cntSymmetric, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination<Z> > &seen) {
+		assert(c.layerSizes[0] == 1);
+		assert(c.layerSizes[1] == 2);
+		Brick &blocker = c.bricks[0][0];
+
+		// Find legal placements v:
+		std::set<Brick> s;
+		for(int i = 0; i < 2; i++) {
+				Brick &b = c.bricks[1][i];
+				bool isVertical = b.is_vertical;
+
+				// Add crossing bricks (one vertical, one horizontal):
+				for(int x = -2; x < 3; x++) {
+						for(int y = -2; y < 3; y++) {
+								Brick b2(!isVertical, b.x+x, b.y+y);
+								if(!blocker.intersects(b2)) {
+										s.insert(b2);
+								}
+						}
+				}
+				// Add parallel bricks:
+				int w = 4, h = 2;
+				if(isVertical) {
+						w = 2;
+						h = 4;
+				}		
+				for(int y = -h+1; y < h; y++) {
+						for(int x = -w+1; x < w; x++) {
+								Brick b2(isVertical, b.x+x, b.y+y);
+								if(!blocker.intersects(b2)) {
+										s.insert(b2);
+								}
+						}
+				}
+		}
+		#ifdef TRACEX
+		std::cout << "  " << s.size() << " Legal bricks to place on first layer:" << std::endl;
+		for(std::set<Brick>::const_iterator it = s.begin(); it != s.end(); it++) {
+				std::cout << "   " << *it << std::endl;
+		}
+		#endif
+
+		// Construct symmetry checker c2:
+		Combination<Z> c2;
+		c2.height = c.height;
+		c2.layerSizes[0] = layer0Size;
+		c2.bricks[0][0] = blocker;
+		for(int i = 1; i < c.height; i++) {
+				c2.layerSizes[i] = c.layerSizes[i];
+				for(int j = 0; j < c.layerSizes[i]; j++) {
+						c2.bricks[i][j] = c.bricks[i][j];
+				}
+		}
+
+		countLayer0P<Z,layer0Size>(c2, 0, s.begin(), s.end(), cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
+}
+
+/*
+	Special case: First layer has more than one brick, while second has 2.
+	Call it <X2...>
+  Iterate over <12...>
+	Add remaining bricks to first layer and count how many ways that can be done.
+ */
+template <int Z, int layer0Size>
+void countX2(char* input) {
+		int smallerToken = 1; // Just have 1 in first layer of smaller
+		int smallerLayerSizes[MAX_HEIGHT];
+		smallerLayerSizes[0] = 1;
+		char c;
+		for(int i = 1; (c = input[i]); i++) {
+				smallerToken = smallerToken * 10 + (c-'0');
+				smallerLayerSizes[i] = (c-'0');
+		}
+		std::cout << "Constructing to " << layer0Size << " bricks for first layer of <" << smallerToken << ">" << std::endl;
+
+		// Go through all smaller combinations:
+		uint64_t cnt = 0, cntSymmetric = 0, divisor = 5*6*7*8*9, countSmaller = 0, cntSkip = 0, preCount = 0;
+
+		Combination<Z-layer0Size+1> smaller;
+		{
+				CombinationReader<Z-layer0Size+1> preReader(smallerLayerSizes);
+				while(preReader.readCombination(smaller)) {
+						preCount++;
+				}
+				// In own space to ensure proper closing of file before next read.
+		}
+		std::cout << "Number of smaller configuration to build on: " << preCount << std::endl;
+		
+		std::map<uint64_t,uint64_t> x2Cnt, x2Sym; // Memory of results
+		
+		CombinationReader<Z-layer0Size+1> reader(smallerLayerSizes);
+		while(reader.readCombination(smaller)) {
+				countSmaller++;
+				
+				// Find all locations to place a brick on first layer:
+				bool topSymmetric, topConnected;
+				uint64_t encoded = smaller.encodeFor12(topSymmetric, topConnected);
+
+				if(x2Cnt.find(encoded) != x2Cnt.end()) {
+						cnt += x2Cnt[encoded];
+						cntSymmetric += x2Sym[encoded];
+						cntSkip++;
+						if((cntSkip-1)%100000000 == 100000000-1)
+								std::cout << " " << (cntSkip/1000000) << " million. " << (countSmaller*100.0/preCount) << "% read." << std::endl;
+						else if((cntSkip-1)%10000000 == 10000000-1)
+								std::cout << ":" << std::flush;
+						else if((cntSkip-1)%1000000 == 1000000-1)
+								std::cout << "." << std::flush;				
+				}
+				else {
+						std::set<Combination<Z> > seen;
+						uint64_t _cnt = 0, _cntSymmetric = 0;
+						countLayer0Placements<Z,layer0Size>(smaller, _cnt, _cntSymmetric, divisor, topSymmetric, topConnected, seen);
+
+						x2Cnt[encoded] = _cnt;
+						x2Sym[encoded] = _cntSymmetric;
+
+						cnt += _cnt;
+						cntSymmetric += _cntSymmetric;
+
+						if(x2Cnt.size()%1000 == 0)
+								std::cout << "| " << x2Cnt.size() << " |" << std::flush;
+
+				    #ifdef TRACE
+						std::cout << seen.size() << " models created on " << smaller << std::endl;
+  	  			#endif
+
+				}
+		}
+		std::cout << " Read " << countSmaller << " smaller combinations." << std::endl;
+		std::cout << " Counted " << cnt << std::endl;
+		std::cout << " Skipped " << cntSkip << " (" << (cntSkip*100.0)/countSmaller << "%)" << std::endl;
+		std::cout << " Skip map size " << x2Cnt.size() << std::endl;		
+
+		std::cout << cnt / divisor << " (" << cntSymmetric / divisor << ")" << std::endl;
+		assert(cnt % divisor == 0);
+		assert(cntSymmetric % divisor == 0);
+}
+
+template <int Z>
+void countRefinements(int token, int height, char* input, bool saveOutput) {
+		// Special case handling:
+		if(height >= 2 && input[0] > '1' && input[1] == '2') {
+				std::cout << "Special case <X2...>" << std::endl;
+				const int layer0Size = input[0]-'0';
+				switch(layer0Size) {
+				case 2:
+						countX2<Z,2>(input);
+						break;
+				case 3:
+						countX2<Z,3>(input);
+						break;
+				case 4:
+						countX2<Z,4>(input);
+						break;
+				case 5:
+						countX2<Z,5>(input);
+						break;
+				case 6:
+						countX2<Z,6>(input);
+						break;
+				case 7:
+						countX2<Z,7>(input);
+						break;
+				case 8:
+						countX2<Z,8>(input);
+						break;
+				case 9:
+						countX2<Z,9>(input);
+						break;
+				default:
+						std::cerr << "Unexpected size of first layer: " << layer0Size << std::endl;
+						return;
+				}
+		}
+		else { // Normal case:
+				int reverseToken = 0;
+				char c;
+				for(int i = height-1; i >= 0; i--) {
+						c = input[i];
+						reverseToken = reverseToken * 10 + (c-'0');
+				}
+
+				if(token < reverseToken) {
+						token = reverseToken;
+				}
+				handleCombinationWriters<Z>(token, 0, false, saveOutput);				
 		}
 }
 
