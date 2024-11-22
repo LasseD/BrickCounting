@@ -11,7 +11,7 @@ uint64_t added, symmetries, earlyExits;
 	TODO:
 	- Make CombinationReader into interface
 	- Have SpindleReader for Lemma 1
-	- Create Max2LayerReader for <222> combinations
+	- Create Max2LayerReader for <22...2> combinations
  */
 void countRefinements(char* input, bool saveOutput) {
 		int size = 0, token = 0,  height = 0;

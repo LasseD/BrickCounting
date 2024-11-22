@@ -510,9 +510,6 @@ public:
 		}
 
 		void flip() {
-				#ifdef TRACE
-				std::cout << "START Flipping " << *this << std::endl;
-				#endif
 				Brick tmp[MAX_BRICKS-1];
 				for(int layer1 = 0, layer2 = height-1; layer1 < layer2; layer1++, layer2--) {
 						int s1 = layerSizes[layer1];
@@ -529,9 +526,6 @@ public:
 				}
 				std::reverse(layerSizes, &layerSizes[height]);
 				normalize();
-				#ifdef TRACE
-				std::cout << "DONE Flipping " << *this << std::endl;
-				#endif
 		}
 
 		uint64_t encodeFor12(bool &topSymmetric, bool &topConnected) const {
@@ -555,8 +549,8 @@ public:
 		}
 
 		uint64_t countSymmetricLayer0Siblings() const {
+				assert(height >= 2);
 				assert(layerSizes[0] > 1);
-				assert(layerSizes[1] == 2);
 
 				uint64_t ret = 0;
 				int X = bricks[1][0].x + bricks[1][1].x;
@@ -622,7 +616,7 @@ private:
 		std::string name;
 
 public:
-		CombinationReader(int layerSizes[]) {
+		CombinationReader(const int layerSizes[]) {
 				combinationCounter = 0;
 				done = false;
 				height = 0;
@@ -650,9 +644,16 @@ public:
 				name = layerString; // Do not reverse
 				ss << (reverse ? layerStringReverse : layerString);
 				std::string file_name = ss.str();
-	
-				if(Z > 1) {
+
+				bool invalid = height == 2 && size_total == 8 && (layerSizes[0] == 1 || layerSizes[1] == 1);
+				if(Z > 1 && !invalid) {
 						istream = new std::ifstream(file_name.c_str(), std::ios::binary);
+				}
+				else {
+						istream = NULL;
+				}
+				if(invalid) {
+						done = true;
 				}
 
 				if(reverse) {
@@ -662,11 +663,13 @@ public:
 				baseCombination.bricks[0][0] = FirstBrick;
 				combinationsLeft = 0;
 
-				std::cout << "   READER for " << layerString << ": " << file_name << ", reversed: " << reverse << std::endl;
+				std::cout << "   READER for " << layerString << ": " << file_name << ", reversed: " << reverse << ", invalid: " << invalid << std::endl;
 		}
 
 		~CombinationReader() {
-				if(Z > 1) {
+				if(istream != NULL) {
+						std::cout << "  Closing combination reader " << name << ". Combinations read: " << combinationCounter << std::endl;
+				
 						istream->close();
 						delete istream;
 				}
@@ -777,8 +780,11 @@ public:
 				assert(c.isValid("Read"));
 
 				#ifdef TRACE
-				std::cout << "  Reading combination " << combinationCounter++ << " of type " << name << ": " << c << std::endl;
+				std::cout << "  Reading combination " << combinationCounter << " of type " << name << ": " << c << std::endl;
 				#endif
+
+				combinationCounter++;
+
 				return true;
 		}
 };
@@ -829,15 +835,9 @@ public:
 		}
 
 		void writeBit(bool bit) {
-        #ifdef TRACE
-				std::cout << "    WriteBit " << (int)bit << std::endl;
-        #endif
 				bits = (bits << 1) + (bit ? 1 : 0);
 				cntBits++;
 				if(cntBits == 8) {
-            #ifdef TRACE
-				    std::cout << "   Writing byte '" << (int)bits << "'" << std::endl;
-            #endif
 						ostream->write((char*)&bits, 1);
 						cntBits = 0;
 				}
@@ -851,9 +851,6 @@ public:
 
 		// Max difference from first brick is for 11 bricks: 10*3 = 30 studs, so 6 bits suffice:
 		void writeInt8(const int8_t toWrite) {
-        #ifdef TRACE
-				std::cout << "   WriteInt8 " << (int)toWrite << std::endl;
-        #endif
 				int i = toWrite;
 				if(i < 0) {
 						writeBit(true); // minus
@@ -871,9 +868,6 @@ public:
 
 		void writeUInt4(const uint8_t toWrite) {
 				uint8_t i = toWrite;
-        #ifdef TRACE
-				std::cout << "   WriteUInt4 " << (int)i << std::endl;
-        #endif
 				for(int j = 0; j < 4; j++) {
 						writeBit(i & 1);
 						i >>= 1;
@@ -881,9 +875,6 @@ public:
 		}
 
 		void writeUInt32(uint32_t toWrite) {
-        #ifdef TRACE
-				std::cout << "   WriteUInt32 " << toWrite << std::endl;
-        #endif
 				for(int j = 0; j < 32; j++) {
 						writeBit(toWrite & 1);
 						toWrite >>= 1;
@@ -891,9 +882,6 @@ public:
 		}
 
 		void writeBrick(const Brick &b) {
-        #ifdef TRACE
-				std::cout << "   WriteBrick " << b << std::endl;
-        #endif
 				writeBit(b.is_vertical);
 				writeInt8(b.x);
 				writeInt8(b.y);
@@ -901,9 +889,6 @@ public:
 
 		template <int W>
 		void writeCombinations(const Combination<W> &baseCombination, uint8_t brickLayer, std::vector<Brick> &v) {
-				#ifdef DEBUG
-				std::cout << "   Writing " << v.size() << " combinations based on " << baseCombination << std::endl;
-        #endif
 				assert(W == Z-1);
 				if(ostream == NULL || v.empty()) {
 						return;
@@ -913,9 +898,6 @@ public:
 				for(int i = 0; i < baseCombination.height; i++) {
 						int s = baseCombination.layerSizes[i];
 						for(int j = (i == 0 ? 1 : 0); j < s; j++) {
-    				    #ifdef TRACE
-								std::cout << "   Write base brick [" << i << "][" << j << "]" << std::endl;
-                #endif
 								writeBrick(baseCombination.bricks[i][j]);
 						}
 				}
@@ -923,9 +905,6 @@ public:
 
 				for(int i = 0; i < v.size(); i++) {
 						writeBrick(v[i]);
-						#ifdef DEBUG
-						std::cout << "    AddBrick " << brickLayer << " " << v[i] << std::endl;
-						#endif
 				}
 
 				writtenFull++;
@@ -1004,7 +983,9 @@ public:
 				// Update counters:
 				added++;
 				if(     (added-1)%1000000000 == 1000000000-1)
-						std::cout << added << std::endl;
+						std::cout << " " << added/1000000000 << " billion counted" << std::endl;
+				else if((added-1)%100000000 == 100000000-1)
+						std::cout << "#" << std::flush;
 				else if((added-1)%10000000 == 10000000-1)
 						std::cout << ":" << std::flush;
 				else if((added-1)%1000000 == 1000000-1)
@@ -1172,12 +1153,11 @@ public:
 				// Build layers:
 				int layers = 0, tkn = token;
 				int layerSizes[MAX_HEIGHT];
-				for(int i = 0; true; i++) {
+				while(true) {
 						int size_add = tkn % 10;
 						if(size_add == 0)
 								break;
-						layers++;
-						layerSizes[i] = size_add;
+						layerSizes[layers++] = size_add;
 						tkn /= 10;
 				}
 				// Flip the layer sizes:
@@ -1195,21 +1175,15 @@ public:
 				for(int i = 0; i < layers; i++) { // Reader from reader where brick on layer i was added:
 						if(layerSizes[i] == 1 && i != layers-1)
 								continue;
-						if(layers == 2 && layerSizes[i-1] == Z-1 && Z != 2)
+						if(layers == 2 && i > 0 && layerSizes[i-1] == Z-1 && Z != 2)
 								continue;
 
 						layerSizes[i]--;
-  	  			#ifdef DEBUG
-						std::cout << "   Creating reader for writer " << token << " with " << layers << " layers. Reducing layer " << i << std::endl;
-						#endif
-						CombinationReader<Z-1> reader(layerSizes);	
+						CombinationReader<Z-1> reader(layerSizes);
 
 						while(reader.readCombination(c)) {
 								makeNewCombinations(c, i, _old, _new);
 						}
-  	  			#ifdef DEBUG
-						std::cout << "Done handling reader for writer " << token << " with " << layers << " layers. Reducing layer " << i << std::endl;
-						#endif
 						layerSizes[i]++;
 				}
 
@@ -1270,25 +1244,19 @@ void handleCombinationWriters(int token, int remaining, bool add_self, bool save
 
 
 
-
-
-
-
-
-
-
-template <int Z, int layer0Size>
+template <int Z, int Y, int layer0Size>
 void countLayer0P(Combination<Z> &symmetryChecker, int idx, std::set<Brick>::const_iterator itBegin, std::set<Brick>::const_iterator itEnd, uint64_t &cnt, uint64_t &cntSymmetric, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination<Z> > &seen) {
 		if(idx == layer0Size-1) {
 				Combination<Z> c(symmetryChecker);
-				c.normalize();				
+				c.normalize();
 
 				if(seen.find(c) != seen.end()) {
 						return; // Already seen!
 				}
 				seen.insert(c);
 
-				assert(c.layerSizes[1] == 2);
+				assert(c.height >= 2);
+				assert(c.layerSizes[1] == Y);
 				assert(c.layerSizes[0] == layer0Size);
 				bool isSymmetric = c.is180Symmetric();
 				uint64_t timesCounted;
@@ -1307,6 +1275,8 @@ void countLayer0P(Combination<Z> &symmetryChecker, int idx, std::set<Brick>::con
 								timesCounted = connectsAbove - s;
 						}
 						else {
+								// Top is not connected and not symmetric.
+								// 
 								timesCounted = connectsAbove;
 						}
 				}
@@ -1346,34 +1316,35 @@ void countLayer0P(Combination<Z> &symmetryChecker, int idx, std::set<Brick>::con
 		}
 		
 		for(std::set<Brick>::const_iterator it = itBegin; it != itEnd; it++) {
-				Brick b = *it;
+				const Brick b = *it;
 				// Check that b does not collide:
 				bool ok = true;
-				for(int i = 1; i < idx+1; i++) {
+				for(int i = Z-1; i < idx+1; i++) {
 						if(symmetryChecker.bricks[0][i].intersects(b)) {
 								ok = false;
 								break;
 						}
 				}
 				if(!ok) {
-						continue; // Intersection!
+						continue; // Intersection with previously placed brick!
 				}
 				
 				symmetryChecker.bricks[0][idx+1] = b;
 				std::set<Brick>::const_iterator nxt = it;
 				nxt++;
-				countLayer0P<Z,layer0Size>(symmetryChecker, idx+1, nxt, itEnd, cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
+				countLayer0P<Z,Y,layer0Size>(symmetryChecker, idx+1, nxt, itEnd, cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
 		}
 }
 
 /*
 	Place "toPlace" bricks on layer 0 in all ways possible.
  */
-template <int Z, int layer0Size>
-void countLayer0Placements(Combination<Z-layer0Size+1> &c, uint64_t &cnt, uint64_t &cntSymmetric, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination<Z> > &seen) {
-		assert(c.layerSizes[0] == 1);
-		assert(c.layerSizes[1] == 2);
-		Brick &blocker = c.bricks[0][0];
+template <int Z, int Y, int layer0Size>
+void countLayer0Placements(Combination<Z-layer0Size+Y-1> &c, uint64_t &cnt, uint64_t &cntSymmetric, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination<Z> > &seen) {
+		assert(c.height >= 2);
+		assert(c.layerSizes[0] == Y-1);
+		assert(c.layerSizes[1] == Y);
+		Brick *blockers = c.bricks[0];
 
 		// Find legal placements v:
 		std::set<Brick> s;
@@ -1385,7 +1356,14 @@ void countLayer0Placements(Combination<Z-layer0Size+1> &c, uint64_t &cnt, uint64
 				for(int x = -2; x < 3; x++) {
 						for(int y = -2; y < 3; y++) {
 								Brick b2(!isVertical, b.x+x, b.y+y);
-								if(!blocker.intersects(b2)) {
+								bool ok = true;
+								for(int i = 0; i < Y-1; i++) {
+										if(blockers[i].intersects(b2)) {
+												ok = false;
+												break;
+										}
+								}
+								if(ok) {
 										s.insert(b2);
 								}
 						}
@@ -1399,36 +1377,36 @@ void countLayer0Placements(Combination<Z-layer0Size+1> &c, uint64_t &cnt, uint64
 				for(int y = -h+1; y < h; y++) {
 						for(int x = -w+1; x < w; x++) {
 								Brick b2(isVertical, b.x+x, b.y+y);
-								if(!blocker.intersects(b2)) {
+								bool ok = true;
+								for(int i = 0; i < Y-1; i++) {
+										if(blockers[i].intersects(b2)) {
+												ok = false;
+												break;
+										}
+								}
+								if(ok) {
 										s.insert(b2);
 								}
 						}
 				}
 		}
-		#ifdef TRACEX
-		std::cout << "  " << s.size() << " Legal bricks to place on first layer:" << std::endl;
-		for(std::set<Brick>::const_iterator it = s.begin(); it != s.end(); it++) {
-				std::cout << "   " << *it << std::endl;
-		}
-		#endif
 
 		// Construct symmetry checker c2:
 		Combination<Z> c2;
 		c2.height = c.height;
 		c2.layerSizes[0] = layer0Size;
-		c2.bricks[0][0] = blocker;
-		for(int i = 1; i < c.height; i++) {
+		for(int i = 0; i < c.height; i++) {
 				c2.layerSizes[i] = c.layerSizes[i];
 				for(int j = 0; j < c.layerSizes[i]; j++) {
 						c2.bricks[i][j] = c.bricks[i][j];
 				}
 		}
 
-		countLayer0P<Z,layer0Size>(c2, 0, s.begin(), s.end(), cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
+		countLayer0P<Z,Y,layer0Size>(c2, 0, s.begin(), s.end(), cnt, cntSymmetric, divisor, topSymmetric, topConnected, seen);
 }
 
 /*
-	Special case: First layer has more than one brick, while second has 2.
+	Special case: First layer has at least 2 bricks, while second layer has 2.
 	Call it <X2...>
   Iterate over <12...>
 	Add remaining bricks to first layer and count how many ways that can be done.
@@ -1488,7 +1466,7 @@ void countX2(char* input) {
 				else {
 						std::set<Combination<Z> > seen;
 						uint64_t _cnt = 0, _cntSymmetric = 0;
-						countLayer0Placements<Z,layer0Size>(smaller, _cnt, _cntSymmetric, divisor, topSymmetric, topConnected, seen);
+						countLayer0Placements<Z,2,layer0Size>(smaller, _cnt, _cntSymmetric, divisor, topSymmetric, topConnected, seen);
 
 						x2Cnt[encoded] = _cnt;
 						x2Sym[encoded] = _cntSymmetric;
@@ -1502,13 +1480,100 @@ void countX2(char* input) {
 				    #ifdef TRACE
 						std::cout << seen.size() << " models created on " << smaller << std::endl;
   	  			#endif
-
 				}
 		}
 		std::cout << " Read " << countSmaller << " smaller combinations." << std::endl;
 		std::cout << " Counted " << cnt << std::endl;
 		std::cout << " Skipped " << cntSkip << " (" << (cntSkip*100.0)/countSmaller << "%)" << std::endl;
 		std::cout << " Skip map size " << x2Cnt.size() << std::endl;		
+
+		std::cout << cnt / divisor << " (" << cntSymmetric / divisor << ")" << std::endl;
+		assert(cnt % divisor == 0);
+		assert(cntSymmetric % divisor == 0);
+}
+
+/*
+	Special case: First layer has at least Y bricks, while second layer has exactly Y.
+	Iterate over smaller Z-layer0Size+Y-1 size models and add all remaining
+
+	Use connection colouring of bricks in second layer
+ */
+template <int Z, int Y, int layer0Size>
+void countXY(char* input) {
+		std::cout << "THIS CODE IS NOT DONE YET!" << std::endl;
+		int smallerToken = Y-1; // Y-1 bricks required to ensure all combinations in second layer are represented.
+		int smallerLayerSizes[MAX_HEIGHT];
+		smallerLayerSizes[0] = Y-1;
+		char c;
+		for(int i = 1; (c = input[i]); i++) {
+				smallerToken = smallerToken * 10 + (c-'0');
+				smallerLayerSizes[i] = (c-'0');
+		}
+		std::cout << "Constructing to " << layer0Size << " bricks for first layer of <" << smallerToken << ">" << std::endl;
+
+		// Go through all smaller combinations:
+		uint64_t cnt = 0, cntSymmetric = 0, divisor = 5*6*7*8*9, countSmaller = 0, cntSkip = 0, preCount = 0;
+
+		Combination<Z-layer0Size+Y-1> smaller;
+		{
+				CombinationReader<Z-layer0Size+Y-1> preReader(smallerLayerSizes);
+				while(preReader.readCombination(smaller)) {
+						preCount++;
+						if((preCount-1)%1000000000 == 1000000000-1)
+								std::cout << " " << preCount/1000000000 << " billion" << std::endl;
+						else if((preCount-1)%100000000 == 100000000-1)
+								std::cout << ":" << std::flush;	
+						else if((preCount-1)%10000000 == 10000000-1)
+								std::cout << "." << std::flush;	
+				}
+				// In own space to ensure proper closing of file before next read.
+		}
+		std::cout << "Number of smaller configuration to build on: " << preCount << std::endl;
+		
+		std::map<Combination<Z>,uint64_t> xyCnt, xySym; // Memory of results // TODO: Should be CutCombination
+		
+		CombinationReader<Z-layer0Size+Y-1> reader(smallerLayerSizes);
+		while(reader.readCombination(smaller)) {
+				countSmaller++;
+				
+				// Find all locations to place a brick on first layer:
+				bool topSymmetric, topConnected;
+				uint64_t encoded = smaller.encodeForYY(topSymmetric, topConnected);
+
+				if(xyCnt.find(encoded) != xyCnt.end()) {
+						cnt += xyCnt[encoded];
+						cntSymmetric += xySym[encoded];
+						cntSkip++;
+						if((cntSkip-1)%100000000 == 100000000-1)
+								std::cout << " " << (cntSkip/1000000) << " million. " << (countSmaller*100.0/preCount) << "% read." << std::endl;
+						else if((cntSkip-1)%10000000 == 10000000-1)
+								std::cout << ":" << std::flush;
+						else if((cntSkip-1)%1000000 == 1000000-1)
+								std::cout << "." << std::flush;				
+				}
+				else {
+						std::set<Combination<Z> > seen;
+						uint64_t _cnt = 0, _cntSymmetric = 0;
+						countLayer0Placements<Z,Y,layer0Size>(smaller, _cnt, _cntSymmetric, divisor, topSymmetric, topConnected, seen);
+
+						xyCnt[encoded] = _cnt;
+						xySym[encoded] = _cntSymmetric;
+
+						cnt += _cnt;
+						cntSymmetric += _cntSymmetric;
+
+						if(xyCnt.size()%1000 == 0)
+								std::cout << "| " << xyCnt.size() << " |" << std::flush;
+
+				    #ifdef TRACE
+						std::cout << seen.size() << " models created on " << smaller << std::endl;
+  	  			#endif
+				}
+		}
+		std::cout << " Read " << countSmaller << " smaller combinations." << std::endl;
+		std::cout << " Counted " << cnt << std::endl;
+		std::cout << " Skipped " << cntSkip << " (" << (cntSkip*100.0)/countSmaller << "%)" << std::endl;
+		std::cout << " Skip map size " << xyCnt.size() << std::endl;		
 
 		std::cout << cnt / divisor << " (" << cntSymmetric / divisor << ")" << std::endl;
 		assert(cnt % divisor == 0);

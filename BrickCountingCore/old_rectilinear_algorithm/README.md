@@ -110,3 +110,42 @@ Special care for counting has to be taken for symmetries and the case where the 
 See the code base for details.
 
 By using countX2(), massive improvements to running time have been observed.
+
+### Special handling of <X3...>, X > 2
+
+The analysis for <X2...> can be expanded to <X3...> by observing <23...> includes all configurations of the three bricks of the second layer.
+
+#### Detailed Analysis of <X3...>
+
+The method of countX2() uses the knowledge of how many times a specific model is being encountered (or counted) to derive the correct result.
+
+Let A, B denote the two bricks of the first layer, while C, D, E are the three bricks of the second layer of a model in <23..>. Consider the bricks of TOP in <3...> consisting of C-E and all bricks in layers above, while F (for FULL) in <X3...> is the full model including A-B and the R remaining bricks of the first layer (so X = 2 + R).
+
+1) If TOP is not connected, then either A, B or both are needed to ensure connectivity of F. Ie. Removing one of them can cause bricks to no longer be connected.
+
+
+
+OLD BELOW
+
+1) If C-E are all connected above, then A-B can be placed without care for connecting the bricks C-E: 
+
+1.1) If TOP is symmetric, then F is counted once for each brick in the first layer, except those that have an identical "sibling" under rotation.
+
+1.2) If TOP is _not_ symmetric, then F is counted once for each brick in first layer.
+
+2) If one of the bricks C-E (let's say C) is connected in TOP, while D, E are not, then either A, B or both connect to D and E (as otherwise the model would not be connected).
+
+2.1) If TOP is symmetric, then
+
+
+TODO:
+
+"top connected" needs to be more precise: top connection needs 0, 1, ... X-1 bricks.
+X = 3:
+Bricks A,B,C so either AB, BC or ABC connection required.
+X = 4:
+Bricks A,B,C,D: AB, AC, AD, BC, BD, ABC, ABD, BCD, AB+CD, AC+BD, ABCD
+CONCLUSION: Not controllable as input division!
+
+So required in Configuration that is used as key!
+
