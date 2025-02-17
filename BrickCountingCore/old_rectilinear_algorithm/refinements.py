@@ -119,16 +119,16 @@ def printXY(X, Y, prefix, rem, actuallyPrint):
         n = getN(prefix)
         sum = [0,0] if None in [s,n] else [n,s]
         if prefix in printed:
-            return sum # Already printed
+            return sum # Already printed: Should still be counted
         printed[prefix] = True
         printed[prefix[::-1]] = True
         if n == 0 and s == 0 or not actuallyPrint:
             return sum
         if n != None and s != None:
-            print('  ' + prefix + ':', s + getN(prefix), '(' + str(s) + ')')
+            print('  <' + prefix + '>', s + getN(prefix), '(' + str(s) + ')')
             printed[prefix[::-1]] = True
         else:
-            print('  ' + prefix + ': #')
+            print('  <' + prefix + '> #')
         return sum
     if len(prefix) >= Y:
         return (0,0) # Too tall!

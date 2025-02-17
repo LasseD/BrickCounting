@@ -1,10 +1,45 @@
 #include "stdint.h"
 #include <iostream>
 #include <fstream>
+#include <map>
+#include <algorithm>
+#include <assert.h>
+#include <chrono>
+#include <thread>
+#include <sstream>
 
 #include "rectilinear.h"
 
 namespace rectilinear {
+
+  Counts::Counts() : all(0), symmetric180(0), symmetric90(0) {
+  }
+  Counts::Counts(uint64_t all, uint64_t symmetric180, uint64_t symmetric90) : all(all), symmetric180(symmetric180), symmetric90(symmetric90) {
+  }
+  Counts::Counts(const Counts& c) : all(c.all), symmetric180(c.symmetric180), symmetric90(c.symmetric90) {
+  }
+  Counts& Counts::operator +=(const Counts& c) {
+    all += c.all;
+    symmetric180 += c.symmetric180;
+    symmetric90 += c.symmetric90;
+    return *this;
+  }
+  Counts Counts::operator -(const Counts& c) {
+    return Counts(all-c.all, symmetric180-c.symmetric180, symmetric90-c.symmetric90);
+  }
+  std::ostream& operator << (std::ostream &os,const Counts &c) {
+    os << c.all;
+    if(c.symmetric180 > 0)
+      os << " (" << c.symmetric180 << ")";
+    if(c.symmetric90 > 0)
+      os << " {" << c.symmetric90 << "}";
+    return os;
+  }
+  void Counts::reset() {
+    all = 0;
+    symmetric180 = 0;
+    symmetric90 = 0;
+  }
 
   Brick::Brick() : is_vertical(true), x(0), y(0) {
   }
@@ -622,14 +657,8 @@ namespace rectilinear {
     return Brick(readBit(), readInt8(), readInt8());
   }
 
-  CombinationReader::CombinationReader(const int layerSizes[], int Z) {
-    combinationCounter = 0;
-    done = false;
-    height = 0;
-    bits = 0;
-    bitIdx = 8; // Ensure a byte is read next time
-    this->Z = Z;
-    token = 0;
+  CombinationReader::CombinationReader(const int layerSizes[], int Z) : height(0), Z(Z), token(0), bits(0), bitIdx(8), done(false), combinationCounter(0) {
+    // bitIdx = 8 -> Ensure a byte is read next time
 
     std::stringstream ss, ss2;
     ss << Z << "/";
@@ -655,7 +684,8 @@ namespace rectilinear {
     ss << (reverse ? layerStringReverse : layerString);
     std::string file_name = ss.str();
 
-    bool invalid = height == 2 && size_total == 8 && (layerSizes[0] == 1 || layerSizes[1] == 1);
+    bool invalid = height == 2 && size_total >= 8 && (layerSizes[0] == 1 || layerSizes[1] == 1);
+
     if(Z > 1 && !invalid) {
       istream = new std::ifstream(file_name.c_str(), std::ios::binary);
     }
@@ -749,10 +779,7 @@ namespace rectilinear {
     return true;
   }
 
-  CombinationWriter::CombinationWriter(const int token, const bool saveOutput) : writtenFull(0), writtenShort(0), token(token), counted(0), counted_symmetries(0) {
-    height = 0;
-    Z = 0;
-
+  CombinationWriter::CombinationWriter(const int token, const bool saveOutput) : height(0), writtenFull(0), writtenShort(0), token(token), counts(), Z(0) {
 #ifdef DEBUG
     std::cout << " Create Combination writer for token " << token << ", output?: " << saveOutput << std::endl;
 #endif
@@ -784,7 +811,7 @@ namespace rectilinear {
       ostream = NULL;
   }
 
-  CombinationWriter::CombinationWriter(const CombinationWriter &cw) : ostream(cw.ostream), height(cw.height), writtenFull(0), writtenShort(0), token(cw.token), counted(0), counted_symmetries(0) {
+  CombinationWriter::CombinationWriter(const CombinationWriter &cw) : ostream(cw.ostream), height(cw.height), writtenFull(0), writtenShort(0), token(cw.token), counts() {
     
   }
 
@@ -878,8 +905,7 @@ namespace rectilinear {
     writtenShort+=v.size();
   }
 
-  // Return 0 if not added, 1 if added and not symmetric, 2 if added and symmetric
-  int CombinationWriter::add(Combination &cOld, const Brick &addedBrick, const uint8_t layer) {
+  Counts CombinationWriter::add(Combination &cOld, const Brick &addedBrick, const uint8_t layer) {
 #ifdef DEBUG
     std::cout << "   TRY TO ADD " << addedBrick << " at layer " << (int)layer << std::endl;
 #endif
@@ -889,7 +915,7 @@ namespace rectilinear {
 #ifdef DEBUG
       std::cout << " Does not fit!" << std::endl;
 #endif
-      return 0; // Does not fit.
+      return Counts(); // Does not fit.
     }
 
     // If cOld is symmetric, then check if we are first:
@@ -897,7 +923,7 @@ namespace rectilinear {
 #ifdef DEBUG
       std::cout << " Not first version of symmetric combination!" << std::endl;
 #endif
-      return 0; // Not first version of this symmetric combination.
+      return Counts(); // Not first version of this symmetric combination.
     }
 
     // Try to remove bricks b from c up to and including layer of addedBrick (unless layer only has 1 brick)
@@ -910,7 +936,7 @@ namespace rectilinear {
 #ifdef DEBUG
 	  std::cout << "  Could be constructed from lower refinement " << ignore << std::endl;
 #endif
-	  return 0; // Sibling comes before cOld, so we do not add
+	  return Counts(); // Sibling comes before cOld, so we do not add
 	}
       }
     }
@@ -923,7 +949,7 @@ namespace rectilinear {
 #ifdef DEBUG
 	    std::cout << "  Could be constructed from lesser sibling" << sibling << std::endl;
 #endif
-	    return 0; // Lesser sibling!
+	    return Counts(); // Lesser sibling!
 	  }
 	}
       }
@@ -936,14 +962,19 @@ namespace rectilinear {
 
     assert(c.isValid(token, "Counting"));
 
-    // Update counters:
+    // Construct return value:
     Combination rotated180(c);
     rotated180.rotate180();
     if(c == rotated180) {
-      return 2;
+      if(c.height == 2 && c.layerSizes[0] == 4 && c.layerSizes[1] == 4) {
+	Combination rotated90(c);
+	rotated90.rotate90();
+	if(c == rotated90)
+	  return Counts(1, 1, 1);
+      }
+      return Counts(1, 1, 0);
     }
-    // TODO: What about 90 degree symmetries?
-    return 1;
+    return Counts(1, 0, 0);
   }
 
   void CombinationWriter::makeNewCombinations(Combination &c, const int layer) {
@@ -962,12 +993,9 @@ namespace rectilinear {
       }
       for(int j = 0; j < s; j++) {
 	if(c.removeBrickAt(i, j, evenSmaller)) {
-	  earlyExits++;
 #ifdef DEBUG
 	  std::cout << "EARLY EXIT due to stable base on layer " << i << ": " << c << " -> " << evenSmaller << std::endl;
 #endif
-	  if((earlyExits-1)%1000000 == 1000000-1)
-	    std::cout << "X" << std::flush;
 	  return;
 	}
       }
@@ -985,12 +1013,9 @@ namespace rectilinear {
 	}
       }
       if(allExpendable) {
-	earlyExits++;
 #ifdef DEBUG
 	std::cout << "EARLY EXIT due to all expendable on layer " << layer-1 << ": " << c << std::endl;
 #endif
-	if((earlyExits-1)%1000000 == 1000000-1)
-	  std::cout << "Y" << std::flush;
 	return;
       }
     }
@@ -1028,14 +1053,12 @@ namespace rectilinear {
 	for(int y = -2; y < 3; y++) {
 	  Brick b(!isVertical, brick.x+x, brick.y+y);
 	  if(alreadyAdded.insert(b).second) { // Brick not already added:
-	    int addedType = add(c, b, layer);
-	    if(addedType > 0) {
+	    Counts added = add(c, b, layer);
+	    if(added.all > 0) {
 	      if(writesToFile())
 		v.push_back(b);
-	      counted++;
-	      if(addedType == 2)
-		counted_symmetries++;
 	    }
+	    counts += added;
 	  }
 	}
       }
@@ -1050,14 +1073,12 @@ namespace rectilinear {
 	for(int x = -w+1; x < w; x++) {
 	  Brick b(isVertical, brick.x+x, brick.y+y);
 	  if(alreadyAdded.insert(b).second) {
-	    int addedType = add(c, b, layer);
-	    if(addedType > 0) {
+	    Counts added = add(c, b, layer);
+	    if(added.all > 0) {
 	      if(writesToFile())
 		v.push_back(b);
-	      counted++;
-	      if(addedType == 2)
-		counted_symmetries++;
 	    }
+	    counts += added;
 	  }
 	}
       }
@@ -1132,15 +1153,14 @@ namespace rectilinear {
 	}
 	for(unsigned int j = 0; j < processor_count; j++) {
 	  (*threads[j]).join();
-	  added += writers[j]->counted;
-	  symmetries += writers[j]->counted_symmetries;
-	  std::cout << "  Joined thread " << j << " which counted " << writers[j]->counted << std::endl;
+	  counts += writers[j]->counts;
+	  std::cout << "  Joined thread " << j << " which counted " << writers[j]->counts << std::endl;
 	}
       }
       else { // Single threaded if output is written:
+	writer.counts.reset();
 	writer.fillFromReader(layerSizes, i, &reader);
-	added += writer.counted;
-	symmetries += writer.counted_symmetries;
+	counts += writer.counts;
       }
 						
       layerSizes[i]++;
@@ -1149,16 +1169,16 @@ namespace rectilinear {
 
   void Counter::handleFinalCombinationWriters(const int token, const bool saveOutput) {
     std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
-    uint64_t before = added, before_s = symmetries;
+    Counts before = counts;
     std::cout << " Handling combinations for token " << token << std::endl;
 
     CombinationWriter writer(token, saveOutput);
     fillFromReaders(writer);
 
-    std::cout << "  Constructed " << (added-before) << " combinations for token " << token << ", of which " << (symmetries-before_s) << " are symmetric in ";
+    std::cout << "  Constructed " << (counts-before) << " combinations for token " << token << " in ";
     std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
     std::chrono::duration<double> t = t_end - t_init;
-    std::cout << t.count() << "s. Early exits: " << earlyExits << std::endl;
+    std::cout << t.count() << "s." << std::endl;
   };
 
   /*
@@ -1343,9 +1363,10 @@ namespace rectilinear {
 
   /*
     Special case: First layer has at least 2 bricks, while second layer has 2.
-    Call it <X2...>
-    Iterate over <12...>
+    Call it <X2...>, X >= 2.
+    Iterate over <12...> of same height.
     Add remaining bricks to first layer and count how many ways that can be done.
+    Multiply with models in <12...> instead of repeating the full process for each model therein.
   */
   void Counter::countX2(int Z, int layer0Size, char* input) {
     int smallerToken = 1; // Just have 1 in first layer of smaller
@@ -1382,7 +1403,7 @@ namespace rectilinear {
     CombinationReader reader(smallerLayerSizes, Z-layer0Size+1);
     while(reader.readCombination(smaller)) {
       countSmaller++;
-				
+
       // Find all locations to place a brick on first layer:
       bool topSymmetric, topConnected;
       uint64_t encoded = smaller.encodeFor12(topSymmetric, topConnected);
@@ -1537,9 +1558,8 @@ namespace rectilinear {
     }
   }
 
-  void Counter::build_all_combinations(int Z, bool saveOutput) {
+  void Counter::buildAllCombinations(int Z, bool saveOutput) {
     std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
-    added = 0; symmetries = 0; earlyExits = 0;
     if(Z == 1) {
       return; // Trivial case with 1 brick.
     }
@@ -1547,7 +1567,7 @@ namespace rectilinear {
     std::cout << "Building all combinations of size " << Z << std::endl;
     handleCombinationWriters(0, Z, false, saveOutput);
 
-    std::cout << "Constructed " << added << " combinations of size " << Z << ", " << symmetries << " of those being symmetric in ";
+    std::cout << "Constructed " << counts << " combinations of size " << Z << " in ";
     std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
     std::chrono::duration<double> t = t_end - t_init;
     std::cout << t.count() << "s." << std::endl;

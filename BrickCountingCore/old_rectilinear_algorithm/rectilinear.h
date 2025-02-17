@@ -13,18 +13,22 @@
 #include <stdarg.h>
 #include <iostream>
 #include <fstream>
-#include <assert.h>
-#include <sstream>
-#include <chrono>
 #include <set>
-#include <map>
-#include <algorithm>
 #include <mutex>
-#include <thread>
-
-extern uint64_t added, symmetries, earlyExits;
 
 namespace rectilinear {
+
+  struct Counts {
+    uint64_t all, symmetric180, symmetric90;
+
+    Counts();
+    Counts(uint64_t all, uint64_t symmetric180, uint64_t symmetric90);
+    Counts(const Counts& c);
+    Counts& operator +=(const Counts &c);
+    Counts operator -(const Counts &c);
+    friend std::ostream& operator <<(std::ostream &os, const Counts &c);
+    void reset();
+  };
 
   /**
    * A Brick represents a 2x4 LEGO brick with an orientation and x,y-position.
@@ -60,6 +64,10 @@ namespace rectilinear {
     Brick bricks[MAX_HEIGHT][MAX_LAYER_SIZE]; // Layer, idx
 
     /*
+      Rectilinear models with restrictions on representation:
+      - first brick must be vertical at first layer and placed at 0,0
+      - model is minimal of all rotations (vs rotated 90, 180, 270 degrees)
+      - bricks are lexicographically sorted (orientation,x,y) on each layer
       Init with one brick on layer 0 at 0,0.
     */
     Combination();
@@ -126,7 +134,7 @@ namespace rectilinear {
 
   public:
     const int token;
-    uint64_t counted, counted_symmetries;
+    Counts counts;
     int Z;
 
     CombinationWriter(const int token, const bool saveOutput);
@@ -140,13 +148,15 @@ namespace rectilinear {
     void writeUInt32(uint32_t toWrite);
     void writeBrick(const Brick &b);
     void writeCombinations(const Combination &baseCombination, uint8_t brickLayer, std::vector<Brick> &v);
-    int add(Combination &cOld, const Brick &addedBrick, const uint8_t layer);
+    Counts add(Combination &cOld, const Brick &addedBrick, const uint8_t layer);
     void makeNewCombinations(Combination &c, const int layer);
     void fillFromReader(int const * const layerSizes, const int reducedLayer, CombinationReader * reader);
     bool writesToFile() const;
   };
 
   class Counter {
+    Counts counts;
+
     void fillFromReaders(CombinationWriter &writer);
     void handleFinalCombinationWriters(const int token, const bool saveOutput);
     void handleCombinationWriters(int token, int remaining, bool add_self, bool saveOutput);
@@ -156,7 +166,7 @@ namespace rectilinear {
     void countXY(int Z, int Y, int layer0Size, char* input);
   public:
     void countRefinements(const int Z, int token, const int height, char* input, const bool saveOutput);
-    void build_all_combinations(int Z, bool saveOutput);
+    void buildAllCombinations(int Z, bool saveOutput);
   };
 }
 

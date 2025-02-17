@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "rectilinear.h"
 
-uint64_t added, symmetries, earlyExits;
-
 /*
   TODO:
   - Make CombinationReader into interface
@@ -22,22 +20,16 @@ void countRefinements(char* input, bool saveOutput) {
   counter.countRefinements(size, token, height, input, saveOutput);
 }
 
-/*
-  Rectilinear models with restrictions on representation:
-  - first brick must be vertical at first layer and placed at 0,0
-  - model is minimal of all rotations (vs rotated 90, 180, 270 degrees)
-  - bricks are lexicographically sorted (orientation,x,y) on each layer
-*/
 int main(int argc, char** argv) {
   bool saveFiles = true;
   rectilinear::Counter c;
   switch(argc) {
   case 1:
-    c.build_all_combinations(2, saveFiles);
-    c.build_all_combinations(3, saveFiles);
-    c.build_all_combinations(4, saveFiles);
-    c.build_all_combinations(5, saveFiles);
-    c.build_all_combinations(6, saveFiles);
+    c.buildAllCombinations(2, saveFiles);
+    c.buildAllCombinations(3, saveFiles);
+    c.buildAllCombinations(4, saveFiles);
+    c.buildAllCombinations(5, saveFiles);
+    c.buildAllCombinations(6, saveFiles);
     break;
   case 2:
     countRefinements(argv[1], false);
