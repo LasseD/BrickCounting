@@ -4,9 +4,16 @@
 
 /*
   TODO:
-  - Make CombinationReader into interface
-  - Have SpindleReader for Lemma 1
-  - Create Max2LayerReader for <22...2> combinations
+  - Create SpindleReader for Lemma 1
+  - Extract build logic from CombinationWriter to Counter.
+  - Have Counter determine correct reader to use
+  - Create recursive reader/builders for cases where a file is not available (size 9+ cannot fit on disk)
+  - countXY using CutCombination of 2 layers with bit-array of connectivity for layer 1:
+   - There are Y bricks in layer 1.
+   - For i = 0 .. Y-1:
+    - For j = i+1 .. Y-1
+     Set bit if brick i connects to brick j above layer 1.
+  - Create Max2LayerReader for <22..2> combinations TODO: Recall how this works...
 */
 void countRefinements(char* input, bool saveOutput) {
   int size = 0, token = 0,  height = 0;
