@@ -235,7 +235,6 @@ namespace rectilinear {
     }
     translateMinToOrigo();
     sortBricks();
-
   }
 
   void Combination::rotate180() {
@@ -536,6 +535,32 @@ namespace rectilinear {
     normalize();
   }
 
+  void Combination::stack(const Combination &_top, Combination &ret) const {
+    const Brick topBrick = bricks[height-1][layerSizes[height-1]-1];
+    Combination top(_top);
+    if(!topBrick.isVertical) {
+      top.rotate90(); // Also call translateMinToOrigo()
+    }
+
+    ret.height = height + top.height - 1;
+    for(int i = 0; i < height; i++) {
+      ret.layerSizes[i] = layerSizes[i];
+      for(int j = 0; j < layerSizes[i]; j++) {
+	ret.bricks[i][j] = bricks[i][j];
+      }
+    }
+    for(int i = 1; i < top.height; i++) {
+      ret.layerSizes[height-1+i] = top.layerSizes[i];
+      for(int j = 0; j < top.layerSizes[i]; j++) {
+	Brick b = bricks[i][j];
+	b.x += topBrick.x;
+	b.y += topBrick.y;
+	ret.bricks[height-1+i][j] = b;
+      }
+    }
+    ret.normalize();
+  }
+
   uint64_t Combination::encodeFor12(bool &topSymmetric, bool &topConnected) const {
     assert(layerSizes[0] == 1);
     assert(layerSizes[1] == 2);
@@ -554,10 +579,6 @@ namespace rectilinear {
     topConnected = isConnectedAboveFirstLayer();
 				
     return (ret << 2) | (topSymmetric << 1) | topConnected;
-  }
-
-  uint64_t Combination::encodeForYY(bool &topSymmetric, bool &topConnected) const {
-    return 0; // TODO!
   }
 
   uint64_t Combination::countSymmetricLayer0Siblings() const {
@@ -612,6 +633,127 @@ namespace rectilinear {
       }
     }
     return ret;
+  }
+
+  int Combination::heightOfToken(int token) {
+    int ret = 0;
+    while(token > 0) {
+      ret++;
+      token = token/10;
+    }
+    return ret;
+  }
+
+  int Combination::sizeOfToken(int token) {
+    int ret = 0;
+    while(token > 0) {
+      ret += token % 10;
+      token = token/10;
+    }
+    return ret;
+  }
+
+  void Combination::getLayerSizesFromToken(int token, int *layerSizes) {
+    int layers = 0;
+    while(token > 0) {
+      int size_add = token % 10;
+      layerSizes[layers++] = size_add;
+      token /= 10;
+    }
+    // Flip the layer sizes:
+    for(int i = 0; i < layers/2; i++) {
+      std::swap(layerSizes[i], layerSizes[layers-i-1]);
+    }
+  }
+
+  int Combination::getTokenFromLayerSizes(int *layerSizes, int height) {
+    int ret = 0;
+    for(int i = 0; i < height; i++) {
+      ret = (ret * 10) + layerSizes[i];
+    }
+    return ret;
+  }
+
+  int Combination::reverseToken(int token) {
+    int ret = 0;
+    while(token > 0) {
+      ret = (ret * 10) + (token % 10);
+      token /= 10;
+    }
+    return ret;
+  }
+
+  CutCombination::CutCombination(const Combination &c) {
+    assert(c.height >= 2);
+    for(int i = 0; i < 2; i++) {
+      layerSizes[i] = c.layerSizes[i];
+      for(int j = 0; j < layerSizes[i]; j++) {
+	bricks[i][j] = c.bricks[i][j];
+      }
+    }
+    // Compute connectivity:
+    connectivity = 0;
+    bool connected[8];
+    for(int i = 0; i < layerSizes[1]; i++) {
+      for(int j = 0; j < layerSizes[1]; j++) {
+	connected[j] = false;
+      }
+      connected[i] = true;
+      for(int j = i+1; j < layerSizes[1]; j++) {
+	
+      }
+    }
+    // TODO
+  }
+
+  bool CutCombination::operator <(const CutCombination& b) const {
+    if(connectivity != b.connectivity)
+      return connectivity < b.connectivity;
+    for(int i = 0; i < 2; i++) {
+      if(layerSizes[i] != b.layerSizes[i])
+	return layerSizes[i] < b.layerSizes[i];
+      for(int j = 0; j < layerSizes[i]; j++) {
+	if(bricks[i][j] != b.bricks[i][j])
+	  return bricks[i][j] < b.bricks[i][j];
+      }
+    }
+    return false;
+  }
+
+  bool CutCombination::operator ==(const CutCombination& b) const {
+    if(connectivity != b.connectivity)
+      return false;
+    for(int i = 0; i < 2; i++) {
+      if(layerSizes[i] != b.layerSizes[i])
+	return false;
+      for(int j = 0; j < layerSizes[i]; j++) {
+	if(bricks[i][j] != b.bricks[i][j])
+	  return false;
+      }
+    }
+    return true;
+  }  
+
+  ICombinationProducer* ICombinationProducer::get(int token) {
+    int Z = Combination::sizeOfToken(token);
+    int layerSizes[MAX_HEIGHT];
+    Combination::getLayerSizesFromToken(token, layerSizes);
+
+    // Quickly read combinations from disk if file available:
+    CombinationReader *combinationReader = new CombinationReader(layerSizes, Z);
+    if(!combinationReader->isInvalid()) {
+      return combinationReader;
+    }
+    else {
+      delete combinationReader;
+    }
+
+    // SpindleBuilder uses a cache to improve performance:
+    if(SpindleBuilder::canHandle(token))
+      return new SpindleBuilder(token);
+
+    // Slow SingleBrickAdder that builds all possible combinations using brute-force:
+    return new SingleBrickAdder(token);
   }
 
   bool CombinationReader::readBit() {
@@ -677,17 +819,22 @@ namespace rectilinear {
     assert(Z == size_total);
 
     std::string layerString = ss2.str(), layerStringReverse = layerString;
-    std::reverse(layerStringReverse.begin(), layerStringReverse.end());				
+    std::reverse(layerStringReverse.begin(), layerStringReverse.end());
     reverse = layerString < layerStringReverse; // Reverse => Read upside-down.
 
     name = layerString; // Do not reverse
     ss << (reverse ? layerStringReverse : layerString);
     std::string file_name = ss.str();
 
-    bool invalid = height == 2 && size_total >= 8 && (layerSizes[0] == 1 || layerSizes[1] == 1);
+    invalid = height == 2 && size_total >= 8 && (layerSizes[0] == 1 || layerSizes[1] == 1);
 
     if(Z > 1 && !invalid) {
       istream = new std::ifstream(file_name.c_str(), std::ios::binary);
+      if(!istream->good()) {
+	delete istream;
+	istream = NULL;
+	invalid = true;
+      }
     }
     else {
       istream = NULL;
@@ -706,6 +853,10 @@ namespace rectilinear {
     std::cout << "   READER for " << layerString << ": " << file_name << ", reversed: " << reverse << ", invalid: " << invalid << std::endl;
   }
 
+  bool CombinationReader::isInvalid() const {
+    return invalid;
+  }
+
   CombinationReader::~CombinationReader() {
     if(istream != NULL) {
       std::cout << "  Closing combination reader " << name << ". Combinations read: " << combinationCounter << std::endl;
@@ -718,7 +869,7 @@ namespace rectilinear {
   // Assume c already has height and layerSizes set.
   bool CombinationReader::nextCombination(Combination &c) {
     std::lock_guard<std::mutex> guard(read_mutex); // Ensure no double-reading.
-				
+
     if(done)
       return false;
     if(Z == 1) {
@@ -773,14 +924,195 @@ namespace rectilinear {
     std::cout << "  Reading <" << name << "> combination " << combinationCounter << ": " << c << std::endl;
 #endif
     combinationCounter++;
-    if((combinationCounter-1)%10000000 == 10000000-1)
+    if((combinationCounter-1)%1000000 == 1000000-1)
       std::cout << " " << combinationCounter/1000000 << " million <" << name << "> combinations read" << std::endl;
     return true;
   }
 
+  bool CombinationReader::hasNextCombination() {
+    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no update while reading
+    return !done;
+  }
+
+  SingleBrickAdder::SingleBrickAdder(const int token) :
+    Z(Combination::sizeOfToken(token)),
+    height(Combination::heightOfToken(token)),
+    token(token),
+    layer(-1),
+    smallerProducer(NULL) {
+    fillToProduce();
+  }
+
+  void SingleBrickAdder::fillToProduce() {
+    if(smallerProducer == NULL || !smallerProducer->hasNextCombination()) {
+      // Update smallerProducer:
+      int layerSizes[MAX_HEIGHT];
+      Combination::getLayerSizesFromToken(token, layerSizes);
+
+      layer++;
+      while(layerSizes[layer] < 2) {
+	layer++;
+	if(layer >= height)
+	  return; // Done!
+      }
+
+      layerSizes[layer]--; // We know there are at least 2 bricks on this layer by now
+      int smallerHeight = layerSizes[layer] == 0 ? height-1 : height;
+      int smallerToken = Combination::getTokenFromLayerSizes(layerSizes, smallerHeight);
+      std::cout << "Builder for <" << token << "> now filling from <" << smallerToken << ">" << std::endl;
+      smallerProducer = ICombinationProducer::get(smallerToken);
+    }
+    
+    Combination c;
+    while(smallerProducer->nextCombination(c)) {
+      std::vector<Brick> v;
+      if(addBricksToCombination(c, layer, v).all > 0) {
+	Combination c2;
+	int ignore;
+	for(std::vector<Brick>::const_iterator it = v.begin(); it != v.end(); it++) {
+#ifdef TRACE
+	  std::cout << "Producing <" << token << "> from " << c << " by adding " << *it << " on layer " << layer << std::endl;
+#endif
+	  c.addBrick(*it, layer, c2, ignore);
+	  toProduce.push(c2);
+	}
+	return; // Request complete!
+      }
+    }
+  }
+  
+  bool SingleBrickAdder::nextCombination(Combination &c) {
+    if(toProduce.empty()) {
+      fillToProduce();
+    }
+    if(!toProduce.empty()) {
+      c = toProduce.top();
+      toProduce.pop();
+#ifdef TRACE
+      std::cout << "Single Brick for <" << token << "> produced: " << c << std::endl;
+#endif
+      return true;
+    }
+    return false;
+  }
+
+  bool SingleBrickAdder::hasNextCombination() {
+    return !toProduce.empty();
+  }
+
+  void SpindleBuilder::setup(const int token, int &height, int &Z, int *layerSizes, std::vector<int> &candidates) {
+    height = Combination::heightOfToken(token);
+    Z = Combination::sizeOfToken(token);
+    Combination::getLayerSizesFromToken(token, layerSizes);
+    for(int i = 1; i < height-1; i++) {
+      if(layerSizes[i] == 1)
+	candidates.push_back(i);
+    }
+  }
+
+  SpindleBuilder::SpindleBuilder(int token) {
+    assert(canHandle(token));
+    int height, Z, layerSizes[MAX_HEIGHT];
+    std::vector<int> candidates;
+    setup(token, height, Z, layerSizes, candidates);
+    // Find best (biggest) candidate:
+    int bestCandidate = -1, bestCandidateSize = 0;
+    bool bestCandidateIsLower;
+    for(std::vector<int>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+      int lowerSize = 1; // Add 1 for layerSize[candidate]
+      for(int i = 0; i < *it; i++) {
+	lowerSize += layerSizes[i];
+      }
+      if(lowerSize > bestCandidateSize) {
+	bestCandidateSize = lowerSize;
+	bestCandidate = *it;
+	bestCandidateIsLower = true;
+      }
+      int upperSize = Z - lowerSize + 1 < 6;
+      if(upperSize > bestCandidateSize) {
+	bestCandidateSize = upperSize;
+	bestCandidate = *it;
+	bestCandidateIsLower = false;
+      }
+    }
+    // Set up cache:
+    cacheIsLower = bestCandidateIsLower;
+    int cacheToken, smallerToken;
+    splitTokenToTokens(layerSizes, height, bestCandidate, cacheToken, smallerToken);
+    if(!cacheIsLower)
+      std::swap(cacheToken, smallerToken);
+    CombinationReader reader(&layerSizes[cacheIsLower ? 0 : bestCandidate], bestCandidateSize);
+    while(reader.hasNextCombination()) {
+      Combination c;
+      reader.nextCombination(c);
+      cache.push_back(c);
+      cacheSymmetric.push_back(c.is180Symmetric());
+    }
+    cacheIndex = (int)cache.size();
+
+    // Set up smaller producer:
+    smallerProducer = ICombinationProducer::get(smallerToken);
+  }
+
+  bool SpindleBuilder::nextCombination(Combination &c) {
+    if(cacheIndex >= (int)cache.size()) {
+      bool ok = smallerProducer->nextCombination(smaller);
+      if(!ok)
+	return false;
+      smallerSymmetric = smaller.is180Symmetric();
+      cacheIndex = 0;
+      produced = false;
+    }
+
+    Combination &lower = cacheIsLower ? cache[cacheIndex] : smaller;
+    Combination &upper = !cacheIsLower ? cache[cacheIndex] : smaller;
+    if(!produced && !smallerSymmetric && !cacheSymmetric[cacheIndex]) {
+      upper.rotate180();
+      lower.stack(upper, c);
+      produced = true;
+      cacheIndex++;
+      return true;
+    }
+    lower.stack(upper, c);
+    produced = smallerSymmetric || cacheSymmetric[cacheIndex];
+    if(produced)
+      cacheIndex++;
+    return true;
+  }
+
+  bool SpindleBuilder::hasNextCombination() {
+    return (cacheIndex < (int)cache.size()) || smallerProducer->hasNextCombination();
+  }
+
+  bool SpindleBuilder::canHandle(int token) {
+    int height, Z, layerSizes[MAX_HEIGHT];
+    std::vector<int> candidates;
+    setup(token, height, Z, layerSizes, candidates);
+    if(candidates.empty())
+      return false; // No candidates!
+    for(std::vector<int>::iterator it = candidates.begin(); it != candidates.end(); it++) {
+      int lowerSize = 1; // Add 1 for layerSize[candidate]
+      for(int i = 0; i < *it; i++) {
+	lowerSize += layerSizes[i];
+      }
+      if(lowerSize < 6 || Z - lowerSize + 1 < 6)
+	return true; // Split into less than 6 on one side
+    }
+    return false;
+  }
+
+  void SpindleBuilder::splitTokenToTokens(int *layerSizes, int height, int splitLayer, int &lower, int &upper) {
+    lower = 0;
+    for(int i = 0; i <= splitLayer; i++)
+      lower = (10*lower) + layerSizes[i];
+    upper = 0;
+    for(int i = splitLayer; i < height; i++)
+      upper = (10*upper) + layerSizes[i];
+  }
+
   CombinationWriter::CombinationWriter(const int token, const bool saveOutput) : height(0), writtenFull(0), writtenShort(0), token(token), counts(), Z(0) {
 #ifdef DEBUG
-    std::cout << " Create Combination writer for token " << token << ", output?: " << saveOutput << std::endl;
+    std::cout << "  Create writer for token " << token << ", output?: " << saveOutput << std::endl;
 #endif
 
     int inverseToken = 0, tkn = token;
@@ -904,24 +1236,15 @@ namespace rectilinear {
     writtenShort+=v.size();
   }
 
-  Counts CombinationWriter::add(Combination &cOld, const Brick &addedBrick, const uint8_t layer) {
-#ifdef TRACE
-    std::cout << "   TRY TO ADD " << addedBrick << " at layer " << (int)layer << std::endl;
-#endif
+  Counts SingleBrickAdder::add(Combination &cOld, const Brick &addedBrick, const uint8_t layer) {
     Combination c; // Build completely in addBrick()
     int rotated = 0;
     if(!cOld.addBrick(addedBrick, layer, c, rotated)) {
-#ifdef TRACE
-      std::cout << " Does not fit!" << std::endl;
-#endif
-      return Counts(); // Does not fit.
+      return Counts(); // Intersects with existing brick.
     }
 
     // If cOld is symmetric, then check if we are first:
     if(cOld.is180Symmetric() && rotated > 90) {
-#ifdef TRACE
-      std::cout << " Not first version of symmetric combination!" << std::endl;
-#endif
       return Counts(); // Not first version of this symmetric combination.
     }
 
@@ -933,9 +1256,6 @@ namespace rectilinear {
       for(int i = 0; i < layer; i++) {
 	for(int j = 0; j < c.layerSizes[i]; j++) {
 	  if(c.layerSizes[i] > 1 && c.removeBrickAt(i, j, ignore)) {
-#ifdef TRACE
-	    std::cout << "  Could be constructed from lower refinement " << ignore << std::endl;
-#endif
 	    return Counts(); // Sibling comes before cOld, so we do not add
 	  }
 	}
@@ -947,9 +1267,6 @@ namespace rectilinear {
       for(int j = 0; j < s; j++) {
 	if(c.removeBrickAt(layer, j, sibling)) { // Can remove siblingBrick:
 	  if(sibling < cOld) {
-#ifdef TRACE
-	    std::cout << "  Could be constructed from lesser sibling" << sibling << std::endl;
-#endif
 	    return Counts(); // Lesser sibling!
 	  }
 	}
@@ -957,12 +1274,6 @@ namespace rectilinear {
     }
 
     // All OK! c can be added and counted:
-#ifdef DEBUG
-    std::cout << " ALL OK! Adding " << c << " for token '" << token << "'" << std::endl;
-#endif
-
-    assert(c.isValid(token, "Counting"));
-
     // Construct return value:
     Combination rotated180(c);
     rotated180.rotate180();
@@ -978,12 +1289,7 @@ namespace rectilinear {
     return Counts(1, 0, 0);
   }
 
-  void CombinationWriter::makeNewCombinations(Combination &c, const int layer) {
-#ifdef TRACE
-    std::cout << "-----------------------------" << std::endl;
-    std::cout << "Building on " << c << " by adding to layer " << layer << std::endl;
-#endif
-
+  Counts SingleBrickAdder::addBricksToCombination(Combination &c, const int layer, std::vector<Brick> &v) {
     // Stop early if c is stable with brick below layer-1 removed!
     // Notice: This does not include layer-1, as we place on layer!
     Combination evenSmaller;
@@ -994,10 +1300,7 @@ namespace rectilinear {
       }
       for(int j = 0; j < s; j++) {
 	if(c.removeBrickAt(i, j, evenSmaller)) {
-#ifdef TRACE
-	  std::cout << "EARLY EXIT due to stable base on layer " << i << ": " << c << " -> " << evenSmaller << std::endl;
-#endif
-	  return;
+	  return Counts();
 	}
       }
     }
@@ -1014,16 +1317,12 @@ namespace rectilinear {
 	}
       }
       if(allExpendable) {
-#ifdef TRACE
-	std::cout << "EARLY EXIT due to all expendable on layer " << layer-1 << ": " << c << std::endl;
-#endif
-	return;
+	return Counts();
       }
     }
 				
     // Build new combinations by adding to all existing bricks:
     std::set<Brick> alreadyAdded, neighbours;
-    std::vector<Brick> v;
 
     // Find all potential neighbours above and below:
     if(layer > 0) {
@@ -1040,13 +1339,11 @@ namespace rectilinear {
 	neighbours.insert(b);
       }
     }
-				
+
+    Counts counts;
+
     for(std::set<Brick>::const_iterator it = neighbours.begin(); it != neighbours.end(); it++) {
       const Brick &brick = *it;
-#ifdef TRACE
-      std::cout << " Try adding brick " << brick << " on layer " << layer << std::endl;
-#endif
-
       bool isVertical = brick.isVertical;
 
       // Add crossing bricks (one vertical, one horizontal):
@@ -1054,11 +1351,9 @@ namespace rectilinear {
 	for(int y = -2; y < 3; y++) {
 	  Brick b(!isVertical, brick.x+x, brick.y+y);
 	  if(alreadyAdded.insert(b).second) { // Brick not already added:
-	    Counts added = add(c, b, layer);
-	    if(added.all > 0) {
-	      if(writesToFile())
+	    Counts added = SingleBrickAdder::add(c, b, layer);
+	    if(added.all > 0)
 		v.push_back(b);
-	    }
 	    counts += added;
 	  }
 	}
@@ -1074,30 +1369,19 @@ namespace rectilinear {
 	for(int x = -w+1; x < w; x++) {
 	  Brick b(isVertical, brick.x+x, brick.y+y);
 	  if(alreadyAdded.insert(b).second) {
-	    Counts added = add(c, b, layer);
-	    if(added.all > 0) {
-	      if(writesToFile())
-		v.push_back(b);
-	    }
+	    Counts added = SingleBrickAdder::add(c, b, layer);
+	    if(added.all > 0)
+	      v.push_back(b);
 	    counts += added;
 	  }
 	}
       }
-#ifdef TRACE
-      std::cout << " Done adding to brick " << brick << std::endl;
-#endif
     }
 
-    // Write:
-    writeCombinations(c, layer, v);
-				
-#ifdef TRACE
-    std::cout << "DONE Building on " << c << std::endl;
-    std::cout << "-----------------------------" << std::endl;
-#endif
+    return counts;
   }
 
-  void CombinationWriter::fillFromReader(int const * const layerSizes, const int reducedLayer, CombinationReader * reader) {
+  void CombinationWriter::fillFromReader(int const * const layerSizes, const int reducedLayer, ICombinationProducer *reader) {
     // Combination to read:
     Combination c;
     c.height = height;
@@ -1106,7 +1390,10 @@ namespace rectilinear {
     }
 
     while(reader->nextCombination(c)) {
-      makeNewCombinations(c, reducedLayer);
+      std::vector<Brick> v;
+      Counts added = SingleBrickAdder::addBricksToCombination(c, reducedLayer, v);
+      counts += added;
+      writeCombinations(c, reducedLayer, v);
     }
   }
 
@@ -1114,21 +1401,16 @@ namespace rectilinear {
     return ostream != NULL;
   }
 
-  void Counter::fillFromReaders(CombinationWriter &writer) {
-    // Build layers:
-    int layers = 0, tkn = writer.token;
+  void Counter::writeToCache(int token, Counts counts) {
+    cache[token] = counts;
+    cache[Combination::reverseToken(token)] = counts;
+  }
+
+  Counts Counter::fastRunToWriter(CombinationWriter &writer) {
+    Counts counts;
+    int layers = Combination::heightOfToken(writer.token);
     int layerSizes[MAX_HEIGHT];
-    while(true) {
-      int size_add = tkn % 10;
-      if(size_add == 0)
-	break;
-      layerSizes[layers++] = size_add;
-      tkn /= 10;
-    }
-    // Flip the layer sizes:
-    for(int i = 0; i < layers/2; i++) {
-      std::swap(layerSizes[i], layerSizes[layers-i-1]);
-    }
+    Combination::getLayerSizesFromToken(writer.token, layerSizes);
 
     for(int i = 0; i < layers; i++) { // Reader from reader where brick on layer i was added:
       if(layerSizes[i] == 1 && i != layers-1)
@@ -1141,7 +1423,7 @@ namespace rectilinear {
 
       unsigned int processor_count = std::thread::hardware_concurrency() - 2; // allow 2 processors for OS and other...
       if(!writer.writesToFile() && processor_count > 1) {
-	std::cout << "Splitting into " << processor_count << " threads!" << std::endl;
+	std::cout << "   Splitting computation into " << processor_count << " threads" << std::endl;
 	// Fill from readers in threads:
 	std::vector<std::thread*> threads;
 	std::vector<CombinationWriter*> writers;
@@ -1164,40 +1446,64 @@ namespace rectilinear {
 						
       layerSizes[i]++;
     }
+    return counts;
   }
-
-  void Counter::handleFinalCombinationWriters(const int token, const bool saveOutput) {
-    std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
-    Counts before = counts;
-    std::cout << " Handling combinations for token " << token << std::endl;
-
-    CombinationWriter writer(token, saveOutput);
-    fillFromReaders(writer);
-
-    std::cout << "  Constructed " << (counts-before) << " combinations for token " << token << " in ";
-    std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> t = t_end - t_init;
-    std::cout << t.count() << "s." << std::endl;
-  };
 
   /*
     Construct the writers.
     If remaining is 0, the writer of name token is constructed and added to writers.
     Otherwise, combinations of all remaining are constructed recursively.
   */
-  void Counter::handleCombinationWriters(int token, int remaining, bool add_self, bool saveOutput) {
+  Counts Counter::buildCombinations(int token, int remaining, bool addSelf, bool saveOutput) {
+    Counts counts;
+
     if(remaining == 0) {
-      handleFinalCombinationWriters(token, saveOutput);
-      return;
+      std::cout << " Handling combinations for token " << token << std::endl;
+      if(!saveOutput) {
+	// Try to count quickly when no data is saved to disk:
+	// 0: See if token is in cache:
+	if(cache.find(token) != cache.end()) {
+	  counts = cache[token];
+	  std::cout << "  Cache -> " << counts << " for token " << token << std::endl;
+	  return counts;
+	}
+	// 1: Lemma 1:
+	if(SpindleBuilder::canHandle(token)) {
+	  int height, Z, layerSizes[MAX_HEIGHT];
+	  std::vector<int> candidates;
+	  SpindleBuilder::setup(token, height, Z, layerSizes, candidates);
+	  int lowerToken, upperToken;
+	  SpindleBuilder::splitTokenToTokens(layerSizes, height, candidates[0], lowerToken, upperToken);
+	  Counts C = cache[lowerToken];
+	  Counts D = cache[upperToken];
+	  uint64_t dn = D.all - D.symmetric180;
+	  uint64_t cn = C.all - C.symmetric180;
+	  uint64_t d = D.all;
+	  uint64_t cs = C.symmetric180;
+	  uint64_t ds = D.symmetric180;
+	  counts.all = (dn+d)*cn + d*cs;
+	  counts.symmetric180 = cs * ds;
+	  std::cout << "  Lemma 1 -> " << counts << " for token " << token << std::endl;
+	  writeToCache(token, counts);
+	  return counts;
+	}
+      }
+      CombinationWriter writer(token, saveOutput);
+      counts = fastRunToWriter(writer);
+
+      std::cout << "  Constructed " << counts << " combinations for token " << token << std::endl;
+      writeToCache(token, counts);
+      return counts;
     }
 
 #ifdef TRACE
-    std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << add_self << std::endl;
+    std::cout << " Building recurse writers for token " << token << ", remaining: " << remaining << ", add self?: " << addSelf << std::endl;
 #endif
-    for(int i = remaining - (add_self ? 0 : 1); i > 0; i--) {
+    for(int i = remaining - (addSelf ? 0 : 1); i > 0; i--) {
       int ntoken = 10*token + i;
-      handleCombinationWriters(ntoken, remaining - i, true, saveOutput);
+      counts += buildCombinations(ntoken, remaining - i, true, saveOutput);
     }
+    return counts;
   }
 
   Counts Counter::countLayer0P(int Z, int layer0Size, int layer1Size, Combination &symmetryChecker, int idx, std::set<Brick>::const_iterator itBegin, std::set<Brick>::const_iterator itEnd, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination> &seen) {
@@ -1349,28 +1655,23 @@ namespace rectilinear {
     Add remaining bricks to first layer and count how many ways that can be done.
     Multiply with models in <12...> instead of repeating the full process for each model therein.
   */
-  void Counter::countX2(int Z, int layer0Size, char* input) {
+  Counts Counter::countX2(int Z, int layer0Size, char* input) {
     int smallerToken = 1; // Just have 1 in first layer of 'smaller'
-    int smallerLayerSizes[MAX_HEIGHT];
-    smallerLayerSizes[0] = 1;
     char c;
-    for(int i = 1; (c = input[i]); i++) {
+    for(int i = 1; (c = input[i]); i++)
       smallerToken = smallerToken * 10 + (c-'0');
-      smallerLayerSizes[i] = (c-'0');
-    }
     std::cout << "Filling to " << layer0Size << " bricks for first layer of <" << smallerToken << ">" << std::endl;
 
     // Go through all smaller combinations:
     Counts ret;
     uint64_t divisor = 5*6*7*8*9, countSmaller = 0, cntSkip = 0;
 
+    ICombinationProducer *producer = ICombinationProducer::get(smallerToken);
+    assert(producer != NULL);
+    Combination smaller; // <12...>
     std::map<uint64_t,Counts> cache;
 
-    const int smallerSize = Z-layer0Size+1; // Smaller only has 1 brick in first layer
-    CombinationReader reader(smallerLayerSizes, smallerSize);
-    Combination smaller; // <12...>
-
-    while(reader.nextCombination(smaller)) {
+    while(producer->nextCombination(smaller)) {
       countSmaller++;
 
       // Find all locations to place a brick on first layer:
@@ -1410,39 +1711,39 @@ namespace rectilinear {
     ret.all /= divisor;
     ret.symmetric180 /= divisor;
     std::cout << "Final results: " << ret << std::endl;
+    return ret;
   }
 
-  void Counter::countRefinements(const int Z, int token, const int height, char* input,const bool saveOutput) {
+  Counts Counter::countRefinements(const int Z, int token, const int height, char* input,const bool saveOutput) {
+    if(cache.find(token) != cache.end())
+      return cache[token];
+    
     // Special case handling:
     if(height >= 2 && input[0] >= '2' && input[1] == '2') {
       std::cout << "Special case <X2...>, X >= 2" << std::endl;
       const int layer0Size = input[0]-'0';
-      countX2(Z, layer0Size, input);
+      Counts counts = countX2(Z, layer0Size, input);
+      writeToCache(token, counts);
+      return counts;
     }
     else { // Normal case:
-      int reverseToken = 0;
-      char c;
-      for(int i = height-1; i >= 0; i--) {
-	c = input[i];
-	reverseToken = reverseToken * 10 + (c-'0');
-      }
-
+      int reverseToken = Combination::reverseToken(token);
       if(token < reverseToken) {
 	token = reverseToken;
       }
 
-      handleFinalCombinationWriters(token, saveOutput);
+      Counts counts = buildCombinations(token, 0, false, saveOutput);
+      return counts;
     }
   }
 
   void Counter::buildAllCombinations(int Z, bool saveOutput) {
     std::chrono::time_point<std::chrono::steady_clock> t_init = std::chrono::steady_clock::now();
-    if(Z == 1) {
+    if(Z == 1)
       return; // Trivial case with 1 brick.
-    }
 
     std::cout << "Building all combinations of size " << Z << std::endl;
-    handleCombinationWriters(0, Z, false, saveOutput);
+    Counts counts = buildCombinations(0, Z, false, saveOutput);
 
     std::cout << "Constructed " << counts << " combinations of size " << Z << " in ";
     std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();

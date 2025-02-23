@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <map>
 #include <mutex>
 
 namespace rectilinear {
@@ -96,48 +97,105 @@ namespace rectilinear {
     bool isConnectedAboveFirstLayer() const;
     bool can_rotate90() const;
     bool addBrick(const Brick &b, const uint8_t layer, Combination &out, int &rotated) const;
-    void removeSingleLowerBrick(Combination &out) const;				
+    void removeSingleLowerBrick(Combination &out) const;
     void removeSingleTopBrick(Combination &out) const;
-    bool removeBrickAt(int layer, int idx, Combination &out) const;		
+    bool removeBrickAt(int layer, int idx, Combination &out) const;	
     void normalize(int &rotated);
     void normalize(); 
     int countConnected(int layer, int idx);
     bool isConnected();
     void flip();
+    void stack(const Combination &top, Combination &ret) const;
+    static int heightOfToken(int token);
+    static int sizeOfToken(int token);
+    static void getLayerSizesFromToken(int token, int *layerSizes);
+    static int getTokenFromLayerSizes(int *layerSizes, int height);
+    static int reverseToken(int token);
 
-    // Helper methods for handling X2 and XY special cases:
+    // Helper methods for countX2:
     uint64_t encodeFor12(bool &topSymmetric, bool &topConnected) const;
-    uint64_t encodeForYY(bool &topSymmetric, bool &topConnected) const;
     uint64_t countSymmetricLayer0Siblings() const;
     uint64_t countSymmetricLayer0SiblingsThatConnectAbove() const;
   };
 
-  class ICombinationProducer {
-    public:
-    virtual bool nextCombination(Combination &c) = 0;
+  class CutCombination {
+  public:
+    int layerSizes[2]; // height is 2
+    Brick bricks[2][8]; // At most 8 bricks per layer (Used for layer1Size >= 3, and max total size is 11)
+    uint64_t connectivity;
+
+    CutCombination(const Combination &c);
+    bool operator <(const CutCombination& b) const;
+    bool operator ==(const CutCombination& b) const;
   };
-  
-  class CombinationReader : ICombinationProducer {
+
+  class ICombinationProducer {
+  public:
+    //virtual ~ICombinationProducer();
+    virtual bool nextCombination(Combination &c) = 0;
+    virtual bool hasNextCombination() = 0;
+    static ICombinationProducer* get(int token);
+  };
+
+  class CombinationReader final : public ICombinationProducer { // 'final' to avoid delete called on derived classes.
   private:
     std::ifstream *istream; // Reads reversed combinations
     int layerSizes[MAX_HEIGHT], // Reversed
       height, combinationsLeft, Z, token;
     uint8_t bits, bitIdx, brickLayer;
     Combination baseCombination; // Reversed!
-    bool reverse, done;
+    bool reverse, done, invalid;
     uint64_t combinationCounter;
     std::string name;
     std::mutex read_mutex;
 
     bool readBit();
     int8_t readInt8();
-    uint8_t readUInt4();		
-    uint32_t readUInt32();		
+    uint8_t readUInt4();
+    uint32_t readUInt32();
     Brick readBrick();
   public:
     CombinationReader(const int layerSizes[], int Z);
     ~CombinationReader();
     bool nextCombination(Combination &c);
+    bool hasNextCombination();
+    bool isInvalid() const;
+  };
+
+  class SingleBrickAdder : public ICombinationProducer {
+    const int Z, height, token;
+    Counts counts;
+    int layer;
+    ICombinationProducer *smallerProducer;
+    std::stack<Combination> toProduce;
+
+    void fillToProduce();
+
+  public:
+    SingleBrickAdder(const int token);
+
+    bool nextCombination(Combination &c);
+    bool hasNextCombination();
+    static Counts add(Combination &cOld, const Brick &addedBrick, const uint8_t layer);
+    static Counts addBricksToCombination(Combination &c, const int layer, std::vector<Brick> &v);
+  };
+
+  class SpindleBuilder final : public ICombinationProducer {
+    std::vector<Combination> cache;
+    std::vector<bool> cacheSymmetric;
+    int cacheIndex;
+    bool cacheIsLower, produced;
+    ICombinationProducer *smallerProducer;
+    Combination smaller;
+    bool smallerSymmetric;
+
+  public:
+    SpindleBuilder(int token);
+    bool nextCombination(Combination &c);
+    bool hasNextCombination();
+    static bool canHandle(int token);
+    static void splitTokenToTokens(int *layerSizes, int height, int splitLayer, int &lower, int &upper);
+    static void setup(const int token, int &height, int &Z, int *layerSizes, std::vector<int> &candidates);
   };
 
   class CombinationWriter {
@@ -156,6 +214,9 @@ namespace rectilinear {
     CombinationWriter(const CombinationWriter &cw);
     ~CombinationWriter();
 
+    bool writesToFile() const;
+    void fillFromReader(int const * const layerSizes, const int reducedLayer, ICombinationProducer *reader);
+  private:
     void writeBit(bool bit);
     void flushBits();
     void writeInt8(const int8_t toWrite);
@@ -163,26 +224,22 @@ namespace rectilinear {
     void writeUInt32(uint32_t toWrite);
     void writeBrick(const Brick &b);
     void writeCombinations(const Combination &baseCombination, uint8_t brickLayer, std::vector<Brick> &v);
-    Counts add(Combination &cOld, const Brick &addedBrick, const uint8_t layer);
-    void makeNewCombinations(Combination &c, const int layer);
-    void fillFromReader(int const * const layerSizes, const int reducedLayer, CombinationReader * reader);
-    bool writesToFile() const;
   };
 
   class Counter {
-    Counts counts;
+    std::map<int,Counts> cache;
 
-    void fillFromReaders(CombinationWriter &writer);
-    void handleFinalCombinationWriters(const int token, const bool saveOutput);
-    void handleCombinationWriters(int token, int remaining, bool add_self, bool saveOutput);
+    void writeToCache(int token, Counts counts);
+    Counts fastRunToWriter(CombinationWriter &writer);
+    Counts buildCombinations(int token, int remaining, bool add_self, bool saveOutput);
 
     // Helper methods for countX2():
     Counts countLayer0P(int Z, int layer0Size, int layer1Size, Combination &symmetryChecker, int idx, std::set<Brick>::const_iterator itBegin, std::set<Brick>::const_iterator itEnd, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination> &seen);
     Counts countLayer0Placements(int Z, int layer0Size, int layer1Size, Combination &c, const uint64_t divisor, bool topSymmetric, bool topConnected, std::set<Combination> &seen);
-    void countX2(int Z, int layer0Size, char* input);
+    Counts countX2(int Z, int layer0Size, char* input);
 
   public:
-    void countRefinements(const int Z, int token, const int height, char* input, const bool saveOutput);
+    Counts countRefinements(const int Z, int token, const int height, char* input, const bool saveOutput);
     void buildAllCombinations(int Z, bool saveOutput);
   };
 }

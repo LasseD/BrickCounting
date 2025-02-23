@@ -4,16 +4,26 @@
 
 /*
   TODO:
-  - Create SpindleReader for Lemma 1
-  - Extract build logic from CombinationWriter to Counter.
-  - Have Counter determine correct reader to use
-  - Create recursive reader/builders for cases where a file is not available (size 9+ cannot fit on disk)
-  - countXY using CutCombination of 2 layers with bit-array of connectivity for layer 1:
-   - There are Y bricks in layer 1.
-   - For i = 0 .. Y-1:
-    - For j = i+1 .. Y-1
-     Set bit if brick i connects to brick j above layer 1.
-  - Create Max2LayerReader for <22..2> combinations TODO: Recall how this works...
+  - countX3(), X >= 3
+   - Use CutCombination of 2 layers with bit-array of connectivity for layer 1:
+    - CutCombination:
+    - There are Y bricks in layer 1.
+    - For i = 0 .. Y-1:
+     - For j = i+1 .. Y-1
+      Set bit if brick i connects to brick j above layer 1.
+  - Generalize to countXY(...)
+  - Create Max2LayerReader for <22..2> combinations:
+   - Consider layer2 instead of layer1:
+    - layer2 of size 2.
+    - Construct cache for all positions of the bricks of layer2 up to what can be connected from the two layers below.
+    - Reuse logic countX2()
+
+  Performance:
+  Eiler et. al. can compute A(6) in 3 second.
+  Current performance of this code base:
+   Writing all files up to size 6: 11 minutes, 53 seconds
+   Counting for size 6 without file writing: 1 minute, 6 seconds
+  Significant performance improvements are required!
 */
 void countRefinements(char* input, bool saveOutput) {
   int size = 0, token = 0,  height = 0;
@@ -28,15 +38,12 @@ void countRefinements(char* input, bool saveOutput) {
 }
 
 int main(int argc, char** argv) {
-  bool saveFiles = true;
+  bool saveFiles = false;
   rectilinear::Counter c;
   switch(argc) {
   case 1:
-    c.buildAllCombinations(2, saveFiles);
-    c.buildAllCombinations(3, saveFiles);
-    c.buildAllCombinations(4, saveFiles);
-    c.buildAllCombinations(5, saveFiles);
-    c.buildAllCombinations(6, saveFiles);
+    for(int i = 2; i <= 6; i++)
+      c.buildAllCombinations(i, saveFiles);
     break;
   case 2:
     countRefinements(argv[1], false);
