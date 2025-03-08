@@ -23,6 +23,12 @@ def setData(data):
         N[data[i]] = data[i+1] - data[i+2]
         S[data[i]] = data[i+2]
 
+# Size 1:
+setData(['1', 1, 1])
+
+# Size 2:
+# Done above
+
 # Size 3:
 setData(['21', 250, 20])
 
@@ -166,3 +172,78 @@ for X in range(2,to+1):
             print('   SUM', n+s, '(' + str(s) + ')')
     if X == to:
         print('TOTAL', sumN+sumS, '(' + str(sumS) + ')')
+
+
+# Code below recreates Table 7 from Eilers (2016):
+def prep():
+    return [[0 for x in range(to)] for y in range(to)]
+f = [0] * to # c with line on top in Table 7
+f180 = [0] * to
+C = prep() # c(n,m) with bold c
+C90 = prep()
+if to >= 8:
+    C90[7][3] = 244
+C180 = prep()
+
+def fillC(n, prefix, rem):
+    if rem == 0 and len(prefix) > 0:
+        if prefix[0] == '1':
+            # f and f180:
+            fprefix = prefix + '1'
+            N = getN(fprefix)
+            S = getS(fprefix)
+            if N is not None:
+                f[n-1] = f[n-1] + 2 * N + S
+                f180[n-1] = f180[n-1] + getS(fprefix)
+        # C and C180:
+        firstLayer = int(prefix[0])
+        N = getN(prefix)
+        S = getS(prefix)        
+        if N is not None:
+            C[n-1][firstLayer-1] = C[n-1][firstLayer-1] + (2 * N + S) * firstLayer
+            C180[n-1][firstLayer-1] = C180[n-1][firstLayer-1] + S * firstLayer
+        return
+    for m in range(1 if prefix == '' else 2, rem+1):
+        fillC(n+m, prefix + str(m), rem-m)
+
+for n in range(1, to+1):
+    fillC(0, '', n)
+
+print('n\tf(n)\tf180(n)\t' + '\t'.join(["C(n,{0})\tC180(n,{0})".format(x) for x in range(1,to+1)]))
+for n in range(0, to):
+    printList = [n+1,f[n],f180[n]]
+    for m in range(0, to):
+        printList.append(C[n][m])
+        printList.append(C180[n][m])
+    print('\t'.join([str(x) for x in printList]))
+
+def multf(remainingCount, remainingN, product, ret, go180):
+    if remainingCount == 0:
+        if remainingN != 0:
+            return
+        ret.append(product);
+        return
+    for i in range(1, remainingN+1):
+        multf(remainingCount-1, remainingN-i, product * (f180[i-1] if go180 else f[i-1]), ret, go180)
+    
+# Compute a(n) using 2.3 from Eilers (2016):
+for n in range(1, to+1):
+    an = 0
+    # First row sum:
+    for m in range(2, n+1):
+        an = an + (C[n-1][m-1] + C180[n-1][m-1] + 2 * C90[n-1][m-1]) / (2 * m)
+    # Second row first sum:
+    suml = 0
+    for l in range(n): # l = 0...n-1
+        for m1 in range(1,n+1): # m1 = 1..n
+            for m2 in range(1,n+2-m1): # m2 = 1..
+                sums = []
+                multf(l, n+1-m1-m2, 1, sums, False)
+                for sum in sums:
+                    suml = suml + C[m1-1][0] * C[m2-1][0] * sum
+                sums180 = []
+                multf(l, n+1-m1-m2, 1, sums180, True)
+                for sum in sums180:
+                    suml = suml + C180[m1-1][0] * C180[m2-1][0] * sum
+    an = an + suml / 2
+    print('a(' + str(n) + ') =', an)

@@ -127,6 +127,8 @@ namespace rectilinear {
     CutCombination(const Combination &c);
     bool operator <(const CutCombination& b) const;
     bool operator ==(const CutCombination& b) const;
+  private:
+    static void colorGraph(int color, int layer, int idx, int colors[MAX_HEIGHT][MAX_LAYER_SIZE], const Combination &c);
   };
 
   class ICombinationProducer {
@@ -154,6 +156,7 @@ namespace rectilinear {
     uint8_t readUInt4();
     uint32_t readUInt32();
     Brick readBrick();
+    void ensureCombinationsLeft();
   public:
     CombinationReader(const int layerSizes[], int Z);
     ~CombinationReader();
@@ -168,8 +171,10 @@ namespace rectilinear {
     int layer;
     ICombinationProducer *smallerProducer;
     std::stack<Combination> toProduce;
+    std::mutex read_mutex;
 
-    void fillToProduce();
+    bool ensureSmallerProducer();
+    void ensureToProduce();
 
   public:
     SingleBrickAdder(const int token);
@@ -188,6 +193,7 @@ namespace rectilinear {
     ICombinationProducer *smallerProducer;
     Combination smaller;
     bool smallerSymmetric;
+    std::mutex read_mutex;
 
   public:
     SpindleBuilder(int token);

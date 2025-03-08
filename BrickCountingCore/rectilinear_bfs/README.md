@@ -17,7 +17,7 @@ g++ -Ofast -DNDEBUG *.cpp -o run.o
 
 or
 
-g++ -std=c++11 -O3 -DNDEBUG *.cpp -o run.o
+g++ -O3 -DNDEBUG *.cpp -o run.o
 ```
 
 Count up to 6 bricks:

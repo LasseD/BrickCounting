@@ -683,6 +683,33 @@ namespace rectilinear {
     return ret;
   }
 
+  void CutCombination::colorGraph(int color, int layer, int idx, int colors[MAX_HEIGHT][MAX_LAYER_SIZE], const Combination &c) {
+    colors[layer][idx] = color;
+    const Brick &b = c.bricks[layer][idx];
+    // Color below:
+    if(layer > 0) {
+      for(int j = 0; j < c.layerSizes[layer-1]; j++) {
+	if(colors[layer-1][j] != 0)
+	  continue; // Already colored
+	const Brick &b2 = c.bricks[layer-1][j];
+	if(b2.intersects(b)) {
+	  colorGraph(color, layer-1, j, colors, c);
+	}
+      }
+    }
+    // Color above:
+    if(layer < c.height-1) {
+      for(int j = 0; j < c.layerSizes[layer+1]; j++) {
+	if(colors[layer+1][j] != 0)
+	  continue; // Already colored
+	const Brick &b2 = c.bricks[layer+1][j];
+	if(b2.intersects(b)) {
+	  colorGraph(color, layer+1, j, colors, c);
+	}
+      }
+    }
+  }
+
   CutCombination::CutCombination(const Combination &c) {
     assert(c.height >= 2);
     for(int i = 0; i < 2; i++) {
@@ -691,19 +718,32 @@ namespace rectilinear {
 	bricks[i][j] = c.bricks[i][j];
       }
     }
-    // Compute connectivity:
-    connectivity = 0;
-    bool connected[8];
-    for(int i = 0; i < layerSizes[1]; i++) {
-      for(int j = 0; j < layerSizes[1]; j++) {
-	connected[j] = false;
-      }
-      connected[i] = true;
-      for(int j = i+1; j < layerSizes[1]; j++) {
-	
+    // Compute connectivity by first coloring the bricks:
+    int colors[MAX_HEIGHT][MAX_LAYER_SIZE];
+    int color = 0;
+    for(int i = 0; i < c.height; i++) {
+      for(int j = 0; j < c.layerSizes[i]; j++) {
+	colors[i][j] = 0;
       }
     }
-    // TODO
+    for(int i = 0; i < c.height; i++) {
+      for(int j = 0; j < c.layerSizes[i]; j++) {
+	if(colors[i][j] == 0) {
+	  color++;
+	  colorGraph(color, i, j, colors, c);
+	}
+      }
+    }
+    // Set a bit for each connection:
+    connectivity = 0;
+    for(int i = 0; i < layerSizes[1]; i++) {
+      for(int j = i+1; j < layerSizes[1]; j++) {
+	int bit = colors[1][i] == colors[1][j];
+	connectivity = (connectivity << 1) + bit;
+      }
+    }
+    // Additional bit for symmetry:
+    connectivity = (connectivity << 1) + c.isSymmetricAboveFirstLayer();
   }
 
   bool CutCombination::operator <(const CutCombination& b) const {
@@ -753,6 +793,7 @@ namespace rectilinear {
       return new SpindleBuilder(token);
 
     // Slow SingleBrickAdder that builds all possible combinations using brute-force:
+    std::cout << "  Backup reader starting for token " << token << "!" << std::endl;
     return new SingleBrickAdder(token);
   }
 
@@ -831,14 +872,15 @@ namespace rectilinear {
     if(Z > 1 && !invalid) {
       istream = new std::ifstream(file_name.c_str(), std::ios::binary);
       if(!istream->good()) {
+	invalid = true;
 	delete istream;
 	istream = NULL;
-	invalid = true;
       }
     }
     else {
       istream = NULL;
     }
+
     if(invalid) {
       done = true;
     }
@@ -850,7 +892,7 @@ namespace rectilinear {
     baseCombination.bricks[0][0] = FirstBrick;
     combinationsLeft = 0;
 
-    std::cout << "   READER for " << layerString << ": " << file_name << ", reversed: " << reverse << ", invalid: " << invalid << std::endl;
+    std::cout << "    READER for " << layerString << ": " << file_name << ", reversed: " << reverse << ", invalid: " << invalid << std::endl;
   }
 
   bool CombinationReader::isInvalid() const {
@@ -866,25 +908,15 @@ namespace rectilinear {
     }
   }
 
-  // Assume c already has height and layerSizes set.
-  bool CombinationReader::nextCombination(Combination &c) {
-    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no double-reading.
-
-    if(done)
-      return false;
-    if(Z == 1) {
-      c.layerSizes[0] = 1;
-      c.bricks[0][0] = FirstBrick;
-      c.height = 1;
-      done = true;
-      return true;
-    }
+  void CombinationReader::ensureCombinationsLeft() {
+    if(done || Z == 1)
+      return;
 
     if(combinationsLeft == 0) { // Read new base combination:
       brickLayer = readUInt4(); // Brick to be added to base combination.
       if(brickLayer == 15) {
 	done = true;
-	return false;
+	return;
       }
 
       baseCombination.height = height - (brickLayer == height-1 && layerSizes[brickLayer] == 1);
@@ -895,8 +927,25 @@ namespace rectilinear {
 
 	for(int j = (i == 0 ? 1 : 0); j < s; j++)
 	  baseCombination.bricks[i][j] = readBrick();
-      }						
+      }
       combinationsLeft = readUInt32();
+    }
+  }
+  
+  // Assume c already has height and layerSizes set.
+  bool CombinationReader::nextCombination(Combination &c) {
+    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no double-reading.
+    ensureCombinationsLeft();
+
+    if(done)
+      return false;
+
+    if(Z == 1) {
+      c.layerSizes[0] = 1;
+      c.bricks[0][0] = FirstBrick;
+      c.height = 1;
+      done = true;
+      return true;
     }
 
     // Copy base combination and add one brick:
@@ -931,6 +980,7 @@ namespace rectilinear {
 
   bool CombinationReader::hasNextCombination() {
     std::lock_guard<std::mutex> guard(read_mutex); // Ensure no update while reading
+    ensureCombinationsLeft();
     return !done;
   }
 
@@ -940,63 +990,68 @@ namespace rectilinear {
     token(token),
     layer(-1),
     smallerProducer(NULL) {
-    fillToProduce();
   }
 
-  void SingleBrickAdder::fillToProduce() {
+  bool SingleBrickAdder::ensureSmallerProducer() {
     if(smallerProducer == NULL || !smallerProducer->hasNextCombination()) {
       // Update smallerProducer:
       int layerSizes[MAX_HEIGHT];
       Combination::getLayerSizesFromToken(token, layerSizes);
 
-      layer++;
-      while(layerSizes[layer] < 2) {
+      do {
 	layer++;
-	if(layer >= height)
-	  return; // Done!
+      } while(layer < height && layerSizes[layer] < 2);
+
+      if(layer >= height) {
+	std::cout << "   Single brick adder for " << token << " done!" << std::endl;
+	return false;
       }
 
       layerSizes[layer]--; // We know there are at least 2 bricks on this layer by now
       int smallerHeight = layerSizes[layer] == 0 ? height-1 : height;
       int smallerToken = Combination::getTokenFromLayerSizes(layerSizes, smallerHeight);
-      std::cout << "Builder for <" << token << "> now filling from <" << smallerToken << ">" << std::endl;
+      std::cout << "   Builder for <" << token << "> now filling from <" << smallerToken << ">" << std::endl;
       smallerProducer = ICombinationProducer::get(smallerToken);
     }
-    
+    return true;
+  }
+
+  void SingleBrickAdder::ensureToProduce() {
+    if(!toProduce.empty()) {
+      return;
+    }
+
     Combination c;
-    while(smallerProducer->nextCombination(c)) {
+    while(ensureSmallerProducer() && smallerProducer->nextCombination(c)) {
       std::vector<Brick> v;
       if(addBricksToCombination(c, layer, v).all > 0) {
+	assert(!v.empty());
 	Combination c2;
-	int ignore;
+	int ignoreRotation;
 	for(std::vector<Brick>::const_iterator it = v.begin(); it != v.end(); it++) {
-#ifdef TRACE
-	  std::cout << "Producing <" << token << "> from " << c << " by adding " << *it << " on layer " << layer << std::endl;
-#endif
-	  c.addBrick(*it, layer, c2, ignore);
+	  c.addBrick(*it, layer, c2, ignoreRotation);
 	  toProduce.push(c2);
 	}
 	return; // Request complete!
       }
     }
   }
-  
+
   bool SingleBrickAdder::nextCombination(Combination &c) {
-    if(toProduce.empty()) {
-      fillToProduce();
-    }
-    if(!toProduce.empty()) {
-      c = toProduce.top();
-      toProduce.pop();
-#ifdef TRACE
-      std::cout << "Single Brick for <" << token << "> produced: " << c << std::endl;
-#endif
-      return true;
-    }
-    return false;
+    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no update while reading
+    ensureToProduce();
+    if(toProduce.empty())
+      return false;
+
+    c = toProduce.top();
+    toProduce.pop();
+    return true;
   }
 
   bool SingleBrickAdder::hasNextCombination() {
+    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no update while reading
+    ensureToProduce();
+    std::cout << "HAS NEXT CALLED!" << std::endl;
     return !toProduce.empty();
   }
 
@@ -1055,6 +1110,7 @@ namespace rectilinear {
   }
 
   bool SpindleBuilder::nextCombination(Combination &c) {
+    std::lock_guard<std::mutex> guard(read_mutex); // Ensure no update while reading
     if(cacheIndex >= (int)cache.size()) {
       bool ok = smallerProducer->nextCombination(smaller);
       if(!ok)
@@ -1408,18 +1464,20 @@ namespace rectilinear {
 
   Counts Counter::fastRunToWriter(CombinationWriter &writer) {
     Counts counts;
-    int layers = Combination::heightOfToken(writer.token);
+    int height = Combination::heightOfToken(writer.token);
     int layerSizes[MAX_HEIGHT];
     Combination::getLayerSizesFromToken(writer.token, layerSizes);
 
-    for(int i = 0; i < layers; i++) { // Reader from reader where brick on layer i was added:
-      if(layerSizes[i] == 1 && i != layers-1)
+    for(int i = 0; i < height; i++) { // Reader from reader where brick on layer i was added:
+      if(layerSizes[i] == 1 && i != height-1)
 	continue; // Size 1 layer only handled if last.
-      if(layers == 2 && i == 1 && layerSizes[i-1] == writer.Z-1 && writer.Z != 2)
+      if(height == 2 && i == 1 && layerSizes[i-1] == writer.Z-1 && writer.Z != 2)
 	continue; // Size 1 last layer will split all!
 
       layerSizes[i]--;
-      CombinationReader reader(layerSizes, writer.Z-1);
+      int smallerHeight = layerSizes[i] == 0 ? height - 1 : height;
+      int smallerToken = Combination::getTokenFromLayerSizes(layerSizes, smallerHeight);
+      ICombinationProducer *reader = ICombinationProducer::get(smallerToken);
 
       unsigned int processor_count = std::thread::hardware_concurrency() - 2; // allow 2 processors for OS and other...
       if(!writer.writesToFile() && processor_count > 1) {
@@ -1430,7 +1488,7 @@ namespace rectilinear {
 
 	for(unsigned int j = 0; j < processor_count; j++) {
 	  writers.push_back(new CombinationWriter(writer));
-	  std::thread *t = new std::thread(&CombinationWriter::fillFromReader, std::ref(*writers[j]), layerSizes, i, &reader);
+	  std::thread *t = new std::thread(&CombinationWriter::fillFromReader, std::ref(*writers[j]), layerSizes, i, reader);
 	  threads.push_back(t);
 	}
 	for(unsigned int j = 0; j < processor_count; j++) {
@@ -1440,10 +1498,10 @@ namespace rectilinear {
       }
       else { // Single threaded if output is written:
 	writer.counts.reset();
-	writer.fillFromReader(layerSizes, i, &reader);
+	writer.fillFromReader(layerSizes, i, reader);
 	counts += writer.counts;
       }
-						
+
       layerSizes[i]++;
     }
     return counts;
@@ -1667,7 +1725,7 @@ namespace rectilinear {
     uint64_t divisor = 5*6*7*8*9, countSmaller = 0, cntSkip = 0;
 
     ICombinationProducer *producer = ICombinationProducer::get(smallerToken);
-    assert(producer != NULL);
+
     Combination smaller; // <12...>
     std::map<uint64_t,Counts> cache;
 
